@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdbool.h>
 
 // Example data to parse from a .sym file (excluding unwanted lines):
 // 0 _CODE                                      size    2B5   flags    0
@@ -14,10 +15,22 @@
 // 5 _GSFINAL                                   size      0   flags    0
 // 6 _CABS                                      size      0   flags    8
 
+int handle_args(int, char * []);
+void add_rec(char * str_area, long value);
+static int area_rec_compare(const void* a, const void* b);
+void print_all_recs(void);
+void parse_symfile_line(char * str_in);
+
+
 #define MAX_STR_LEN     4096
 #define MAX_SPLIT_WORDS 6
 #define MAX_AREAS       20
 
+enum {
+    USAGE_NONE,
+    USAGE_16K,
+    USAGE_32K
+};
 
 typedef struct area_rec {
     char str_area[MAX_STR_LEN];
@@ -26,6 +39,8 @@ typedef struct area_rec {
 
 area_rec area_list[MAX_AREAS];
 int area_count = 0;
+
+int usage_mode = USAGE_NONE; // default to usage turned off
 
 
 void add_rec(char * str_area, long value) {
@@ -55,8 +70,7 @@ void add_rec(char * str_area, long value) {
 
 
 // qsort compare function
-static int area_rec_compare(const void* a, const void* b)
-{
+static int area_rec_compare(const void* a, const void* b) {
     // rule for comparison
     area_rec *recA = (area_rec *)a;
     area_rec *recB = (area_rec *)b;
@@ -67,24 +81,35 @@ static int area_rec_compare(const void* a, const void* b)
 
 void print_all_recs(void) {
     int c;
+    long area_size = 0x3FFF; // Default area size is 16K
+
+    if (usage_mode == USAGE_32K) area_size = 0x7FFF;  // Update area size if needed
 
     // Sort first
     qsort (area_list, area_count, sizeof(area_rec), area_rec_compare);
 
-    fprintf(stdout,"Area         Size    Used  Free \n"
-                   "-----        ----    ----  ----\n");
+    if (usage_mode == USAGE_NONE) {
+        fprintf(stdout,"Area         Size\n"
+                       "-----        ----\n");
+    } else {
+        fprintf(stdout,"Area         Size    Used  Remains\n"
+                       "-----        ----    ----  -------\n");
+    }
+
+
     // Print all records
     for (c = 0; c < area_count; c++) {
         fprintf(stdout,"%-12s %-7ld ",area_list[c].str_area, area_list[c].value);   // Area, Size
 
         // Only print utilization for CODE areas
-        if (strstr(area_list[c].str_area, "CODE")) {
+        if ((usage_mode != USAGE_NONE)  &&
+            strstr(area_list[c].str_area, "CODE")) {
 
             // Percentage
-            fprintf(stdout,"%%%-4ld ", (area_list[c].value * 100) / (area_list[c].value <= 0x3FFF ? 0x3FFF : 0x7FFF));
+            fprintf(stdout,"%%%-4ld ", (area_list[c].value * 100) / area_size);
 
             // Free
-            fprintf(stdout,"%-5ld ", (area_list[c].value <= 0x3FFF ? 0x3FFF : 0x7FFF) - area_list[c].value);
+            fprintf(stdout,"%-5ld ", area_size - area_list[c].value);
         }
 
         fprintf(stdout,"\n");
@@ -120,15 +145,51 @@ int main( int argc, char *argv[] )  {
 
     char strline_in[MAX_STR_LEN];
 
-    // Read one line at a time into \0 terminated string
-    while ( fgets(strline_in, sizeof(strline_in), stdin) != NULL) {
+    if (handle_args(argc, argv)) {
 
-        // Only parse lines that have a "flags" entry
-        if (strstr(strline_in, "flags"))
-            parse_symfile_line(strline_in);
+        // Read one line at a time into \0 terminated string
+        while ( fgets(strline_in, sizeof(strline_in), stdin) != NULL) {
+
+            // Only parse lines that have a "flags" entry
+            if (strstr(strline_in, "flags"))
+                parse_symfile_line(strline_in);
+        }
+
+        print_all_recs();
     }
 
-    print_all_recs();
-
     return 0;
+}
+
+
+
+int handle_args( int argc, char * argv[] ) {
+
+    int i;
+
+    // Start at first optional argument, argc is zero based
+    for (i = 1; i <= (argc -1); i++ ) {
+
+        if (strstr(argv[i], "-h")) {
+            printf("romusage\n\n"
+                   "-h : Show this help\n"
+                   "-u32k : Estimate usage with 32k Areas\n"
+                   "-u16k : Estimate usage with 16k Areas\n"
+                   "\n"
+                   "Use: Pipe symbol files in to parse them.\n"
+                   "Example: \"more build/*.sym build/res/*.sym | romusage\"\n"
+                   "\n"
+                   "Note: Usage estimates are for Area only, and do not factor in whether multiple areas share the same bank (such as HOME, CODE, GS_INIT, etc).\n"
+                   );
+            return false;  // Don't parse input when -h is used
+        }
+        else if (strstr(argv[i], "-u16k")) {
+            usage_mode = USAGE_16K;
+        }
+        else if (strstr(argv[i], "-u32k")) {
+            usage_mode = USAGE_32K;
+        }
+    }
+
+    return true;
 }
