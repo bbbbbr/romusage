@@ -7,13 +7,17 @@
 #include <stdbool.h>
 
 // Example data to parse from a .sym file (excluding unwanted lines):
-// 0 _CODE                                      size    2B5   flags    0
-// 1 _DATA                                      size    259   flags    0
-// 2 _DABS                                      size      0   flags    8
-// 3 _HOME                                      size      0   flags    0
-// 4 _GSINIT                                    size      0   flags    0
-// 5 _GSFINAL                                   size      0   flags    0
-// 6 _CABS                                      size      0   flags    8
+// _CODE                  00000200    00006A62 =       27234. bytes (REL,CON)
+// _CODE                  00000200    00006A62 =       27234. bytes (REL,CON)
+// _HOME                  00006C62    000000ED =         237. bytes (REL,CON)
+// _BASE                  00006D4F    000002A3 =         675. bytes (REL,CON)
+// _GSINIT                00006FF2    000001F9 =         505. bytes (REL,CON)
+// _GSINITTAIL            000071EB    00000001 =           1. bytes (REL,CON)
+// _DATA                  0000C0A0    00001684 =        5764. bytes (REL,CON)
+// _BSS                   0000D724    00000041 =          65. bytes (REL,CON)
+// _HEAP                  0000D765    00000000 =           0. bytes (REL,CON)
+// _HRAM10                00000000    00000001 =           1. bytes (ABS,CON)
+
 
 int handle_args(int, char * []);
 void add_rec(char * str_area, long value);
@@ -121,23 +125,45 @@ void parse_symfile_line(char * str_in) {
 
     char cols = 0;
     char * p_words[MAX_SPLIT_WORDS];
-    char * p_str = strtok (str_in," ");;
+    char * p_str = strtok (str_in," ");
+    static char str_area_last[MAX_STR_LEN] = "";
 
     // Split string into words separated by spaces
     while (p_str != NULL)
     {
         p_words[cols++] = p_str;
-        p_str = strtok(NULL, " ");
+        p_str = strtok(NULL, " =.");
         if (cols >= MAX_SPLIT_WORDS) break;
     }
 
     // Only use if exact match on columns in Area table (6)
-    if (cols == 6) {
-        // fprintf(stdout,"%s = ",p_words[1]);   // [1] = Area
-        // fprintf(stdout,"%s --> ",p_words[3]); // [3] = Hex Size
+    if ((cols == 6) &&
+        !(strstr(str_in, "SFR")) && // Exclude SFR areas
+        !(strstr(str_in, "HEADER")) && // Exclude HEADER areas
+        !(strtol(p_words[3], NULL, 10) == 0))  // Exclude empty areas
+     {
+        // Don't repeat areas (can be duplicated across multiple output "pages"
+        if (0 != strncmp(str_area_last,p_words[0], sizeof(str_area_last))) {
+            // [0] = Area Name
+            // [1] = Hex Address Start
+            // [2] = Hex Size
+            // [3] = Decimal Size
+            // [4] = 'bytes'
+            // [5] = '(ABS/REL,CON)'
+            fprintf(stdout,"%-12s:",p_words[0]);   // [0] = Area
+            fprintf(stdout,"%8lx - %-8lx",strtol(p_words[1], NULL, 16),
+                                          strtol(p_words[1], NULL, 16) + strtol(p_words[2], NULL, 16) -1 ); // Address Start -> End
+            fprintf(stdout,"%8ld %s",strtol(p_words[3], NULL, 10), p_words[4]);
 
-        add_rec(p_words[1], strtol(p_words[3], NULL, 16)); // [1] = Area, [3] = Hex Size string converted to decimal
+            fprintf(stdout, "\n");
+        }
+
+        // Copy area name to check against next pass
+        strncpy(str_area_last, p_words[0], sizeof(str_area_last));
+//        add_rec(p_words[0], strtol(p_words[3], NULL, 16)); // [1] = Area, [3] = Hex Size string converted to decimal
     }
+
+
 }
 
 
@@ -147,11 +173,14 @@ int main( int argc, char *argv[] )  {
 
     if (handle_args(argc, argv)) {
 
+        fprintf(stdout, "\n");
+
         // Read one line at a time into \0 terminated string
         while ( fgets(strline_in, sizeof(strline_in), stdin) != NULL) {
 
-            // Only parse lines that have a "flags" entry
-            if (strstr(strline_in, "flags"))
+            // Only parse lines that start with '_' character (area summary lines)
+            // if (strstr(strline_in, "flags"))
+            if (strline_in[0] == '_')
                 parse_symfile_line(strline_in);
         }
 
