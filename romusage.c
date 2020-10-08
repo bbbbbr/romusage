@@ -19,17 +19,20 @@
 // _HRAM10                00000000    00000001 =           1. bytes (ABS,CON)
 
 
+void display_help(void);
 int handle_args(int, char * []);
 void add_rec(char * str_area, long addr, long size);
 static int area_rec_compare(const void* a, const void* b);
 void print_all_recs(void);
-void parse_symfile_line(char * str_in);
+int parse_map_file(void);
 
 
 #define MAX_STR_LEN     4096
 #define MAX_STR_AREALEN 100
 #define MAX_SPLIT_WORDS 6
 #define MAX_AREAS       30
+
+char filename_in[MAX_STR_LEN] = {'\0'};
 
 enum {
     USAGE_NONE,
@@ -94,14 +97,15 @@ void print_all_recs(void) {
     // Sort first
     qsort (area_list, area_count, sizeof(area_rec), area_rec_compare);
 
+    fprintf(stdout, "\n");
+
     if (usage_mode == USAGE_NONE) {
-        fprintf(stdout,"Area        Addr                Size \n"
-                       "-----       -----------------   -----\n");
+        fprintf(stdout,"Area        Addr                Size       \n"
+                       "-----       -----------------   -----------\n");
     } else {
         fprintf(stdout,"Area        Addr                Size         Used  Remains\n"
-                       "-----       -----------------   -----        ----  -------\n");
+                       "-----       -----------------   -----------  ----  -------\n");
     }
-
 
     // Print all records
     for (c = 0; c < area_count; c++) {
@@ -124,79 +128,92 @@ void print_all_recs(void) {
 }
 
 
-void parse_symfile_line(char * str_in) {
+int parse_map_file(void) {
 
-    char cols = 0;
+    char cols;
+    char * p_str;
     char * p_words[MAX_SPLIT_WORDS];
-    char * p_str = strtok (str_in," ");
-    static char str_area_last[MAX_STR_LEN] = "";
+    char strline_in[MAX_STR_LEN] = "";
+    FILE * map_file = fopen(filename_in, "r");
 
-    // Split string into words separated by spaces
-    while (p_str != NULL)
-    {
-        p_words[cols++] = p_str;
-        p_str = strtok(NULL, " =.");
-        if (cols >= MAX_SPLIT_WORDS) break;
-    }
-
-    // Only use if exact match on columns in Area table (6)
-    if ((cols == 6) &&
-        !(strstr(str_in, "SFR")) && // Exclude SFR areas
-        !(strstr(str_in, "HEADER")) && // Exclude HEADER areas
-        !(strtol(p_words[3], NULL, 10) == 0))  // Exclude empty areas
-     {
-        add_rec(p_words[0], strtol(p_words[1], NULL, 16), strtol(p_words[3], NULL, 10)); // [0] Area, [1] Hex Address, [3] Decimal Size
-    }
-
-
-}
-
-
-int main( int argc, char *argv[] )  {
-
-    char strline_in[MAX_STR_LEN];
-
-    if (handle_args(argc, argv)) {
-
-        fprintf(stdout, "\n");
+    if (map_file) {
 
         // Read one line at a time into \0 terminated string
-        while ( fgets(strline_in, sizeof(strline_in), stdin) != NULL) {
+        while ( fgets(strline_in, sizeof(strline_in), map_file) != NULL) {
 
-            // Only parse lines that start with '_' character (area summary lines)
-            // if (strstr(strline_in, "flags"))
-            if (strline_in[0] == '_')
-                parse_symfile_line(strline_in);
-        }
+            // Only parse lines that start with '_' character (Area summary lines)
+            if (strline_in[0] == '_') {
 
-        print_all_recs();
-    }
+                // Split string into words separated by spaces
+                cols = 0;
+                p_str = strtok (strline_in," =.");
+                while (p_str != NULL)
+                {
+                    p_words[cols++] = p_str;
+                    p_str = strtok(NULL, " =.");
+                    if (cols >= MAX_SPLIT_WORDS) break;
+                }
 
-    return 0;
+                // Only use if exact match on columns in Area table (6)
+                if ((cols == 6) &&
+                    !(strstr(p_words[0], "SFR")) && // Exclude SFR areas
+                    !(strstr(p_words[0], "HEADER")) && // Exclude HEADER areas
+                    !(strtol(p_words[3], NULL, 10) == 0))  // Exclude empty areas
+                {
+                    add_rec(p_words[0], strtol(p_words[1], NULL, 16), strtol(p_words[3], NULL, 10)); // [0] Area, [1] Hex Address, [3] Decimal Size
+                }
+            } // end: if valid start of line
+
+        } // end: while still lines to process
+
+        fclose(map_file);
+
+    } // end: if valid file
+    else return (false);
+
+   return true;
 }
 
+
+
+
+void display_help(void) {
+    fprintf(stdout,
+           "romusage input_file.map [options]\n\n"
+           "\n"
+           "Options\n"
+           "-h : Show this help\n"
+           "-u32k : Estimate usage with 32k Areas\n"
+           "-u16k : Estimate usage with 16k Areas\n"
+           "\n"
+           "Use: Read a map file to display area sizes.\n"
+           "Example: \"romusage build/MyProject.map\"\n"
+           "\n"
+           "Note: Usage estimates are for a given Area only.\n"
+           "They **do not** factor in whether multiple areas share\n"
+           "the same bank (such as HOME, CODE, GS_INIT, etc).\n"
+           );
+}
 
 
 int handle_args( int argc, char * argv[] ) {
 
     int i;
 
+    if( argc < 2 ) {
+        display_help();
+        return false;
+    }
+
+    // Copy input filename (if not preceded with option dash)
+    if (argv[1][0] != '-')
+        strncpy(filename_in, argv[1], sizeof(filename_in));
+
     // Start at first optional argument, argc is zero based
     for (i = 1; i <= (argc -1); i++ ) {
 
         if (strstr(argv[i], "-h")) {
-            printf("romusage\n\n"
-                   "-h : Show this help\n"
-                   "-u32k : Estimate usage with 32k Areas\n"
-                   "-u16k : Estimate usage with 16k Areas\n"
-                   "\n"
-                   "Use: Pipe symbol files in to parse them.\n"
-                   "Example: \"more build/*.sym build/res/*.sym | romusage\"\n"
-                   "\n"
-                   "Note: Usage estimates are for a given Area only.\n"
-                   "They **do not** factor in whether multiple areas share\n"
-                   "the same bank (such as HOME, CODE, GS_INIT, etc).\n"
-                   );
+            display_help();
             return false;  // Don't parse input when -h is used
         }
         else if (strstr(argv[i], "-u16k")) {
@@ -208,4 +225,23 @@ int handle_args( int argc, char * argv[] ) {
     }
 
     return true;
+}
+
+
+int main( int argc, char *argv[] )  {
+
+
+    if (handle_args(argc, argv)) {
+
+        if (parse_map_file()) {
+            print_all_recs();
+        } else {
+            printf("Unable to open file! %s\n", filename_in);
+            return 1; // Exit with failure
+        }
+    } else {
+        return 1; // Exit with failure
+    }
+
+    return 0;
 }
