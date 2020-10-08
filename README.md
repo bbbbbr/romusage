@@ -5,7 +5,7 @@ A small command line tool for estimating usage of Game Boy ROMs from map file ou
 
 It produces a trimmed, sorted output of the Areas from the map file.
 
-Runs on Linux and Windows, meant for use with [GBDK 2020](https://github.com/Zal0/gbdk-2020/). If map file is not enabled, use either `-Wl-m` with `lcc` or `-m` with `sdldgb` directly.
+Runs on Linux and Windows, meant for use with [GBDK 2020](https://github.com/Zal0/gbdk-2020/). If map file output is not already enabled, use either `-Wl-m` with `lcc` or `-m` with `sdldgb` directly.
 
 Binaries are in [here](/bin/)
 
