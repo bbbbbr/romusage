@@ -179,7 +179,7 @@ int parse_map_file(void) {
 
 void display_help(void) {
     fprintf(stdout,
-           "romusage input_file.map [options]\n\n"
+           "romusage input_file.map [options]\n"
            "\n"
            "Options\n"
            "-h : Show this help\n"
@@ -190,8 +190,8 @@ void display_help(void) {
            "Example: \"romusage build/MyProject.map\"\n"
            "\n"
            "Note: Usage estimates are for a given Area only.\n"
-           "They **do not** factor in whether multiple areas share\n"
-           "the same bank (such as HOME, CODE, GS_INIT, etc).\n"
+           "      They **do not** factor in whether multiple areas share\n"
+           "      the same bank (such as HOME, CODE, GS_INIT, etc).\n"
            );
 }
 
