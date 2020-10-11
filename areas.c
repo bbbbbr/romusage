@@ -34,6 +34,7 @@ int areas_process_map_file(char * filename_in) {
     char * p_words[MAX_SPLIT_WORDS];
     char strline_in[MAX_STR_LEN] = "";
     FILE * map_file = fopen(filename_in, "r");
+    area_item area;
 
     if (map_file) {
 
@@ -59,18 +60,15 @@ int areas_process_map_file(char * filename_in) {
                                                p_words[2]);
 
 
-// TODO!!!!!!!!!!! Prevent duplicates in 32K CODE mode, -> Log all entries and suppress duplciates from MULTI_PAGINATION
-// collect all entries
-// merge any that overlap
-// then process them
-
 // TODO: handle headers/etc better. Filter them out for now
-                    if ((strtol(p_words[1], NULL, 16) != 0x00000000) &&
-                       (strtol(p_words[2], NULL, 16) != 0))  // Size != 0
+// if ((strtol(p_words[1], NULL, 16) != 0x00000000) &&
+//    (strtol(p_words[2], NULL, 16) != 0))  // Size != 0
+                    if (strtol(p_words[2], NULL, 16) != 0)  // Size != 0
                     {
-                        banks_check( strtol(p_words[1], NULL, 16),  // [1] Area Hex Address Start
-                                     strtol(p_words[1], NULL, 16) +
-                                     strtol(p_words[2], NULL, 16) - 1); // [1] + [3] Hex Size - 1 = Area End
+                        snprintf(area.name, sizeof(area.name), "%s", p_words[0]); // [0] Area Name
+                        area.start = strtol(p_words[1], NULL, 16);         // [1] Area Hex Address Start
+                        area.end   = area.start + strtol(p_words[2], NULL, 16) - 1; // Start + [3] Hex Size - 1 = Area End
+                        banks_check( area);
                     }
                 }
             } // end: if valid start of line
