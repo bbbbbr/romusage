@@ -46,7 +46,7 @@ int handle_args(int argc, char * argv[]) {
 
     // Copy input filename (if not preceded with option dash)
     if (argv[1][0] != '-')
-        strncpy(filename_in, argv[1], sizeof(filename_in));
+        snprintf(filename_in, sizeof(filename_in), "%s", argv[1]);
 
     // Start at first optional argument, argc is zero based
     for (i = 1; i <= (argc -1); i++ ) {
