@@ -24,6 +24,7 @@ void display_help(void) {
            "\n"
            "Options\n"
            "-h : Show this help\n"
+           "-a : Show Areas in each Bank\n"
            "\n"
            "Use: Read a map file to display area sizes.\n"
            "Example: \"romusage build/MyProject.map\"\n"
@@ -54,6 +55,8 @@ int handle_args(int argc, char * argv[]) {
         if (strstr(argv[i], "-h")) {
             display_help();
             return false;  // Don't parse input when -h is used
+        } else if (strstr(argv[i], "-a")) {
+            banks_output_show_areas(true);
         }
     }
 

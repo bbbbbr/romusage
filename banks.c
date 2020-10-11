@@ -6,7 +6,7 @@
 #include <string.h>
 #include <stdlib.h>
 // #include <unistd.h>
-// #include <stdbool.h>
+#include <stdbool.h>
 #include <stdint.h>
 
 #include "banks.h"
@@ -33,7 +33,11 @@ const bank_item bank_templates[] = {
 
 bank_item bank_list[MAX_BANKS];
 int bank_count = 0;
+int banks_display_areas = false;
 
+void banks_output_show_areas(bool do_show) {
+    banks_display_areas = do_show;
+}
 
 uint32_t min(uint32_t a, uint32_t b) {
     return (a < b) ? a : b;
@@ -86,9 +90,17 @@ void bank_add_area(bank_item * p_bank, area_item area) {
             // Duplicate entry, abort adding it
             if ((area.start == p_bank->area_list[c].start) &&
                 (area.end == p_bank->area_list[c].end)) {
+
+fprintf(stdout,"Remove dupe:");
+                fprintf(stdout,"%-13s",area.name);           // Name
+                fprintf(stdout,"0x%04X -> 0x%04X",area.start,
+                                                  area.end); // Address Start -> End
+                fprintf(stdout,"\n");
+
                 return;
             }
 
+// FIXME: handle overlapping areas
 
             // // expand overlapped area to new size
             // if (area.start < p_bank->area_list[c].start)
@@ -227,11 +239,14 @@ void bank_list_printall(void) {
                                    / bank_list[c].size_total); // Percent Used
         fprintf(stdout,"\n");
 
-        qsort (bank_list[c].area_list, bank_list[c].area_count, sizeof(area_item), area_item_compare);
-        for(b=0; b < bank_list[c].area_count; b++) {
-            fprintf(stdout,"└─%-13s",bank_list[c].area_list[b].name);           // Name
-            fprintf(stdout,"0x%04X -> 0x%04X",bank_list[c].area_list[b].start,
-                                              bank_list[c].area_list[b].end); // Address Start -> End
+        if (banks_display_areas) {
+            qsort (bank_list[c].area_list, bank_list[c].area_count, sizeof(area_item), area_item_compare);
+            for(b=0; b < bank_list[c].area_count; b++) {
+                fprintf(stdout,"└─%-13s",bank_list[c].area_list[b].name);           // Name
+                fprintf(stdout,"0x%04X -> 0x%04X",bank_list[c].area_list[b].start,
+                                                  bank_list[c].area_list[b].end); // Address Start -> End
+                fprintf(stdout,"\n");
+            }
             fprintf(stdout,"\n");
         }
     }

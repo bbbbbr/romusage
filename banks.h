@@ -40,5 +40,6 @@ typedef struct bank_item {
 } bank_item;
 
 
+void banks_output_show_areas(bool do_show);
 void banks_check(area_item area);
 void bank_list_printall(void);
