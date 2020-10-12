@@ -3,64 +3,76 @@ romusage
 
 A small command line tool for estimating usage of Game Boy ROMs from map file output.
 
-It produces a trimmed, sorted output of the Areas from the map file.
+It produces a trimmed, sorted output of ROM/RAMs, their usage and optionally the Areas located in them.
 
 Runs on Linux and Windows, meant for use with [GBDK 2020](https://github.com/Zal0/gbdk-2020/). If map file output is not already enabled, use either `-Wl-m` with `lcc` or `-m` with `sdldgb` directly.
 
-Binaries are in [here](/bin/)
+The usage calculation will attempt to merge overlapping areas to avoid counting shared space multiple times (such as HEADER areas).
 
-TODO: Calculate actual use of banks based on address and size using all areas.
+Binaries are [here](/bin/)
+
 
 ```
 romusage input_file.map [options]
 
 Options
--h : Show this help
--u32k : Estimate usage with 32k Areas
--u16k : Estimate usage with 16k Areas
+-h  : Show this help
+-a  : Show Areas in each Bank
+-sH : Show HEADER Areas (normally hidden)
 
 Use: Read a map file to display area sizes.
 Example: "romusage build/MyProject.map"
 
-Note: Usage estimates are for a given Area only.
-      They **do not** factor in whether multiple areas share
-      the same bank (such as HOME, CODE, GS_INIT, etc).
+Note: Estimates are as close as possible, but may not be complete.
+      They *do not* factor regions lacking complete ranges in
+      the Map file, for example Shadow OAM and Stack.
 ```
 
 
 Example output for a 32k non-banked ROM, called after completion of the link stage:
 ```
 $ romusage.exe /ReleaseColor/Petris.map -u32k
-Area        Addr                Size         Used  Remains
------       -----------------   -----------  ----  -------
-_BASE          6d4f ->   6ff1     675 bytes
-_BSS           d725 ->   d765      65 bytes
-_CODE           200 ->   6c61   27234 bytes  %83    5533
-_DATA          c0a0 ->   d724    5765 bytes
-_GSINIT        6ff2 ->   71ea     505 bytes
-_GSINITTAIL    71eb ->   71eb       1 bytes
-_HOME          6c62 ->   6d4e     237 bytes
-_HRAM10           0 ->      0       1 bytes
+
+Bank             Range               Size    Used  Used%    Free  Free%
+----------       ----------------   -----   -----  -----   -----  -----
+ROM              0x0000 -> 0x3FFF   16384   15989    97%     395     2%
+ROM_0            0x4000 -> 0x7FFF   16384   12780    78%    3604    21%
+WRAM             0xC000 -> 0xCFFF    4096    3936    96%     160     3%
+WRAM_1_0         0xD000 -> 0xDFFF    4096    1893    46%    2203    53%
 ```
 
-And another example:
+And another example, with display of areas in the banks enabled:
 ```
-romusage gbdk/examples/gb/banks.map
+romusage gbdk/examples/gb/new_banks.map -a
 
-Area        Addr                Size
------       -----------------   -----------
-_BASE          10fe ->   1f7a    3709 bytes
-_BSS           c0a2 ->   c0f1      80 bytes
-_CODE           200 ->    fb7    3512 bytes
-_CODE_1       14000 ->  1401b      28 bytes
-_CODE_2       24000 ->  2401b      28 bytes
-_CODE_3       34000 ->  3401b      28 bytes
-_DATA          c0a0 ->   c0a1       2 bytes
-_DATA_0        a000 ->   a001       2 bytes
-_DATA_1       1a000 ->  1a001       2 bytes
-_DATA_2       2a000 ->  2a001       2 bytes
-_DATA_3       3a000 ->  3a001       2 bytes
-_GSINITTAIL    1f7b ->   1f7b       1 bytes
-_HOME           fb8 ->   10fd     326 bytes
-_HRAM10           0 ->      0       1 bytes
+Bank             Range               Size    Used  Used%    Free  Free%
+----------       ----------------   -----   -----  -----   -----  -----
+ROM              0x0000 -> 0x3FFF   16384    8211    50%    8173    49%
+│
+└─_CODE          0x0200 -> 0x111A    3867
+└─_HOME          0x111B -> 0x1286     364
+└─_BASE          0x1287 -> 0x20F2    3692
+└─_GSINIT        0x20F3 -> 0x219C     170
+└─_GSINITTAIL    0x219D -> 0x219D       1
+
+ROM_1            0x4000 -> 0x7FFF   16384      19     0%   16365    99%
+│
+└─_CODE_1        0x4000 -> 0x4012      19
+
+ROM_2            0x4000 -> 0x7FFF   16384      19     0%   16365    99%
+│
+└─_CODE_2        0x4000 -> 0x4012      19
+
+XRAM_1           0xA000 -> 0xBFFF    8192      22     0%    8170    99%
+│
+└─_DATA_1        0xA000 -> 0xA015      22
+
+XRAM_2           0xA000 -> 0xBFFF    8192      28     0%    8164    99%
+│
+└─_DATA_2        0xA000 -> 0xA01B      28
+
+WRAM             0xC000 -> 0xCFFF    4096     102     2%    3994    97%
+│
+└─_DATA          0xC0A0 -> 0xC0B5      22
+└─_BSS           0xC0B6 -> 0xC105      80
 ```
