@@ -57,7 +57,12 @@ int handle_args(int argc, char * argv[]) {
             return false;  // Don't parse input when -h is used
         } else if (strstr(argv[i], "-a")) {
             banks_output_show_areas(true);
+        } else if (argv[i][0] == '-') {
+            fprintf(stdout,"Unknown argument: %s\n\n", argv[i]);
+            display_help();
+            return false;  // Don't parse input when -h is used
         }
+
     }
 
     return true;
