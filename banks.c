@@ -21,7 +21,6 @@
 //  E000-FDFF   Same as C000-DDFF (ECHO)    (typically not used)
 
 
-
 const bank_item bank_templates[] = {
     {"ROM  ",   0x0000, 0x3FFF, BANKED_NO,  0,0,0},
     {"ROM_",    0x4000, 0x7FFF, BANKED_YES, 0,0,0},
@@ -31,13 +30,17 @@ const bank_item bank_templates[] = {
     {"WRAM_1_", 0xD000, 0xDFFF, BANKED_YES, 0,0,0},
 };
 
+
 bank_item bank_list[MAX_BANKS];
 int bank_count = 0;
 int banks_display_areas = false;
 
+
+// Turn on/off display of areas within bank
 void banks_output_show_areas(bool do_show) {
     banks_display_areas = do_show;
 }
+
 
 uint32_t min(uint32_t a, uint32_t b) {
     return (a < b) ? a : b;
@@ -48,7 +51,8 @@ uint32_t max(uint32_t a, uint32_t b) {
 }
 
 
-// Returns amount of space used in the bank, if zero then no overlap or none used
+// Returns size of overlap between two address ranges,
+// if zero then no overlap
 uint32_t addrs_get_overlap(uint32_t a_start, uint32_t a_end, uint32_t b_start, uint32_t b_end) {
 
     uint32_t size_used;
@@ -64,73 +68,98 @@ uint32_t addrs_get_overlap(uint32_t a_start, uint32_t a_end, uint32_t b_start, u
 }
 
 
+// Clips an address range to be within a bank address range
 void area_clip_range_to_bank(bank_item * p_bank, area_item * p_area) {
     // Clip address range to bank range
     p_area->start = max(p_area->start, p_bank->start);
     p_area->end   = min(p_area->end,   p_bank->end);
 }
 
-//void bank_merge_areas(int bank_id, area_item area) {
 
-//     // Expand address range to max of both
-//     area.start = min(area.start, bank_list[bank_id].area_list[bank_id].start);
-//     area.end   = min(area.end, bank_list[bank_id].area_list[bank_id].end);
+// Calculates amount of space used by areas in a bank.
+// Attempts to merge overlapping areas to avoid
+// counting shared space multiple times.
+//
+// Note: Expects areas to be sorted ascending
+//       by .start then by .end before being called
+void bank_areas_calc_used(bank_item * p_bank) {
+    int c,sub;
+    uint32_t start, end;
 
-// }
+    p_bank->size_used = 0;
 
+    // Iterate over all areas
+    c = 0;
+    while (c < p_bank->area_count) {
+
+        // // Store start/end of range for current area
+        start = p_bank->area_list[c].start;
+        end = p_bank->area_list[c].end;
+
+        // Iterate over remaining areas and stop when they cease to overlap
+        sub = c + 1;
+        while (sub < p_bank->area_count) {
+
+            // Check for overlap with next entry
+            if (addrs_get_overlap(start, end, p_bank->area_list[sub].start, p_bank->area_list[sub].end)) {
+
+                // Expand overlapped area to new end size
+                // Just end, start shouldn't be necessary due to expected sorting
+                if (p_bank->area_list[sub].end > end) {
+                    end = p_bank->area_list[sub].end;
+                }
+
+                // Update main loop to next area after current merged,
+                c = sub;
+            }
+            // Increment to next area to check for overlap
+            sub++;
+        }
+        // Move to next area
+        c++;
+
+        // Store space used by updated range
+        p_bank->size_used += RANGE_SIZE(start, end);
+        // fprintf(stdout,"  * %d, %d Final Size> 0x%04X -> 0x%04X = %d ((%d))\n",c, sub, start, end, RANGE_SIZE(start, end), p_bank->size_used);
+    }
+
+}
+
+
+// Add an area to a bank's list of areas
 void bank_add_area(bank_item * p_bank, area_item area) {
     int c;
     uint32_t area_size = RANGE_SIZE(area.start, area.end);
 
-    // Merge with any areas that it overlaps
+    // Check for duplicate entries
+    // (happens due to paginating in .map file)
     for(c=0;c < p_bank->area_count; c++) {
-        if (addrs_get_overlap(area.start, area.end,
-                              p_bank->area_list[c].start, p_bank->area_list[c].end)) {
-
-            // Duplicate entry, abort adding it
-            if ((area.start == p_bank->area_list[c].start) &&
-                (area.end == p_bank->area_list[c].end)) {
-
-fprintf(stdout,"Remove dupe:");
-                fprintf(stdout,"%-13s",area.name);           // Name
-                fprintf(stdout,"0x%04X -> 0x%04X",area.start,
-                                                  area.end); // Address Start -> End
-                fprintf(stdout,"\n");
-
-                return;
-            }
-
-// FIXME: handle overlapping areas
-
-            // // expand overlapped area to new size
-            // if (area.start < p_bank->area_list[c].start)
-            //     p_bank->area_list[c].start = area.start;
-
-            // if (area.end > p_bank->area_list[c].end)
-            //     p_bank->area_list[c].end = area.end;
-
-            // merge address ranges if overlapped
+        // Abort add if it's already present
+        if ((strstr(area.name, p_bank->area_list[c].name)) &&
+            (area.start == p_bank->area_list[c].start) &&
+            (area.end == p_bank->area_list[c].end)) {
+            return;
         }
     }
 
-    // no match was found, initialize new area if possible
+    // no match was found, add area if possible
     if (p_bank->area_count < MAX_AREAS) {
         p_bank->area_list[ p_bank->area_count ] = area;
         p_bank->area_count++;
     }
 
     p_bank->size_used += area_size;
-
 }
 
 
-
-// TODO: instead of simple size calc, store all used ranges and merge them when necessary
-// TODO: log all area names
-void bank_list_add(bank_item bank_template, area_item area, int bank_num) {
+// Add/Update a bank with an area entry
+void banklist_add(bank_item bank_template, area_item area, int bank_num) {
 
     int c;
 
+    // Strip bank indicator bits and limit area range to within bank
+    area.start = WITHOUT_BANK(area.start);
+    area.end = WITHOUT_BANK(area.end);
     area_clip_range_to_bank(&bank_template, &area);
 
     // Check to see if key matches any entries,
@@ -168,7 +197,9 @@ void bank_list_add(bank_item bank_template, area_item area, int bank_num) {
 }
 
 
-
+// Check to see if an area overlaps with any of the bank templates.
+// If it does then try to create/update a bank entry
+// and add/append the area entry
 void banks_check(area_item area) {
 
     int      c;
@@ -184,7 +215,7 @@ void banks_check(area_item area) {
 
         if (size_used > 0) {
             bank_num = BANK_GET_NUM(area.start);
-            bank_list_add(bank_templates[c], area, bank_num);
+            banklist_add(bank_templates[c], area, bank_num);
         }
     }
 }
@@ -196,6 +227,8 @@ static int area_item_compare(const void* a, const void* b) {
     // sort by start address first, then bank number if needed
     if (((area_item *)a)->start != ((area_item *)b)->start)
         return (((area_item *)a)->start > ((area_item *)b)->start);
+    else if (((area_item *)a)->end != ((area_item *)b)->end)
+        return (((area_item *)a)->end > ((area_item *)b)->end);
     else
         return strcmp(((area_item *)a)->name, ((area_item *)b)->name);
 }
@@ -212,7 +245,10 @@ static int bank_item_compare(const void* a, const void* b) {
 }
 
 
-void bank_list_printall(void) {
+
+// Display all banks along with space used.
+// Optionally show areas.
+void banklist_printall(void) {
     int c;
     int b;
 
@@ -221,11 +257,15 @@ void bank_list_printall(void) {
 
     fprintf(stdout, "\n");
 
-    fprintf(stdout,"Bank + #       Bank Range          Size    Used  Used%%    Free  Free%% \n"
+    fprintf(stdout,"Bank           Range               Size    Used  Used%%    Free  Free%% \n"
                    "----------     ----------------   -----   -----  -----   -----  -----\n");
 
     // Print all banks
     for (c = 0; c < bank_count; c++) {
+
+        // Sort areas in bank and calculate usage
+        qsort (bank_list[c].area_list, bank_list[c].area_count, sizeof(area_item), area_item_compare);
+        bank_areas_calc_used(&bank_list[c]);
 
         fprintf(stdout,"%-15s",bank_list[c].name);           // Name
         fprintf(stdout,"0x%04X -> 0x%04X",bank_list[c].start,
@@ -240,12 +280,17 @@ void bank_list_printall(void) {
         fprintf(stdout,"\n");
 
         if (banks_display_areas) {
-            qsort (bank_list[c].area_list, bank_list[c].area_count, sizeof(area_item), area_item_compare);
             for(b=0; b < bank_list[c].area_count; b++) {
+                if (b == 0) fprintf(stdout,"│\n");
                 fprintf(stdout,"└─%-13s",bank_list[c].area_list[b].name);           // Name
                 fprintf(stdout,"0x%04X -> 0x%04X",bank_list[c].area_list[b].start,
                                                   bank_list[c].area_list[b].end); // Address Start -> End
+
+                fprintf(stdout,"%8d", RANGE_SIZE(bank_list[c].area_list[b].start,
+                                                 bank_list[c].area_list[b].end));
+
                 fprintf(stdout,"\n");
+
             }
             fprintf(stdout,"\n");
         }

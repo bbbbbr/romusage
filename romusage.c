@@ -70,7 +70,7 @@ int main( int argc, char *argv[] )  {
 
         if (areas_process_map_file(filename_in)) {
 
-            bank_list_printall();
+            banklist_printall();
             return 0; // Exit with success
         } else {
 

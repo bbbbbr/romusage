@@ -55,15 +55,10 @@ int areas_process_map_file(char * filename_in) {
                 }
 
                 if (cols == 6) {
-                    printf(">> %s  %s  %s \n", p_words[0],
-                                               p_words[1],
-                                               p_words[2]);
-
-
-// TODO: handle headers/etc better. Filter them out for now
-// if ((strtol(p_words[1], NULL, 16) != 0x00000000) &&
-//    (strtol(p_words[2], NULL, 16) != 0))  // Size != 0
-                    if (strtol(p_words[2], NULL, 16) != 0)  // Size != 0
+                    if ((strtol(p_words[2], NULL, 16) > 0) &&  // Eclude empty areas
+                        !(strstr(p_words[0], "SFR")) &&        // Exclude SFR areas (not actually located at addresses in area listing)
+                        !(strstr(p_words[0], "HRAM10"))        // Exclude HRAM area
+                        )
                     {
                         snprintf(area.name, sizeof(area.name), "%s", p_words[0]); // [0] Area Name
                         area.start = strtol(p_words[1], NULL, 16);         // [1] Area Hex Address Start
