@@ -30,9 +30,9 @@ void display_help(void) {
            "Use: Read a map file to display area sizes.\n"
            "Example: \"romusage build/MyProject.map\"\n"
            "\n"
-           "Note: Usage estimates are for a given Area only.\n"
-           "      They **do not** factor in whether multiple areas share\n"
-           "      the same bank (such as HOME, CODE, GS_INIT, etc).\n"
+           "Note: Estimates are as close as possible, but may not be complete.\n"
+           "      They *do not* factor regions lacking complete ranges in\n"
+           "      the Map file, for example Shadow OAM and Stack.\n"
            );
 }
 
