@@ -23,8 +23,9 @@ void display_help(void) {
            "romusage input_file.map [options]\n"
            "\n"
            "Options\n"
-           "-h : Show this help\n"
-           "-a : Show Areas in each Bank\n"
+           "-h  : Show this help\n"
+           "-a  : Show Areas in each Bank\n"
+           "-sH : Show HEADER Areas (normally hidden)\n"
            "\n"
            "Use: Read a map file to display area sizes.\n"
            "Example: \"romusage build/MyProject.map\"\n"
@@ -57,6 +58,8 @@ int handle_args(int argc, char * argv[]) {
             return false;  // Don't parse input when -h is used
         } else if (strstr(argv[i], "-a")) {
             banks_output_show_areas(true);
+        } else if (strstr(argv[i], "-sH")) {
+            banks_output_show_headers(true);
         } else if (argv[i][0] == '-') {
             fprintf(stdout,"Unknown argument: %s\n\n", argv[i]);
             display_help();

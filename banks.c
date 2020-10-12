@@ -34,11 +34,17 @@ const bank_item bank_templates[] = {
 bank_item bank_list[MAX_BANKS];
 int bank_count = 0;
 int banks_display_areas = false;
+int banks_display_headers = false;
 
 
 // Turn on/off display of areas within bank
 void banks_output_show_areas(bool do_show) {
     banks_display_areas = do_show;
+}
+
+// Turn on/off display of areas within bank
+void banks_output_show_headers(bool do_show) {
+    banks_display_headers = do_show;
 }
 
 
@@ -257,8 +263,8 @@ void banklist_printall(void) {
 
     fprintf(stdout, "\n");
 
-    fprintf(stdout,"Bank           Range               Size    Used  Used%%    Free  Free%% \n"
-                   "----------     ----------------   -----   -----  -----   -----  -----\n");
+    fprintf(stdout,"Bank             Range               Size    Used  Used%%    Free  Free%% \n"
+                   "----------       ----------------   -----   -----  -----   -----  -----\n");
 
     // Print all banks
     for (c = 0; c < bank_count; c++) {
@@ -267,7 +273,7 @@ void banklist_printall(void) {
         qsort (bank_list[c].area_list, bank_list[c].area_count, sizeof(area_item), area_item_compare);
         bank_areas_calc_used(&bank_list[c]);
 
-        fprintf(stdout,"%-15s",bank_list[c].name);           // Name
+        fprintf(stdout,"%-17s",bank_list[c].name);           // Name
         fprintf(stdout,"0x%04X -> 0x%04X",bank_list[c].start,
                                           bank_list[c].end); // Address Start -> End
         fprintf(stdout,"%8d", bank_list[c].size_total);      // Total size
@@ -282,15 +288,18 @@ void banklist_printall(void) {
         if (banks_display_areas) {
             for(b=0; b < bank_list[c].area_count; b++) {
                 if (b == 0) fprintf(stdout,"│\n");
-                fprintf(stdout,"└─%-13s",bank_list[c].area_list[b].name);           // Name
-                fprintf(stdout,"0x%04X -> 0x%04X",bank_list[c].area_list[b].start,
-                                                  bank_list[c].area_list[b].end); // Address Start -> End
 
-                fprintf(stdout,"%8d", RANGE_SIZE(bank_list[c].area_list[b].start,
-                                                 bank_list[c].area_list[b].end));
+                // Don't display headers unless requested
+                if ((banks_display_headers) || !(strstr(bank_list[c].area_list[b].name,"HEADER"))) {
+                    fprintf(stdout,"└─%-15s",bank_list[c].area_list[b].name);           // Name
+                    fprintf(stdout,"0x%04X -> 0x%04X",bank_list[c].area_list[b].start,
+                                                      bank_list[c].area_list[b].end); // Address Start -> End
 
-                fprintf(stdout,"\n");
+                    fprintf(stdout,"%8d", RANGE_SIZE(bank_list[c].area_list[b].start,
+                                                     bank_list[c].area_list[b].end));
 
+                    fprintf(stdout,"\n");
+                }
             }
             fprintf(stdout,"\n");
         }
