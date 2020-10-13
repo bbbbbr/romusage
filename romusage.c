@@ -10,7 +10,8 @@
 #include <stdint.h>
 
 #include "banks.h"
-#include "areas.h"
+#include "map_file.h"
+#include "noi_file.h"
 
 void display_help(void);
 int handle_args(int argc, char * argv[]);
@@ -86,12 +87,12 @@ int main( int argc, char *argv[] )  {
         if (strlen(filename_in) >=5) {
             // detect file extension
             if (matches_extension(filename_in, (char *)".noi")) {
-                if (areas_process_noi_file(filename_in)) {
+                if (noi_file_process_areas(filename_in)) {
                     banklist_printall();
                     return 0; // Exit with success
                 }
             } else if (matches_extension(filename_in, (char *)".map")) {
-                if (areas_process_map_file(filename_in)) {
+                if (map_file_process_areas(filename_in)) {
                     banklist_printall();
                     return 0; // Exit with success
                 }
