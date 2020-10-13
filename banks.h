@@ -21,6 +21,7 @@ typedef struct area_item {
     uint32_t start;
     uint32_t end;
     uint32_t length;
+    bool     exclusive;
 } area_item;
 
 
@@ -40,6 +41,8 @@ typedef struct bank_item {
     int       area_count;
 } bank_item;
 
+
+int area_manual_add(char * arg_str);
 
 void banks_output_show_areas(bool do_show);
 void banks_output_show_headers(bool do_show);

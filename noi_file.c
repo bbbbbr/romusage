@@ -51,6 +51,7 @@ static int arealist_get_id_by_name(char * area_name) {
         area_list[area_count].start  = AREA_VAL_UNSET;
         area_list[area_count].end    = AREA_VAL_UNSET;
         area_list[area_count].length = AREA_VAL_UNSET;
+        area_list[area_count].exclusive = false;
         area_count++;
         return (area_count - 1);
     }

@@ -27,6 +27,8 @@ void display_help(void) {
            "-h  : Show this help\n"
            "-a  : Show Areas in each Bank\n"
            "-sH : Show HEADER Areas (normally hidden)\n"
+           "-m  : Manually specify an Area -m:NAME:HEXADDR:HEXLENGTH\n"
+           "-e  : Manually specify an Area that should not overlap -e:NAME:HEXADDR:HEXLENGTH\n"
            "\n"
            "Use: Read a .map or .noi file to display area sizes.\n"
            "Example 1: \"romusage build/MyProject.map\"\n"
@@ -62,6 +64,12 @@ int handle_args(int argc, char * argv[]) {
             banks_output_show_areas(true);
         } else if (strstr(argv[i], "-sH")) {
             banks_output_show_headers(true);
+        } else if (strstr(argv[i], "-m") || strstr(argv[i], "-e")) {
+            if (!area_manual_add(argv[i])) {
+            fprintf(stdout,"malformed manual area argument: %s\n\n", argv[i]);
+            display_help();
+            return false;  // Don't parse input when -h is used
+            }
         } else if (argv[i][0] == '-') {
             fprintf(stdout,"Unknown argument: %s\n\n", argv[i]);
             display_help();
@@ -98,6 +106,8 @@ int main( int argc, char *argv[] )  {
                 }
             }
         }
+    } else {
+        return 1;
     }
 
     printf("Problem with filename or unable to open file! %s\n", filename_in);

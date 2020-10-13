@@ -62,6 +62,7 @@ int map_file_process_areas(char * filename_in) {
                         snprintf(area.name, sizeof(area.name), "%s", p_words[0]); // [0] Area Name
                         area.start = strtol(p_words[1], NULL, 16);         // [1] Area Hex Address Start
                         area.end   = area.start + strtol(p_words[2], NULL, 16) - 1; // Start + [3] Hex Size - 1 = Area End
+                        area.exclusive = false;
                         banks_check(area);
                     }
                 }
