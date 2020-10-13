@@ -31,10 +31,10 @@ const bank_item bank_templates[] = {
 };
 
 
-bank_item bank_list[MAX_BANKS];
-int bank_count = 0;
-int banks_display_areas = false;
-int banks_display_headers = false;
+static bank_item bank_list[MAX_BANKS];
+static int bank_count = 0;
+static int banks_display_areas = false;
+static int banks_display_headers = false;
 
 
 // Turn on/off display of areas within bank
@@ -59,7 +59,7 @@ uint32_t max(uint32_t a, uint32_t b) {
 
 // Returns size of overlap between two address ranges,
 // if zero then no overlap
-uint32_t addrs_get_overlap(uint32_t a_start, uint32_t a_end, uint32_t b_start, uint32_t b_end) {
+static uint32_t addrs_get_overlap(uint32_t a_start, uint32_t a_end, uint32_t b_start, uint32_t b_end) {
 
     uint32_t size_used;
 
@@ -75,7 +75,7 @@ uint32_t addrs_get_overlap(uint32_t a_start, uint32_t a_end, uint32_t b_start, u
 
 
 // Clips an address range to be within a bank address range
-void area_clip_range_to_bank(bank_item * p_bank, area_item * p_area) {
+static void area_clip_range_to_bank(bank_item * p_bank, area_item * p_area) {
     // Clip address range to bank range
     p_area->start = max(p_area->start, p_bank->start);
     p_area->end   = min(p_area->end,   p_bank->end);
@@ -88,7 +88,7 @@ void area_clip_range_to_bank(bank_item * p_bank, area_item * p_area) {
 //
 // Note: Expects areas to be sorted ascending
 //       by .start then by .end before being called
-void bank_areas_calc_used(bank_item * p_bank) {
+static void bank_areas_calc_used(bank_item * p_bank) {
     int c,sub;
     uint32_t start, end;
 
@@ -133,7 +133,7 @@ void bank_areas_calc_used(bank_item * p_bank) {
 
 
 // Add an area to a bank's list of areas
-void bank_add_area(bank_item * p_bank, area_item area) {
+static void bank_add_area(bank_item * p_bank, area_item area) {
     int c;
     uint32_t area_size = RANGE_SIZE(area.start, area.end);
 
@@ -159,7 +159,7 @@ void bank_add_area(bank_item * p_bank, area_item area) {
 
 
 // Add/Update a bank with an area entry
-void banklist_add(bank_item bank_template, area_item area, int bank_num) {
+static void banklist_add(bank_item bank_template, area_item area, int bank_num) {
 
     int c;
 
@@ -210,19 +210,40 @@ void banks_check(area_item area) {
 
     int      c;
     uint32_t size_used;
+    uint32_t size_assigned = 0;
     int      bank_num;
 
     // Loop through all banks and log any that overlap
     // (may be more than one)
     for(c = 0; c < ARRAY_LEN(bank_templates); c++) {
 
+        // Check a given ROM/RAM bank template for overlap
         size_used = addrs_get_overlap(bank_templates[c].start, bank_templates[c].end,
                                       WITHOUT_BANK(area.start), WITHOUT_BANK(area.end));
 
+        // If overlap was found, determine bank number and log it
         if (size_used > 0) {
             bank_num = BANK_GET_NUM(area.start);
             banklist_add(bank_templates[c], area, bank_num);
+            size_assigned += size_used; // Log space assigned to bank
         }
+    }
+
+    // Warn if there are unassigned bytes left over
+    if (size_assigned < RANGE_SIZE(area.start, area.end)) {
+        printf("\n* Warning: Area %s 0x%x -> 0x%x (%d bytes): %d bytes not assigned to any bank (overflow?)\n",
+            area.name,
+            area.start, area.end,
+            RANGE_SIZE(area.start, area.end),
+            RANGE_SIZE(area.start, area.end) - size_assigned);
+    }
+
+    // Warn if length will wrap around into a bank
+    if ((WITHOUT_BANK(area.start) + RANGE_SIZE(area.start, area.end) - 1)  > 0xFFFF) {
+            printf("\n* Warning: Area %s 0x%x -> 0x%x (%d bytes): extends past 0xFFFF into bank addressing bits\n",
+                area.name,
+                area.start, area.end,
+                RANGE_SIZE(area.start, area.end));
     }
 }
 
@@ -280,9 +301,9 @@ void banklist_printall(void) {
         fprintf(stdout,"%8d", bank_list[c].size_used);       // Used
         fprintf(stdout,"   %3d%%", (bank_list[c].size_used * (uint32_t)100)
                                    / bank_list[c].size_total); // Percent Used
-        fprintf(stdout,"%8d", bank_list[c].size_total - bank_list[c].size_used); // Free
-        fprintf(stdout,"   %3d%%", ((bank_list[c].size_total - bank_list[c].size_used) * (uint32_t)100)
-                                   / bank_list[c].size_total); // Percent Used
+        fprintf(stdout,"%8d", (int32_t)bank_list[c].size_total - (int32_t)bank_list[c].size_used); // Free
+        fprintf(stdout,"   %3d%%", (((int32_t)bank_list[c].size_total - (int32_t)bank_list[c].size_used) * (int32_t)100)
+                                   / (int32_t)bank_list[c].size_total); // Percent Free
         fprintf(stdout,"\n");
 
         if (banks_display_areas) {
