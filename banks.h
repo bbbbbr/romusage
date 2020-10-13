@@ -20,6 +20,7 @@ typedef struct area_item {
     char     name[AREA_MAX_STR];
     uint32_t start;
     uint32_t end;
+    uint32_t length;
 } area_item;
 
 

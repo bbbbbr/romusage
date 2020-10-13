@@ -7,3 +7,4 @@
 #define MAX_SPLIT_WORDS 6
 
 int areas_process_map_file(char * filename_in);
+int areas_process_noi_file(char * filename_in);
