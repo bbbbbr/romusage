@@ -82,6 +82,44 @@ static void area_clip_range_to_bank(bank_item * p_bank, area_item * p_area) {
 }
 
 
+static void area_check_warnings(area_item area, uint32_t size_assigned) {
+
+    // Warn if there are unassigned bytes left over
+    if (size_assigned < RANGE_SIZE(area.start, area.end)) {
+        printf("\n* Warning: Area %s 0x%x -> 0x%x (%d bytes): %d bytes not assigned to any bank (overflow?)\n",
+            area.name,
+            area.start, area.end,
+            RANGE_SIZE(area.start, area.end),
+            RANGE_SIZE(area.start, area.end) - size_assigned);
+    }
+
+    // Warn if length will wrap around into a bank
+    if ((WITHOUT_BANK(area.start) + RANGE_SIZE(area.start, area.end) - 1)  > 0xFFFF) {
+            printf("\n* Warning: Area %s 0x%x -> 0x%x (%d bytes): extends past 0xFFFF into bank addressing bits\n",
+                area.name,
+                area.start, area.end,
+                RANGE_SIZE(area.start, area.end));
+    }
+}
+
+
+static void area_check_warn_overlap(area_item area_a, area_item area_b) {
+    // Check to see if an there are overlaps with exclusive areas
+    if (area_a.exclusive || area_b.exclusive) {
+        if (addrs_get_overlap(WITHOUT_BANK(area_a.start), WITHOUT_BANK(area_a.end),
+                              WITHOUT_BANK(area_b.start), WITHOUT_BANK(area_b.end)) > 0) {
+            printf("\n* Warning: Overlap with exclusive area: "
+                   "%s 0x%x -> 0x%x (%d bytes%s) --and-- "
+                   "%s 0x%x -> 0x%x (%d bytes%s)\n",
+                area_a.name, area_a.start, area_a.end, RANGE_SIZE(area_a.start, area_a.end),
+                (area_a.exclusive) ? ", EXCLUSIVE" : " ",
+                area_b.name, area_b.start, area_b.end, RANGE_SIZE(area_b.start, area_b.end),
+                (area_b.exclusive) ? ", EXCLUSIVE" : " ");
+
+        }
+    }
+}
+
 // Calculates amount of space used by areas in a bank.
 // Attempts to merge overlapping areas to avoid
 // counting shared space multiple times.
@@ -146,6 +184,8 @@ static void bank_add_area(bank_item * p_bank, area_item area) {
             (area.end == p_bank->area_list[c].end)) {
             return;
         }
+
+        area_check_warn_overlap(area, p_bank->area_list[c]);
     }
 
     // no match was found, add area if possible
@@ -229,22 +269,44 @@ void banks_check(area_item area) {
         }
     }
 
-    // Warn if there are unassigned bytes left over
-    if (size_assigned < RANGE_SIZE(area.start, area.end)) {
-        printf("\n* Warning: Area %s 0x%x -> 0x%x (%d bytes): %d bytes not assigned to any bank (overflow?)\n",
-            area.name,
-            area.start, area.end,
-            RANGE_SIZE(area.start, area.end),
-            RANGE_SIZE(area.start, area.end) - size_assigned);
+    area_check_warnings(area, size_assigned);
+}
+
+#define MAX_SPLIT_WORDS 4
+#define ARG_AREA_REC_COUNT_MATCH 4
+
+
+// -m:NAME:HEX_ADDR:HEX_LENGTH or -e[same]
+// Add areas manually from command line arguments
+int area_manual_add(char * arg_str) {
+
+    char cols;
+    char * p_str;
+    char * p_words[MAX_SPLIT_WORDS];
+    area_item area;
+
+    // Split string into words separated by spaces
+    cols = 0;
+    p_str = strtok(arg_str,"-:");
+    while (p_str != NULL)
+    {
+        p_words[cols++] = p_str;
+        // Only split on underscore for the second match
+        p_str = strtok(NULL, "-:");
+        if (cols >= MAX_SPLIT_WORDS) break;
     }
 
-    // Warn if length will wrap around into a bank
-    if ((WITHOUT_BANK(area.start) + RANGE_SIZE(area.start, area.end) - 1)  > 0xFFFF) {
-            printf("\n* Warning: Area %s 0x%x -> 0x%x (%d bytes): extends past 0xFFFF into bank addressing bits\n",
-                area.name,
-                area.start, area.end,
-                RANGE_SIZE(area.start, area.end));
-    }
+    if (cols == ARG_AREA_REC_COUNT_MATCH) {
+        snprintf(area.name, sizeof(area.name), "%s", p_words[1]);   // [1] Area Name
+        area.start = strtol(p_words[2], NULL, 16);                  // [2] Area Hex Address Start
+        area.end   = area.start + strtol(p_words[3], NULL, 16) - 1; // Start + [3] Hex Size - 1 = Area End
+        area.exclusive = (p_words[0][0] == 'e') ? true : false;        // [0] shared/exclusive
+
+        banks_check(area);
+        return true;
+    } else
+        return false; // Signal failure
+
 }
 
 

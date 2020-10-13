@@ -10,9 +10,9 @@
 #include <stdint.h>
 
 #include "banks.h"
-#include "areas.h"
+#include "map_file.h"
 
-// Example data to parse from a .sym file (excluding unwanted lines):
+// Example data to parse from a .map file (excluding unwanted lines):
 /*
 _CODE                  00000200    00006A62 =       27234. bytes (REL,CON)
 _CODE                  00000200    00006A62 =       27234. bytes (REL,CON)
@@ -26,8 +26,7 @@ _HEAP                  0000D765    00000000 =           0. bytes (REL,CON)
 _HRAM10                00000000    00000001 =           1. bytes (ABS,CON)
 */
 
-
-int areas_process_map_file(char * filename_in) {
+int map_file_process_areas(char * filename_in) {
 
     char cols;
     char * p_str;
@@ -55,7 +54,7 @@ int areas_process_map_file(char * filename_in) {
                 }
 
                 if (cols == 6) {
-                    if ((strtol(p_words[2], NULL, 16) > 0) &&  // Eclude empty areas
+                    if ((strtol(p_words[2], NULL, 16) > 0) &&  // Exclude empty areas
                         !(strstr(p_words[0], "SFR")) &&        // Exclude SFR areas (not actually located at addresses in area listing)
                         !(strstr(p_words[0], "HRAM10"))        // Exclude HRAM area
                         )
@@ -63,7 +62,8 @@ int areas_process_map_file(char * filename_in) {
                         snprintf(area.name, sizeof(area.name), "%s", p_words[0]); // [0] Area Name
                         area.start = strtol(p_words[1], NULL, 16);         // [1] Area Hex Address Start
                         area.end   = area.start + strtol(p_words[2], NULL, 16) - 1; // Start + [3] Hex Size - 1 = Area End
-                        banks_check( area);
+                        area.exclusive = false;
+                        banks_check(area);
                     }
                 }
             } // end: if valid start of line
@@ -77,3 +77,4 @@ int areas_process_map_file(char * filename_in) {
 
    return true;
 }
+

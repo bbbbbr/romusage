@@ -10,7 +10,8 @@
 #include <stdint.h>
 
 #include "banks.h"
-#include "areas.h"
+#include "map_file.h"
+#include "noi_file.h"
 
 void display_help(void);
 int handle_args(int argc, char * argv[]);
@@ -20,15 +21,18 @@ char filename_in[MAX_STR_LEN] = {'\0'};
 
 void display_help(void) {
     fprintf(stdout,
-           "romusage input_file.map [options]\n"
+           "romusage input_file.[map|noi] [options]\n"
            "\n"
            "Options\n"
            "-h  : Show this help\n"
            "-a  : Show Areas in each Bank\n"
            "-sH : Show HEADER Areas (normally hidden)\n"
+           "-m  : Manually specify an Area -m:NAME:HEXADDR:HEXLENGTH\n"
+           "-e  : Manually specify an Area that should not overlap -e:NAME:HEXADDR:HEXLENGTH\n"
            "\n"
-           "Use: Read a map file to display area sizes.\n"
-           "Example: \"romusage build/MyProject.map\"\n"
+           "Use: Read a .map or .noi file to display area sizes.\n"
+           "Example 1: \"romusage build/MyProject.map\"\n"
+           "Example 2: \"romusage build/MyProject.noi -a\"\n"
            "\n"
            "Note: Estimates are as close as possible, but may not be complete.\n"
            "      They *do not* factor regions lacking complete ranges in\n"
@@ -60,6 +64,12 @@ int handle_args(int argc, char * argv[]) {
             banks_output_show_areas(true);
         } else if (strstr(argv[i], "-sH")) {
             banks_output_show_headers(true);
+        } else if (strstr(argv[i], "-m") || strstr(argv[i], "-e")) {
+            if (!area_manual_add(argv[i])) {
+            fprintf(stdout,"malformed manual area argument: %s\n\n", argv[i]);
+            display_help();
+            return false;  // Don't parse input when -h is used
+            }
         } else if (argv[i][0] == '-') {
             fprintf(stdout,"Unknown argument: %s\n\n", argv[i]);
             display_help();
@@ -72,19 +82,34 @@ int handle_args(int argc, char * argv[]) {
 }
 
 
+int matches_extension(char * filename, char * extension) {
+    return (strcmp(filename + (strlen(filename) - strlen(extension)), extension) == 0);
+}
+
+
 int main( int argc, char *argv[] )  {
 
     if (handle_args(argc, argv)) {
 
-        if (areas_process_map_file(filename_in)) {
-
-            banklist_printall();
-            return 0; // Exit with success
-        } else {
-
-            printf("Unable to open file! %s\n", filename_in);
+        // Must at least have extension
+        if (strlen(filename_in) >=5) {
+            // detect file extension
+            if (matches_extension(filename_in, (char *)".noi")) {
+                if (noi_file_process_areas(filename_in)) {
+                    banklist_printall();
+                    return 0; // Exit with success
+                }
+            } else if (matches_extension(filename_in, (char *)".map")) {
+                if (map_file_process_areas(filename_in)) {
+                    banklist_printall();
+                    return 0; // Exit with success
+                }
+            }
         }
+    } else {
+        return 1;
     }
 
+    printf("Problem with filename or unable to open file! %s\n", filename_in);
     return 1; // Exit with failure by default
 }
