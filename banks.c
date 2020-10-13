@@ -308,11 +308,11 @@ void banklist_printall(void) {
 
         if (banks_display_areas) {
             for(b=0; b < bank_list[c].area_count; b++) {
-                if (b == 0) fprintf(stdout,"│\n");
+                if (b == 0) fprintf(stdout,"|\n");
 
                 // Don't display headers unless requested
                 if ((banks_display_headers) || !(strstr(bank_list[c].area_list[b].name,"HEADER"))) {
-                    fprintf(stdout,"└─%-15s",bank_list[c].area_list[b].name);           // Name
+                    fprintf(stdout,"+%-16s",bank_list[c].area_list[b].name);           // Name
                     fprintf(stdout,"0x%04X -> 0x%04X",bank_list[c].area_list[b].start,
                                                       bank_list[c].area_list[b].end); // Address Start -> End
 
