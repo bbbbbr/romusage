@@ -22,8 +22,8 @@ static void bank_print_graph(bank_item * p_bank, uint32_t num_chars) {
     for (c = 0; c <= (num_chars - 1); c++) {
 
         perc_used = (bank_areas_calc_used(p_bank,
-                                          WITHOUT_BANK(p_bank->start) + (c * range_size),
-                                          WITHOUT_BANK(p_bank->start) + ((c + 1) * range_size) - 1)
+                                          p_bank->start + (c * range_size),
+                                          p_bank->start + ((c + 1) * range_size) - 1)
                                            * (uint32_t)100) / range_size;
 
         if (perc_used > 95)      ch = '#';
