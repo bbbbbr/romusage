@@ -27,6 +27,8 @@ void display_help(void) {
            "-h  : Show this help\n"
            "-a  : Show Areas in each Bank\n"
            "-sH : Show HEADER Areas (normally hidden)\n"
+           "-g  : Show a small usage graph per bank\n"
+           "-G  : Show a large usage graph per bank\n"
            "-m  : Manually specify an Area -m:NAME:HEXADDR:HEXLENGTH\n"
            "-e  : Manually specify an Area that should not overlap -e:NAME:HEXADDR:HEXLENGTH\n"
            "\n"
@@ -64,6 +66,12 @@ int handle_args(int argc, char * argv[]) {
             banks_output_show_areas(true);
         } else if (strstr(argv[i], "-sH")) {
             banks_output_show_headers(true);
+
+        } else if (strstr(argv[i], "-g")) {
+            banks_output_show_minigraph(true);
+        } else if (strstr(argv[i], "-G")) {
+            banks_output_show_largegraph(true);
+
         } else if (strstr(argv[i], "-m") || strstr(argv[i], "-e")) {
             if (!area_manual_add(argv[i])) {
             fprintf(stdout,"malformed manual area argument: %s\n\n", argv[i]);

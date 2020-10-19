@@ -15,6 +15,9 @@
 #define BANKED_YES    1
 #define MAX_BANKS     1000
 
+#define MINIGRAPH_SIZE (2 * 14) // Number of characters wide (inside edge brackets)
+#define LARGEGRAPH_BYTES_PER_CHAR 16
+
 
 typedef struct area_item {
     char     name[AREA_MAX_STR];
@@ -46,5 +49,7 @@ int area_manual_add(char * arg_str);
 
 void banks_output_show_areas(bool do_show);
 void banks_output_show_headers(bool do_show);
+void banks_output_show_minigraph(bool do_show);
+void banks_output_show_largegraph(bool do_show);
 void banks_check(area_item area);
 void banklist_printall(void);

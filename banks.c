@@ -33,8 +33,10 @@ const bank_item bank_templates[] = {
 
 static bank_item bank_list[MAX_BANKS];
 static int bank_count = 0;
-static int banks_display_areas = false;
-static int banks_display_headers = false;
+static bool banks_display_areas = false;
+static bool banks_display_headers = false;
+static bool banks_display_minigraph = false;
+static bool banks_display_largegraph = false;
 
 
 // Turn on/off display of areas within bank
@@ -47,6 +49,15 @@ void banks_output_show_headers(bool do_show) {
     banks_display_headers = do_show;
 }
 
+// Turn on/off display of mini usage graph per bank
+void banks_output_show_minigraph(bool do_show) {
+    banks_display_minigraph = do_show;
+}
+
+// Turn on/off display of large usage graph per bank
+void banks_output_show_largegraph(bool do_show) {
+    banks_display_largegraph = do_show;
+}
 
 uint32_t min(uint32_t a, uint32_t b) {
     return (a < b) ? a : b;
@@ -75,10 +86,12 @@ static uint32_t addrs_get_overlap(uint32_t a_start, uint32_t a_end, uint32_t b_s
 
 
 // Clips an address range to be within a bank address range
-static void area_clip_range_to_bank(bank_item * p_bank, area_item * p_area) {
+static void area_clip_to_range(uint32_t start, uint32_t end, area_item * p_area) {
     // Clip address range to bank range
-    p_area->start = max(p_area->start, p_bank->start);
-    p_area->end   = min(p_area->end,   p_bank->end);
+    p_area->start = max(p_area->start, start);
+    p_area->end   = min(p_area->end,   end);
+    // Trim to zero length if end is before start
+    if (p_area->end < p_area->start) p_area->end = p_area->start - 1;
 }
 
 
@@ -120,37 +133,49 @@ static void area_check_warn_overlap(area_item area_a, area_item area_b) {
     }
 }
 
+
+
 // Calculates amount of space used by areas in a bank.
 // Attempts to merge overlapping areas to avoid
 // counting shared space multiple times.
 //
 // Note: Expects areas to be sorted ascending
 //       by .start then by .end before being called
-static void bank_areas_calc_used(bank_item * p_bank) {
+uint32_t bank_areas_calc_used(bank_item * p_bank, uint32_t clip_start, uint32_t clip_end) {
     int c,sub;
     uint32_t start, end;
+    uint32_t size_used;
+    area_item t_area, sub_area;
 
-    p_bank->size_used = 0;
+    size_used = 0;
 
     // Iterate over all areas
     c = 0;
     while (c < p_bank->area_count) {
 
+        // Copy area so it can be clipped, then clip to param range
+        t_area = p_bank->area_list[c];
+        area_clip_to_range(clip_start, clip_end, &t_area); // clip to param range
+
         // // Store start/end of range for current area
-        start = p_bank->area_list[c].start;
-        end = p_bank->area_list[c].end;
+        start = t_area.start;
+        end = t_area.end;
 
         // Iterate over remaining areas and stop when they cease to overlap
         sub = c + 1;
         while (sub < p_bank->area_count) {
 
+            // Copy area so it can be clipped, then clip to param range
+            sub_area = p_bank->area_list[sub];
+            area_clip_to_range(clip_start, clip_end, &sub_area);
+
             // Check for overlap with next entry
-            if (addrs_get_overlap(start, end, p_bank->area_list[sub].start, p_bank->area_list[sub].end)) {
+            if (addrs_get_overlap(start, end, sub_area.start, sub_area.end)) {
 
                 // Expand overlapped area to new end size
                 // Just end, start shouldn't be necessary due to expected sorting
-                if (p_bank->area_list[sub].end > end) {
-                    end = p_bank->area_list[sub].end;
+                if (sub_area.end > end) {
+                    end = sub_area.end;
                 }
 
                 // Update main loop to next area after current merged,
@@ -163,10 +188,37 @@ static void bank_areas_calc_used(bank_item * p_bank) {
         c++;
 
         // Store space used by updated range
-        p_bank->size_used += RANGE_SIZE(start, end);
+        size_used += RANGE_SIZE(start, end);
         // fprintf(stdout,"  * %d, %d Final Size> 0x%04X -> 0x%04X = %d ((%d))\n",c, sub, start, end, RANGE_SIZE(start, end), p_bank->size_used);
     }
 
+    return size_used;
+
+}
+
+
+static void bank_draw_graph(bank_item * p_bank, uint32_t num_chars) {
+
+    int c;
+    char ch;
+    uint32_t range_size = RANGE_SIZE(p_bank->start, p_bank->end) / num_chars;
+    uint32_t perc_used;
+
+    for (c = 0; c <= (num_chars - 1); c++) {
+
+        perc_used = (bank_areas_calc_used(p_bank,
+                                          WITHOUT_BANK(p_bank->start) + (c * range_size),
+                                          WITHOUT_BANK(p_bank->start) + ((c + 1) * range_size) - 1)
+                                           * (uint32_t)100) / range_size;
+
+        if (perc_used > 95)      ch = '#';
+        else if (perc_used > 25) ch = '-';
+        else                     ch = '.';
+        fprintf(stdout, "%c", ch);
+
+        if (((c + 1) % 64) == 0)
+            fprintf(stdout, "\n");
+    }
 }
 
 
@@ -206,7 +258,7 @@ static void banklist_add(bank_item bank_template, area_item area, int bank_num) 
     // Strip bank indicator bits and limit area range to within bank
     area.start = WITHOUT_BANK(area.start);
     area.end = WITHOUT_BANK(area.end);
-    area_clip_range_to_bank(&bank_template, &area);
+    area_clip_to_range(bank_template.start, bank_template.end, &area);
 
     // Check to see if key matches any entries,
     for (c=0; c < bank_count; c++) {
@@ -334,6 +386,71 @@ static int bank_item_compare(const void* a, const void* b) {
 }
 
 
+// Show a large usage graph for each bank
+// Currently 16 bytes per character
+static void banklist_print_large_graph(void) {
+
+    int c;
+
+        for (c = 0; c < bank_count; c++) {
+
+            fprintf(stdout,"\n\nStart: %s  ",bank_list[c].name); // Name
+            fprintf(stdout,"0x%04X -> 0x%04X",bank_list[c].start,
+                                              bank_list[c].end); // Address Start -> End
+            fprintf(stdout,"\n"); // Name
+
+            bank_draw_graph(&bank_list[c], bank_list[c].size_total / LARGEGRAPH_BYTES_PER_CHAR);
+
+            fprintf(stdout,"End: %s\n",bank_list[c].name); // Name
+        }
+}
+
+
+// Display all areas for a bank
+static void bank_print_area(bank_item *p_bank) {
+
+    int b;
+
+    for(b = 0; b < p_bank->area_count; b++) {
+        if (b == 0) fprintf(stdout,"|\n");
+
+        // Don't display headers unless requested
+        if ((banks_display_headers) || !(strstr(p_bank->area_list[b].name,"HEADER"))) {
+            fprintf(stdout,"+%-16s",p_bank->area_list[b].name);           // Name
+            fprintf(stdout,"0x%04X -> 0x%04X",p_bank->area_list[b].start,
+                                              p_bank->area_list[b].end); // Address Start -> End
+
+            fprintf(stdout,"%8d", RANGE_SIZE(p_bank->area_list[b].start,
+                                             p_bank->area_list[b].end));
+
+            fprintf(stdout,"\n");
+        }
+    }
+    fprintf(stdout,"\n");
+}
+
+
+static void bank_print_info(bank_item *p_bank) {
+
+    fprintf(stdout,"%-15s",p_bank->name);           // Name
+    fprintf(stdout,"0x%04X -> 0x%04X",p_bank->start,
+                                      p_bank->end); // Address Start -> End
+    fprintf(stdout,"%7d", p_bank->size_total);      // Total size
+    fprintf(stdout,"%7d", p_bank->size_used);       // Used
+    fprintf(stdout,"  %3d%%", (p_bank->size_used * (uint32_t)100)
+                               / p_bank->size_total); // Percent Used
+    fprintf(stdout,"%8d", (int32_t)p_bank->size_total - (int32_t)p_bank->size_used); // Free
+    fprintf(stdout,"   %3d%%", (((int32_t)p_bank->size_total - (int32_t)p_bank->size_used) * (int32_t)100)
+                               / (int32_t)p_bank->size_total); // Percent Free
+
+    // Print a small bar graph if requested
+    if (banks_display_minigraph) {
+        fprintf(stdout, " |");
+        bank_draw_graph(p_bank, MINIGRAPH_SIZE);
+        fprintf(stdout, "|");
+    }
+}
+
 
 // Display all banks along with space used.
 // Optionally show areas.
@@ -343,48 +460,27 @@ void banklist_printall(void) {
 
     // Sort by name
     qsort (bank_list, bank_count, sizeof(bank_item), bank_item_compare);
-
     fprintf(stdout, "\n");
-
-    fprintf(stdout,"Bank             Range               Size    Used  Used%%    Free  Free%% \n"
-                   "----------       ----------------   -----   -----  -----   -----  -----\n");
+    fprintf(stdout,"Bank           Range             Size   Used   Used%%   Free  Free%% \n"
+                   "----------     ----------------  -----  -----  -----  -----  -----\n");
 
     // Print all banks
     for (c = 0; c < bank_count; c++) {
 
         // Sort areas in bank and calculate usage
         qsort (bank_list[c].area_list, bank_list[c].area_count, sizeof(area_item), area_item_compare);
-        bank_areas_calc_used(&bank_list[c]);
+        bank_list[c].size_used = bank_areas_calc_used(&bank_list[c], bank_list[c].start, bank_list[c].end);
 
-        fprintf(stdout,"%-17s",bank_list[c].name);           // Name
-        fprintf(stdout,"0x%04X -> 0x%04X",bank_list[c].start,
-                                          bank_list[c].end); // Address Start -> End
-        fprintf(stdout,"%8d", bank_list[c].size_total);      // Total size
-        fprintf(stdout,"%8d", bank_list[c].size_used);       // Used
-        fprintf(stdout,"   %3d%%", (bank_list[c].size_used * (uint32_t)100)
-                                   / bank_list[c].size_total); // Percent Used
-        fprintf(stdout,"%8d", (int32_t)bank_list[c].size_total - (int32_t)bank_list[c].size_used); // Free
-        fprintf(stdout,"   %3d%%", (((int32_t)bank_list[c].size_total - (int32_t)bank_list[c].size_used) * (int32_t)100)
-                                   / (int32_t)bank_list[c].size_total); // Percent Free
+        bank_print_info(&bank_list[c]);
         fprintf(stdout,"\n");
 
-        if (banks_display_areas) {
-            for(b=0; b < bank_list[c].area_count; b++) {
-                if (b == 0) fprintf(stdout,"|\n");
+        if (banks_display_areas)
+            bank_print_area(&bank_list[c]);
 
-                // Don't display headers unless requested
-                if ((banks_display_headers) || !(strstr(bank_list[c].area_list[b].name,"HEADER"))) {
-                    fprintf(stdout,"+%-16s",bank_list[c].area_list[b].name);           // Name
-                    fprintf(stdout,"0x%04X -> 0x%04X",bank_list[c].area_list[b].start,
-                                                      bank_list[c].area_list[b].end); // Address Start -> End
+    } // End: Print all banks loop
 
-                    fprintf(stdout,"%8d", RANGE_SIZE(bank_list[c].area_list[b].start,
-                                                     bank_list[c].area_list[b].end));
+        // Print a large graph per-bank if requested
+    if (banks_display_largegraph)
+        banklist_print_large_graph();
 
-                    fprintf(stdout,"\n");
-                }
-            }
-            fprintf(stdout,"\n");
-        }
-    }
 }
