@@ -104,12 +104,12 @@ int main( int argc, char *argv[] )  {
             // detect file extension
             if (matches_extension(filename_in, (char *)".noi")) {
                 if (noi_file_process_areas(filename_in)) {
-                    banklist_printall();
+                    banklist_finalize_and_show();
                     return 0; // Exit with success
                 }
             } else if (matches_extension(filename_in, (char *)".map")) {
                 if (map_file_process_areas(filename_in)) {
-                    banklist_printall();
+                    banklist_finalize_and_show();
                     return 0; // Exit with success
                 }
             }

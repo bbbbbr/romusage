@@ -2,6 +2,9 @@
 // For more information, please refer to <https://unlicense.org>
 // bbbbbr 2020
 
+#ifndef _BANKS_H
+#define _BANKS_H
+
 #define ARRAY_LEN(A)  (sizeof(A) / sizeof(A[0]))
 #define WITHOUT_BANK(addr)  (addr & 0x0000FFFF)
 #define BANK_GET_NUM(addr)     ((addr & 0xFFFF0000) >> 16)
@@ -44,12 +47,19 @@ typedef struct bank_item {
     int       area_count;
 } bank_item;
 
+extern bool banks_display_areas;
+extern bool banks_display_headers;
+extern bool banks_display_minigraph;
+extern bool banks_display_largegraph;
 
 int area_manual_add(char * arg_str);
+uint32_t bank_areas_calc_used(bank_item *, uint32_t, uint32_t);
 
 void banks_output_show_areas(bool do_show);
 void banks_output_show_headers(bool do_show);
 void banks_output_show_minigraph(bool do_show);
 void banks_output_show_largegraph(bool do_show);
 void banks_check(area_item area);
-void banklist_printall(void);
+void banklist_finalize_and_show(void);
+
+#endif // _BANKS_H
