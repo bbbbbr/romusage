@@ -35,7 +35,7 @@ Note: Estimates are as close as possible, but may not be complete.
 ```
 
 
-Example output with a small graph for a 32k non-banked ROM, called after completion of the link stage. Manually specify Shadow OAM and Stack as exclusive ranges. Reading from the .map file.
+Example output with a small graph (-g) for a 32k non-banked ROM, called after completion of the link stage. Manually specify Shadow OAM and Stack as exclusive ranges (-e). Reading from the .map file.
 ```
 $ romusage.exe /ReleaseColor/Petris.map -g -e:STACK:DEFF:100 -e:SHADOW_OAM:C000:A0
 
@@ -85,9 +85,9 @@ WRAM             0xC000 -> 0xCFFF    4096     102     2%    3994    97%
 
 ```
 
-Example output with a large graph for a 32k non-banked ROM, called after completion of the link stage. Manually specify Shadow OAM and Stack as exclusive ranges. Reading from the .map file.
+Example output with a large graph (-G) for a 32k non-banked ROM, called after completion of the link stage. Manually specify Shadow OAM and Stack as exclusive ranges (-e). Reading from the .map file.
 ```
-$ romusage.exe /ReleaseColor/Petris.map -g -e:STACK:DEFF:100 -e:SHADOW_OAM:C000:A0
+$ romusage.exe /ReleaseColor/Petris.map -G -e:STACK:DEFF:100 -e:SHADOW_OAM:C000:A0
 
 Bank           Range             Size   Used   Used%   Free  Free%
 ----------     ----------------  -----  -----  -----  -----  -----
