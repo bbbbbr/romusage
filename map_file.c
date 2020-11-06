@@ -56,13 +56,16 @@ int map_file_process_areas(char * filename_in) {
                 if (cols == 6) {
                     if ((strtol(p_words[2], NULL, 16) > 0) &&  // Exclude empty areas
                         !(strstr(p_words[0], "SFR")) &&        // Exclude SFR areas (not actually located at addresses in area listing)
-                        !(strstr(p_words[0], "HRAM10"))        // Exclude HRAM area
+                        !(strstr(p_words[0], "HRAM"))        // Exclude HRAM area
                         )
                     {
                         snprintf(area.name, sizeof(area.name), "%s", p_words[0]); // [0] Area Name
                         area.start = strtol(p_words[1], NULL, 16);         // [1] Area Hex Address Start
                         area.end   = area.start + strtol(p_words[2], NULL, 16) - 1; // Start + [3] Hex Size - 1 = Area End
-                        area.exclusive = false;
+                        if (strstr(area.name,"HEADER"))
+                            area.exclusive = false; // HEADER areas almost always overlap, ignore them
+                        else
+                            area.exclusive = option_all_areas_exclusive; // Default is false
                         banks_check(area);
                     }
                 }

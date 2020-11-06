@@ -51,6 +51,9 @@ extern bool banks_display_areas;
 extern bool banks_display_headers;
 extern bool banks_display_minigraph;
 extern bool banks_display_largegraph;
+extern bool option_all_areas_exclusive;
+extern bool option_quiet_mode;
+
 
 int area_manual_add(char * arg_str);
 uint32_t bank_areas_calc_used(bank_item *, uint32_t, uint32_t);
@@ -59,6 +62,10 @@ void banks_output_show_areas(bool do_show);
 void banks_output_show_headers(bool do_show);
 void banks_output_show_minigraph(bool do_show);
 void banks_output_show_largegraph(bool do_show);
+void set_option_all_areas_exclusive(bool value);
+void set_option_quiet_mode(bool value);
+
+
 void banks_check(area_item area);
 void banklist_finalize_and_show(void);
 

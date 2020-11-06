@@ -31,14 +31,16 @@ void display_help(void) {
            "-G  : Show a large usage graph per bank\n"
            "-m  : Manually specify an Area -m:NAME:HEXADDR:HEXLENGTH\n"
            "-e  : Manually specify an Area that should not overlap -e:NAME:HEXADDR:HEXLENGTH\n"
+           "-E  : All areas are exclusive (except HEADERs), warn for any overlaps\n"
+           "-q  : Quiet, no output except warnings and errors\n"
            "\n"
            "Use: Read a .map or .noi file to display area sizes.\n"
            "Example 1: \"romusage build/MyProject.map\"\n"
            "Example 2: \"romusage build/MyProject.noi -a\"\n"
            "\n"
            "Note: Estimates are as close as possible, but may not be complete.\n"
-           "      They *do not* factor regions lacking complete ranges in\n"
-           "      the Map file, for example Shadow OAM and Stack.\n"
+           "      Unless specified with -m/-e they *do not* factor regions lacking\n"
+           "      complete ranges in the Map/Noi file, for example Shadow OAM and Stack.\n"
            );
 }
 
@@ -71,6 +73,10 @@ int handle_args(int argc, char * argv[]) {
             banks_output_show_minigraph(true);
         } else if (strstr(argv[i], "-G")) {
             banks_output_show_largegraph(true);
+        } else if (strstr(argv[i], "-E")) {
+            set_option_all_areas_exclusive(true);
+        } else if (strstr(argv[i], "-q")) {
+            set_option_quiet_mode(true);
 
         } else if (strstr(argv[i], "-m") || strstr(argv[i], "-e")) {
             if (!area_manual_add(argv[i])) {

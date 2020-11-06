@@ -38,6 +38,8 @@ bool banks_display_areas = false;
 bool banks_display_headers = false;
 bool banks_display_minigraph = false;
 bool banks_display_largegraph = false;
+bool option_all_areas_exclusive = false;
+bool option_quiet_mode = false;
 
 
 // Turn on/off display of areas within bank
@@ -58,6 +60,16 @@ void banks_output_show_minigraph(bool do_show) {
 // Turn on/off display of large usage graph per bank
 void banks_output_show_largegraph(bool do_show) {
     banks_display_largegraph = do_show;
+}
+
+// Turn on/off whether all areas are exclusive,
+// and whether to warn for any overlap
+void set_option_all_areas_exclusive(bool value) {
+    option_all_areas_exclusive = value;
+}
+// Turn on/off display of large usage graph per bank
+void set_option_quiet_mode(bool value) {
+    option_quiet_mode = value;
 }
 
 uint32_t min(uint32_t a, uint32_t b) {
@@ -377,6 +389,8 @@ void banklist_finalize_and_show(void) {
         bank_list[c].size_used = bank_areas_calc_used(&bank_list[c], bank_list[c].start, bank_list[c].end);
     }
 
-    banklist_printall(bank_list, bank_count);
+    // Only print if quiet mode is not enabled
+    if (!option_quiet_mode)
+        banklist_printall(bank_list, bank_count);
 }
 

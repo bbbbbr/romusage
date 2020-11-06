@@ -51,7 +51,10 @@ static int arealist_get_id_by_name(char * area_name) {
         area_list[area_count].start  = AREA_VAL_UNSET;
         area_list[area_count].end    = AREA_VAL_UNSET;
         area_list[area_count].length = AREA_VAL_UNSET;
-        area_list[area_count].exclusive = false;
+        if (strstr(area_name,"HEADER"))
+            area_list[area_count].exclusive = false; // HEADER areas almost always overlap, ignore them
+        else
+            area_list[area_count].exclusive = option_all_areas_exclusive; // Default is false
         area_count++;
         return (area_count - 1);
     }
@@ -115,7 +118,7 @@ int noi_file_process_areas(char * filename_in) {
 
                     if (cols == NOI_REC_COUNT_MATCH) {
                         if ( !(strstr(p_words[2], "SFR")) &&        // Exclude SFR areas (not actually located at addresses in area listing)
-                             !(strstr(p_words[2], "HRAM10")) ) {    // Exclude HRAM area
+                             !(strstr(p_words[2], "HRAM")) ) {    // Exclude HRAM area
 
                             int area_id = arealist_get_id_by_name(p_words[2]); // [2] Area Name1
                             if (area_id != ERR_NO_AREAS_LEFT) {
