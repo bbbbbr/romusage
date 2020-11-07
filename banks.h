@@ -11,12 +11,12 @@
 #define RANGE_SIZE(MIN, MAX) (MAX - MIN + 1)
 
 #define AREA_MAX_STR 20
-#define MAX_AREAS     100
+#define MAX_AREAS     2000 // Max areas per bank // TODO: Should probably make this grow dynamically
 
 #define BANK_MAX_STR 20
 #define BANKED_NO     0
 #define BANKED_YES    1
-#define MAX_BANKS     1000
+#define MAX_BANKS     200  // TODO: Should probably make this grow dynamically
 
 #define MINIGRAPH_SIZE (2 * 14) // Number of characters wide (inside edge brackets)
 #define LARGEGRAPH_BYTES_PER_CHAR 16

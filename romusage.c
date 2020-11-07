@@ -12,6 +12,7 @@
 #include "banks.h"
 #include "map_file.h"
 #include "noi_file.h"
+#include "ihx_file.h"
 
 void display_help(void);
 int handle_args(int argc, char * argv[]);
@@ -21,7 +22,7 @@ char filename_in[MAX_STR_LEN] = {'\0'};
 
 void display_help(void) {
     fprintf(stdout,
-           "romusage input_file.[map|noi] [options]\n"
+           "romusage input_file.[map|noi|ihx] [options]\n"
            "\n"
            "Options\n"
            "-h  : Show this help\n"
@@ -34,13 +35,13 @@ void display_help(void) {
            "-E  : All areas are exclusive (except HEADERs), warn for any overlaps\n"
            "-q  : Quiet, no output except warnings and errors\n"
            "\n"
-           "Use: Read a .map or .noi file to display area sizes.\n"
+           "Use: Read a .map, .noi or .ihx file to display area sizes.\n"
            "Example 1: \"romusage build/MyProject.map\"\n"
            "Example 2: \"romusage build/MyProject.noi -a\"\n"
            "\n"
            "Note: Estimates are as close as possible, but may not be complete.\n"
            "      Unless specified with -m/-e they *do not* factor regions lacking\n"
-           "      complete ranges in the Map/Noi file, for example Shadow OAM and Stack.\n"
+           "      complete ranges in the Map/Noi/Ihx file, for example Shadow OAM and Stack.\n"
            );
 }
 
@@ -115,6 +116,11 @@ int main( int argc, char *argv[] )  {
                 }
             } else if (matches_extension(filename_in, (char *)".map")) {
                 if (map_file_process_areas(filename_in)) {
+                    banklist_finalize_and_show();
+                    return 0; // Exit with success
+                }
+            } else if (matches_extension(filename_in, (char *)".ihx")) {
+                if (ihx_file_process_areas(filename_in)) {
                     banklist_finalize_and_show();
                     return 0; // Exit with success
                 }
