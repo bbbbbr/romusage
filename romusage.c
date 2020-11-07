@@ -38,6 +38,7 @@ void display_help(void) {
            "Use: Read a .map, .noi or .ihx file to display area sizes.\n"
            "Example 1: \"romusage build/MyProject.map\"\n"
            "Example 2: \"romusage build/MyProject.noi -a\"\n"
+           "Example 3: \"romusage build/MyProject.ihx -g -e:STACK:DEFF:100 -e:SHADOW_OAM:C000:A0\"\n"
            "\n"
            "Note: Estimates are as close as possible, but may not be complete.\n"
            "      Unless specified with -m/-e they *do not* factor regions lacking\n"

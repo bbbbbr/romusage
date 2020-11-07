@@ -1,7 +1,7 @@
 romusage
 ===========
 
-A small command line tool for estimating usage of Game Boy ROMs from a .map or .noi file.
+A small command line tool for estimating usage of Game Boy ROMs from a .map, .noi or ihx file.
 
 It produces a trimmed, sorted output of ROM/RAMs, their usage and optionally the Areas located in them.
 
@@ -13,7 +13,7 @@ Binaries are [here](/bin/)
 
 
 ```
-romusage input_file.[map|noi] [options]
+romusage input_file.[map|noi|ihx] [options]
 
 Options
 -h  : Show this help
@@ -23,14 +23,17 @@ Options
 -G  : Show a large usage graph per bank
 -m  : Manually specify an Area -m:NAME:HEXADDR:HEXLENGTH
 -e  : Manually specify an Area that should not overlap -e:NAME:HEXADDR:HEXLENGTH
+-E  : All areas are exclusive (except HEADERs), warn for any overlaps
+-q  : Quiet, no output except warnings and errors
 
-Use: Read a .map or .noi file to display area sizes.
+Use: Read a .map, .noi or .ihx file to display area sizes and usage.
 Example 1: "romusage build/MyProject.map"
 Example 2: "romusage build/MyProject.noi -a"
+Example 3: "romusage build/MyProject.ihx -g -e:STACK:DEFF:100 -e:SHADOW_OAM:C000:A0"
 
 Note: Estimates are as close as possible, but may not be complete.
-      They *do not* factor regions lacking complete ranges in
-      the Map file, for example Shadow OAM and Stack.
+      Unless specified with -m/-e they *do not* factor regions lacking
+      complete ranges in the Map/Noi/Ihx file, for example Shadow OAM and Stack.
 
 ```
 
