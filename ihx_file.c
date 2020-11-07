@@ -49,14 +49,15 @@
 
 typedef struct ihx_record {
     uint16_t length;
-    uint16_t byte_count;
+    uint16_t  byte_count;
     uint16_t address;
     uint16_t address_end;
-    uint16_t type;
-    uint8_t checksum;
+    uint16_t  type;
+    uint8_t  checksum;
 } ihx_record;
 
-// TODO: merge this with c2hex() and also add bytes for checksum
+
+// Return false if any character isn't a valid hex digit
 int check_hex(char * c) {
     while (*c != '\0') {
         if ((*c >= '0') && (*c <= '9'))
@@ -67,43 +68,27 @@ int check_hex(char * c) {
             c++;
         else
             return false;
-
     }
-    return true;
-}
 
-//TODO: readbyte ... update checksum
-uint16_t c2hex(char c) {
-    if ((c >= '0') && (c <= '9'))
-        return (uint16_t)(c - '0');
-    if ((c >= 'A') && (c <= 'F'))
-        return (uint16_t)(c - 'A' + 10);
-    if ((c >= 'a') && (c <= 'f'))
-        return (uint16_t)(c - 'a' + 10);
+    return true;
 }
 
 
 // Parse and validate an IHX record
-int ihx_parse_and_validate(char * p_str, ihx_record * p_rec) {
+int ihx_parse_and_validate_record(char * p_str, ihx_record * p_rec) {
 
         int calc_length = 0;
         int c;
-        uint8_t checksum_calc = 0;
+        uint8_t ctemp, checksum_calc = 0;
 
         // Remove trailing CR and LF
         p_rec->length = strlen(p_str);
         for (c = 0;c < p_rec->length;c++) {
             if (p_str[c] == '\n' || p_str[c] == '\r') {
                 p_str[c] = '\0';   // Replace char with string terminator
-                p_rec->length = c; // Update length
-                break;
+                p_rec->length = c; // Shrink length to truncated size
+                break;             // Exit loop after finding first CR or LF
             }
-        }
-
-       // Require minimum length
-        if (p_rec->length < IHX_REC_LEN_MIN) {
-            printf("Warning: IHX: Invalid line, too few characters: %s. Is %d, needs at least %d \n", p_str, p_rec->length, IHX_REC_LEN_MIN);
-            return false;
         }
 
         // Only parse lines that start with ':' character (Start token for IHX record)
@@ -112,36 +97,45 @@ int ihx_parse_and_validate(char * p_str, ihx_record * p_rec) {
             return false;
         }
 
-        // Only hex characters are allower after start token
+       // Require minimum length
+        if (p_rec->length < IHX_REC_LEN_MIN) {
+            printf("Warning: IHX: Invalid line, too few characters: %s. Is %d, needs at least %d \n", p_str, p_rec->length, IHX_REC_LEN_MIN);
+            return false;
+        }
+
+        // Only hex characters are allowed after start token
         p_str++; // Advance past Start code
         if (check_hex(p_str)) {
             printf("Warning: IHX: Invalid line, non-hex characters present: %s\n", p_str);
             return false;
         }
 
-        p_rec->byte_count  = (c2hex(*p_str++) << 4)  + c2hex(*p_str++);
-        p_rec->address     = (c2hex(*p_str++) << 12) + (c2hex(*p_str++) << 8) + (c2hex(*p_str++) << 4) + c2hex(*p_str++);
+        sscanf(p_str, "%2hx%4hx%2hx", &p_rec->byte_count, &p_rec->address, &p_rec->type); // fmt 'h'=unsigned short
+        p_str += (2 + 4 + 2);
         p_rec->address_end = p_rec->address + p_rec->byte_count - 1;
-        p_rec->type = (c2hex(*p_str++) << 4)  + c2hex(*p_str++);
 
-        calc_length = IHX_REC_LEN_MIN + (p_rec->byte_count * 2);
 
         // Require expected data byte count to fit within record length (at 2 chars per hex byte)
+        calc_length = IHX_REC_LEN_MIN + (p_rec->byte_count * 2);
         if (p_rec->length != calc_length) {
             printf("Warning: IHX: byte count doesn't match length available in record! Record length = %d, Calc length = %d, bytecount = %d \n", p_rec->length, calc_length, p_rec->byte_count);
             return false;
         }
 
-        // Read data segment and calculate it's checksum
+        // Read data segment and calculate checsum of data + headers
         checksum_calc = p_rec->byte_count + (p_rec->address & 0xFF) + ((p_rec->address >> 8) & 0xFF) + p_rec->type;
-        for (c = 0;c < p_rec->byte_count;c++)
-            checksum_calc += (c2hex(*p_str++) << 4)  + c2hex(*p_str++);
+        for (c = 0;c < p_rec->byte_count;c++) {
+            sscanf(p_str, "%2hhx", &ctemp);  // fmt 'hh'=unsigned char
+            p_str += 2;
+            checksum_calc += ctemp;
+        }
 
         // Final calculated checeksum is 2's complement of LSByte
         checksum_calc = ((checksum_calc & 0xFF) ^ 0xFF) + 1;
 
         // Read checksum from data
-        p_rec->checksum = (c2hex(*p_str++) << 4)  + c2hex(*p_str++);
+        sscanf(p_str, "%2hhx", &p_rec->checksum); // fmt 'hh'=unsigned char
+        p_str += 2;
 
         if (p_rec->checksum != checksum_calc) {
             printf("Warning: IHX: record checksum %x didn't match calculated checksum %x\n", p_rec->checksum, checksum_calc);
@@ -172,7 +166,7 @@ int ihx_file_process_areas(char * filename_in) {
         while (fgets(strline_in, sizeof(strline_in), ihx_file) != NULL) {
 
             // Parse record, skip if fails validation
-            if (!ihx_parse_and_validate(strline_in, &ihx_rec))
+            if (!ihx_parse_and_validate_record(strline_in, &ihx_rec))
                 continue;
 
             // Process the pending area and exit if last record (EOF)
@@ -183,7 +177,7 @@ int ihx_file_process_areas(char * filename_in) {
             } else if (ihx_rec.type != IHX_REC_DATA)
                 continue;
 
-            // Try to merge address-adjacent records to reduce number stored
+            // Try to merge address-adjacent records to reduce number and compared
             // (since most are only 32 bytes long)
             if (ihx_rec.address == area.end + 1) {
                 area.end = ihx_rec.address_end;  // append to previous area
