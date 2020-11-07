@@ -33,6 +33,8 @@
 :00000001FF (EOF indicator)
 */
 
+#define ADDR_UNSET   0xFFFF
+
 #define MAX_STR_LEN     4096
 #define IHX_DATA_LEN_MAX 255
 #define IHX_REC_LEN_MIN  (1 + 2 + 4 + 2 + 0 + 2) // Start(1), ByteCount(2), Addr(4), Rec(2), Data(0..255x2), Checksum(2)
@@ -44,6 +46,15 @@
 #define IHX_REC_STARTSEG 0x03
 #define IHX_REC_EXTLIN   0x04
 #define IHX_REC_STARTLIN 0x05
+
+typedef struct ihx_record {
+    uint16_t length;
+    uint16_t byte_count;
+    uint16_t address;
+    uint16_t address_end;
+    uint16_t type;
+    uint8_t checksum;
+} ihx_record;
 
 // TODO: merge this with c2hex() and also add bytes for checksum
 int check_hex(char * c) {
@@ -71,108 +82,122 @@ uint16_t c2hex(char c) {
         return (uint16_t)(c - 'a' + 10);
 }
 
+
+// Parse and validate an IHX record
+int ihx_parse_and_validate(char * p_str, ihx_record * p_rec) {
+
+        int calc_length = 0;
+        int c;
+        uint8_t checksum_calc = 0;
+
+        // Remove trailing CR and LF
+        p_rec->length = strlen(p_str);
+        for (c = 0;c < p_rec->length;c++) {
+            if (p_str[c] == '\n' || p_str[c] == '\r') {
+                p_str[c] = '\0';   // Replace char with string terminator
+                p_rec->length = c; // Update length
+                break;
+            }
+        }
+
+       // Require minimum length
+        if (p_rec->length < IHX_REC_LEN_MIN) {
+            printf("Warning: IHX: Invalid line, too few characters: %s. Is %d, needs at least %d \n", p_str, p_rec->length, IHX_REC_LEN_MIN);
+            return false;
+        }
+
+        // Only parse lines that start with ':' character (Start token for IHX record)
+        if (p_str[0] != ':') {
+            printf("Warning: IHX: Invalid start of line token for line: %s \n", p_str);
+            return false;
+        }
+
+        // Only hex characters are allower after start token
+        p_str++; // Advance past Start code
+        if (check_hex(p_str)) {
+            printf("Warning: IHX: Invalid line, non-hex characters present: %s\n", p_str);
+            return false;
+        }
+
+        p_rec->byte_count  = (c2hex(*p_str++) << 4)  + c2hex(*p_str++);
+        p_rec->address     = (c2hex(*p_str++) << 12) + (c2hex(*p_str++) << 8) + (c2hex(*p_str++) << 4) + c2hex(*p_str++);
+        p_rec->address_end = p_rec->address + p_rec->byte_count - 1;
+        p_rec->type = (c2hex(*p_str++) << 4)  + c2hex(*p_str++);
+
+        calc_length = IHX_REC_LEN_MIN + (p_rec->byte_count * 2);
+
+        // Require expected data byte count to fit within record length (at 2 chars per hex byte)
+        if (p_rec->length != calc_length) {
+            printf("Warning: IHX: byte count doesn't match length available in record! Record length = %d, Calc length = %d, bytecount = %d \n", p_rec->length, calc_length, p_rec->byte_count);
+            return false;
+        }
+
+        // Read data segment and calculate it's checksum
+        checksum_calc = p_rec->byte_count + (p_rec->address & 0xFF) + ((p_rec->address >> 8) & 0xFF) + p_rec->type;
+        for (c = 0;c < p_rec->byte_count;c++)
+            checksum_calc += (c2hex(*p_str++) << 4)  + c2hex(*p_str++);
+
+        // Final calculated checeksum is 2's complement of LSByte
+        checksum_calc = ((checksum_calc & 0xFF) ^ 0xFF) + 1;
+
+        // Read checksum from data
+        p_rec->checksum = (c2hex(*p_str++) << 4)  + c2hex(*p_str++);
+
+        if (p_rec->checksum != checksum_calc) {
+            printf("Warning: IHX: record checksum %x didn't match calculated checksum %x\n", p_rec->checksum, checksum_calc);
+            return false;
+        }
+
+        return true;
+}
+
+
 int ihx_file_process_areas(char * filename_in) {
 
     char cols;
-    char * p_str;
     char strline_in[MAX_STR_LEN] = "";
     FILE * ihx_file = fopen(filename_in, "r");
     area_item area;
-
-    int rec_length;
-    uint16_t byte_count;
-    uint16_t address;
-    uint16_t address_end;
-    uint16_t record_type;
+    ihx_record ihx_rec;
 
     // Initialize area record
     snprintf(area.name, sizeof(area.name), "ihx record");
     area.exclusive = option_all_areas_exclusive; // Default is false
-    area.start = 0xFFFF;
-    area.end   = 0xFFFF;
+    area.start = ADDR_UNSET;
+    area.end   = ADDR_UNSET;
 
-int rec=0;
-int t_rec=0;
     if (ihx_file) {
 
         // Read one line at a time into \0 terminated string
         while (fgets(strline_in, sizeof(strline_in), ihx_file) != NULL) {
 
-            p_str = strline_in;
-
-            // TODO: move into ihx_record_validate() or ihx_record_read()
-
-            // remove line feed if needed
-            rec_length = strlen(p_str);
-            if (p_str[rec_length - 1] == '\n' || p_str[rec_length - 1] == '\r') {
-                p_str[rec_length - 1] = '\0';
-                rec_length--;
-            }
-
-           // Require minimum length
-            if (rec_length < IHX_REC_LEN_MIN) {
-                printf("Warning: IHX: Invalid line, too few characters: %s. Is %d, needs at least %d \n", p_str, rec_length, IHX_REC_LEN_MIN);
+            // Parse record, skip if fails validation
+            if (!ihx_parse_and_validate(strline_in, &ihx_rec))
                 continue;
-            }
 
-            // Only parse lines that start with ':' character (Start token for IHX record)
-            if (p_str[0] != ':') {
-                printf("Warning: IHX: Invalid start of line token for line: %s \n", strline_in);
-                continue;
-            }
-
-            // Only hex characters are allower after start token
-            p_str++; // Advance past Start code
-            if (check_hex(p_str)) {
-                printf("Warning: IHX: Invalid line, non-hex characters present: %s\n", strline_in);
-                continue;
-            }
-
-            byte_count  = (c2hex(*p_str++) << 4)  + c2hex(*p_str++);
-            address     = (c2hex(*p_str++) << 12) + (c2hex(*p_str++) << 8) + (c2hex(*p_str++) << 4) + c2hex(*p_str++);
-            address_end = address + byte_count - 1;
-            record_type = (c2hex(*p_str++) << 4)  + c2hex(*p_str++);
-
-            int calc_length = IHX_REC_LEN_MIN + (byte_count * 2);
-
-            // Require expected data byte count to fit within record length (at 2 chars per hex byte)
-            if (rec_length != (IHX_REC_LEN_MIN + (byte_count * 2))) {
-                printf("Warning: IHX: byte count doesn't match length available in record! Record length = %d, Calc length = %d, bytecount = %d \n", rec_length, calc_length, byte_count);
-                continue;
-            }
-
-            t_rec++;
-// TODO: handle other data record types
-            // If this is the last record then process the pending banks check and exit
-            // Ignore other non de-default data records since they don't seem to occur for gbz80
-            if (record_type == IHX_REC_EOF) {
-                rec++;
-                printf("%d (%d)\n", rec, t_rec);
+            // Process the pending area and exit if last record (EOF)
+            // Also ignore non de-default data records (don't seem to occur for gbz80)
+            if (ihx_rec.type == IHX_REC_EOF) {
                 banks_check(area);
                 continue;
-            } else if (record_type != IHX_REC_DATA)
+            } else if (ihx_rec.type != IHX_REC_DATA)
                 continue;
-
-
-// TODO: checksum
 
             // Try to merge address-adjacent records to reduce number stored
             // (since most are only 32 bytes long)
-            if (address == area.end + 1) {
-                area.end = address_end;  // append to previous area
-                printf("merge (append ): %4x - %4x ... %4x - %4x\n", area.start, area.end, address, address_end);
-            } else if (address_end == area.start + 1) {
-                area.start = address;   // pre-pend to previuos area
-                printf("merge (prepend): %4x - %4x ... %4x - %4x\n", area.start, area.end, address, address_end);
+            if (ihx_rec.address == area.end + 1) {
+                area.end = ihx_rec.address_end;  // append to previous area
+            } else if (ihx_rec.address_end == area.start + 1) {
+                area.start = ihx_rec.address;   // pre-pend to previuos area
             } else {
-                rec++;
-                printf("%d (%d)\n", rec, t_rec);
-                // New record was not adjacent to last, so process the last/pending record
-                banks_check(area);
+                // New record was not adjacent to last,
+                // so process the last/pending record
+                if (area.start != ADDR_UNSET)
+                    banks_check(area);
 
                 // Now queue current record as pending for next loop
-                area.start = address;
-                area.end   = area.start + byte_count - 1;
+                area.start = ihx_rec.address;
+                area.end   = ihx_rec.address + ihx_rec.byte_count - 1;
             }
 
         } // end: while still lines to process
