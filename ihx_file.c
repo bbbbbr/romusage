@@ -110,6 +110,7 @@ int ihx_parse_and_validate_record(char * p_str, ihx_record * p_rec) {
             return false;
         }
 
+        // Read record header: byte count, start address, type
         sscanf(p_str, "%2hx%4hx%2hx", &p_rec->byte_count, &p_rec->address, &p_rec->type); // fmt 'h'=unsigned short
         p_str += (2 + 4 + 2);
         p_rec->address_end = p_rec->address + p_rec->byte_count - 1;
