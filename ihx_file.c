@@ -170,22 +170,25 @@ int ihx_file_process_areas(char * filename_in) {
             if (!ihx_parse_and_validate_record(strline_in, &ihx_rec))
                 continue;
 
-            // Process the pending area and exit if last record (EOF)
-            // Also ignore non de-default data records (don't seem to occur for gbz80)
+            // Process the pending record and exit if last record (EOF)
+            // Also ignore non-default data records (don't seem to occur for gbz80)
             if (ihx_rec.type == IHX_REC_EOF) {
                 banks_check(area);
                 continue;
             } else if (ihx_rec.type != IHX_REC_DATA)
                 continue;
 
-            // Try to merge address-adjacent records to reduce number and compared
-            // (since most are only 32 bytes long)
+            // Records are left pending (non-processed) until they don't merge
+            // with the current incoming record *or* the final (EOF) record is found.
+
+            // Try to merge with (pending) previous record if it's address-adjacent.
+            // (this reduces count from 1000's since most are only 32 bytes long)
             if (ihx_rec.address == area.end + 1) {
                 area.end = ihx_rec.address_end;  // append to previous area
             } else if (ihx_rec.address_end == area.start + 1) {
                 area.start = ihx_rec.address;   // pre-pend to previuos area
             } else {
-                // New record was not adjacent to last,
+                // New record was *not* adjacent to last,
                 // so process the last/pending record
                 if (area.start != ADDR_UNSET)
                     banks_check(area);
