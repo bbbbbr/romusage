@@ -82,8 +82,17 @@ int ihx_file_process_areas(char * filename_in) {
     int rec_length;
     uint16_t byte_count;
     uint16_t address;
+    uint16_t address_end;
     uint16_t record_type;
 
+    // Initialize area record
+    snprintf(area.name, sizeof(area.name), "ihx record");
+    area.exclusive = option_all_areas_exclusive; // Default is false
+    area.start = 0xFFFF;
+    area.end   = 0xFFFF;
+
+int rec=0;
+int t_rec=0;
     if (ihx_file) {
 
         // Read one line at a time into \0 terminated string
@@ -121,13 +130,8 @@ int ihx_file_process_areas(char * filename_in) {
 
             byte_count  = (c2hex(*p_str++) << 4)  + c2hex(*p_str++);
             address     = (c2hex(*p_str++) << 12) + (c2hex(*p_str++) << 8) + (c2hex(*p_str++) << 4) + c2hex(*p_str++);
+            address_end = address + byte_count - 1;
             record_type = (c2hex(*p_str++) << 4)  + c2hex(*p_str++);
-
-// TODO: handle other data record types
-            // Only process IHX default data records
-            // (ignore other types since they don't seem to occur for gbz80)
-            if (record_type != IHX_REC_DATA)
-                continue;
 
             int calc_length = IHX_REC_LEN_MIN + (byte_count * 2);
 
@@ -137,16 +141,39 @@ int ihx_file_process_areas(char * filename_in) {
                 continue;
             }
 
+            t_rec++;
+// TODO: handle other data record types
+            // If this is the last record then process the pending banks check and exit
+            // Ignore other non de-default data records since they don't seem to occur for gbz80
+            if (record_type == IHX_REC_EOF) {
+                rec++;
+                printf("%d (%d)\n", rec, t_rec);
+                banks_check(area);
+                continue;
+            } else if (record_type != IHX_REC_DATA)
+                continue;
+
+
 // TODO: checksum
 
-// TODO: try to merge address-adjacent records to reduce number stored (since most are only 32 bytes long)
+            // Try to merge address-adjacent records to reduce number stored
+            // (since most are only 32 bytes long)
+            if (address == area.end + 1) {
+                area.end = address_end;  // append to previous area
+                printf("merge (append ): %4x - %4x ... %4x - %4x\n", area.start, area.end, address, address_end);
+            } else if (address_end == area.start + 1) {
+                area.start = address;   // pre-pend to previuos area
+                printf("merge (prepend): %4x - %4x ... %4x - %4x\n", area.start, area.end, address, address_end);
+            } else {
+                rec++;
+                printf("%d (%d)\n", rec, t_rec);
+                // New record was not adjacent to last, so process the last/pending record
+                banks_check(area);
 
-            // Add the record
-            snprintf(area.name, sizeof(area.name), "ihx record");
-            area.start = address;
-            area.end   = area.start + byte_count - 1;
-            area.exclusive = option_all_areas_exclusive; // Default is false
-            banks_check(area);
+                // Now queue current record as pending for next loop
+                area.start = address;
+                area.end   = area.start + byte_count - 1;
+            }
 
         } // end: while still lines to process
 

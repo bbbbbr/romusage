@@ -11,7 +11,7 @@
 #define RANGE_SIZE(MIN, MAX) (MAX - MIN + 1)
 
 #define AREA_MAX_STR 20
-#define MAX_AREAS     2000 // Max areas per bank // TODO: Should probably make this grow dynamically
+#define MAX_AREAS     200 // Max areas per bank // TODO: dynamic area per-bank allocation
 
 #define BANK_MAX_STR 20
 #define BANKED_NO     0

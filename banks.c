@@ -233,7 +233,8 @@ static void bank_add_area(bank_item * p_bank, area_item area) {
     if (p_bank->area_count < MAX_AREAS) {
         p_bank->area_list[ p_bank->area_count ] = area;
         p_bank->area_count++;
-    }
+    } else
+        printf("Warning: ran out of areas in bank %s\n", p_bank->name);
 
     p_bank->size_used += area_size;
 }
