@@ -42,27 +42,30 @@ Currently the 100% bank will get merged into the next one and present as overflo
 */
 
 
-#define ADDR_UNSET   0xFFFFFFFF
+#define IS_NOT_BANK_START(addr)  (!((addr & 0x00003FFFU) == 0x00000000U))
+#define IS_NOT_BANK_END(addr)    (!((addr & 0x00003FFFU) == 0x00003FFFU))
+#define BANK_NUM(addr)  ((addr & 0xFFFFC000U) >> 14)
+#define ADDR_UNSET      0xFFFFFFFEU
 
 #define MAX_STR_LEN     4096
 #define IHX_DATA_LEN_MAX 255
 #define IHX_REC_LEN_MIN  (1 + 2 + 4 + 2 + 0 + 2) // Start(1), ByteCount(2), Addr(4), Rec(2), Data(0..255x2), Checksum(2)
 
 // IHX record types
-#define IHX_REC_DATA     0x00
-#define IHX_REC_EOF      0x01
-#define IHX_REC_EXTSEG   0x02
-#define IHX_REC_STARTSEG 0x03
-#define IHX_REC_EXTLIN   0x04
-#define IHX_REC_STARTLIN 0x05
+#define IHX_REC_DATA     0x00U
+#define IHX_REC_EOF      0x01U
+#define IHX_REC_EXTSEG   0x02U
+#define IHX_REC_STARTSEG 0x03U
+#define IHX_REC_EXTLIN   0x04U
+#define IHX_REC_STARTLIN 0x05U
 
 typedef struct ihx_record {
     uint16_t length;
     uint32_t byte_count;
     uint32_t address;
     uint32_t address_end;
-    uint16_t type;
-    uint8_t  checksum;
+    uint32_t type;
+    uint32_t checksum; // Would prefer this be a uint8_t, but mingw sscanf("%2hhx") has a buffer overflow that corrupts adjacent data
 } ihx_record;
 
 uint32_t g_address_upper;
@@ -101,7 +104,7 @@ int ihx_parse_and_validate_record(char * p_str, ihx_record * p_rec) {
 
         int calc_length = 0;
         int c;
-        uint8_t ctemp, checksum_calc = 0;
+        uint32_t ctemp, checksum_calc = 0; // Avoid mingw sscanf("%2hhx") buffer overflow with uint8_t
 
         // Remove trailing CR and LF
         p_rec->length = strlen(p_str);
@@ -133,7 +136,7 @@ int ihx_parse_and_validate_record(char * p_str, ihx_record * p_rec) {
         }
 
         // Read record header: byte count, start address, type
-        sscanf(p_str, "%2x%4x%2hx", &p_rec->byte_count, &p_rec->address, &p_rec->type); // fmt 'h'=unsigned short
+        sscanf(p_str, "%2x%4x%2x", &p_rec->byte_count, &p_rec->address, &p_rec->type);
         p_str += (2 + 4 + 2);
 
         // Apply extended linear address (upper 16 bits of address space)
@@ -155,20 +158,19 @@ int ihx_parse_and_validate_record(char * p_str, ihx_record * p_rec) {
             g_address_upper <<= 16; // Shift into upper 16 bits of address space
         }
 
-
         // Read data segment and calculate checsum of data + headers
         checksum_calc = p_rec->byte_count + (p_rec->address & 0xFF) + ((p_rec->address >> 8) & 0xFF) + p_rec->type;
         for (c = 0;c < p_rec->byte_count;c++) {
-            sscanf(p_str, "%2hhx", &ctemp);  // fmt 'hh'=unsigned char
+            sscanf(p_str, "%2x", &ctemp);
             p_str += 2;
             checksum_calc += ctemp;
         }
 
         // Final calculated checeksum is 2's complement of LSByte
-        checksum_calc = ((checksum_calc & 0xFF) ^ 0xFF) + 1;
+        checksum_calc = (((checksum_calc & 0xFF) ^ 0xFF) + 1) & 0xFF;
 
         // Read checksum from data
-        sscanf(p_str, "%2hhx", &p_rec->checksum); // fmt 'hh'=unsigned char
+        sscanf(p_str, "%2x", &p_rec->checksum);
         p_str += 2;
 
         if (p_rec->checksum != checksum_calc) {
@@ -176,7 +178,15 @@ int ihx_parse_and_validate_record(char * p_str, ihx_record * p_rec) {
             return false;
         }
 
-        return true;
+        // For records that start in banks above the unbanked region (0x000 - 0x3FFF)
+        // Warn if they cross the boundary between different banks
+        if ((p_rec->address >= 0x00004000U) &&
+            ((p_rec->address & 0xFFFFC000U) != (p_rec->address_end & 0xFFFFC000U))) {
+            printf("Warning: Write from one bank spans into the next. Bank overflow? %x -> %x (bank %d -> %d)\n",
+                   p_rec->address, p_rec->address_end, BANK_NUM(p_rec->address), BANK_NUM(p_rec->address_end));
+        }
+
+    return true;
 }
 
 void area_convert_and_add(area_item area) {
@@ -190,11 +200,19 @@ void area_convert_and_add(area_item area) {
 
 int ihx_file_process_areas(char * filename_in) {
 
+    int  ret = true;  // default to success
     char cols;
     char strline_in[MAX_STR_LEN] = "";
     FILE * ihx_file = fopen(filename_in, "r");
     area_item area;
     ihx_record ihx_rec;
+
+
+    // IHX record areas don't have distinct names, so turn
+    // off duplicate suppression to avoid any being dropped.
+    // They are also never allowed to overlap
+    set_option_suppress_duplicates(false);
+    set_option_all_areas_exclusive(true);
 
     // Initialize global upper address modifier
     g_address_upper = 0x0000;
@@ -230,19 +248,19 @@ int ihx_file_process_areas(char * filename_in) {
             // Records are left pending (non-processed) until they don't merge
             // with the current incoming record *or* the final (EOF) record is found.
 
-            // Try to merge with (pending) previous record if it's address-adjacent.
+            // Try to merge with (pending) previous record if it's address-adjacent,
+            // except when the new record starts or ends on a bank boundary
             // (this reduces count from 1000's since most are only 32 bytes long)
-            if (ihx_rec.address == area.end + 1) {
+            if ((ihx_rec.address == area.end + 1) && IS_NOT_BANK_START(ihx_rec.address)) {
                 area.end = ihx_rec.address_end;  // append to previous area
-            } else if (ihx_rec.address_end == area.start + 1) {
-                area.start = ihx_rec.address;   // pre-pend to previuos area
+            } else if ((ihx_rec.address_end == area.start + 1) && IS_NOT_BANK_END(ihx_rec.address_end)) {
+                area.start = ihx_rec.address;    // pre-pend to previous area
             } else {
                 // New record was *not* adjacent to last,
                 // so process the last/pending record
                 if (area.start != ADDR_UNSET) {
                     area_convert_and_add(area);
                 }
-
                 // Now queue current record as pending for next loop
                 area.start = ihx_rec.address;
                 area.end   = ihx_rec.address + ihx_rec.byte_count - 1;
@@ -253,8 +271,9 @@ int ihx_file_process_areas(char * filename_in) {
         fclose(ihx_file);
 
     } // end: if valid file
-    else return (false);
+    else
+        ret = false;
 
-   return true;
+    return ret;
 }
 
