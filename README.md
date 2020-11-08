@@ -9,6 +9,10 @@ Runs on Linux and Windows, meant for use with [GBDK 2020](https://github.com/Zal
 
 The usage calculation will attempt to merge overlapping areas to avoid counting shared space multiple times (such as HEADER areas). Optionally it can warn of overlap in exclusive areas, such as the Stack.
 
+IHX Files:
+- For .ihx files bank overflow can only be guessed at (aside from duplicate writes). It's often not possible to tell the difference two banks with data that perfectly aligns on a shared boundary and a single bank that spills over into the unused area of a following bank. It's better to use .map and .noi files to check for overflow.
+- Due to their nature, RAM estimates are unavailable with .ihx files
+
 Binaries are [here](/bin/)
 
 
@@ -28,8 +32,8 @@ Options
 
 Use: Read a .map, .noi or .ihx file to display area sizes and usage.
 Example 1: "romusage build/MyProject.map"
-Example 2: "romusage build/MyProject.noi -a"
-Example 3: "romusage build/MyProject.ihx -g -e:STACK:DEFF:100 -e:SHADOW_OAM:C000:A0"
+Example 2: "romusage build/MyProject.noi -a -e:STACK:DEFF:100 -e:SHADOW_OAM:C000:A0"
+Example 3: "romusage build/MyProject.ihx -g"
 
 Note: Estimates are as close as possible, but may not be complete.
       Unless specified with -m/-e they *do not* factor regions lacking
