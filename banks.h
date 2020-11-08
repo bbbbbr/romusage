@@ -11,7 +11,7 @@
 #define RANGE_SIZE(MIN, MAX) (MAX - MIN + 1)
 
 #define AREA_MAX_STR 20
-#define MAX_AREAS     200 // Max areas per bank // TODO: dynamic area per-bank allocation
+#define MAX_AREAS     250 // Max areas per bank // TODO: dynamic area per-bank allocation
 
 #define BANK_MAX_STR 20
 #define BANKED_NO     0
@@ -53,6 +53,7 @@ extern bool banks_display_minigraph;
 extern bool banks_display_largegraph;
 extern bool option_all_areas_exclusive;
 extern bool option_quiet_mode;
+extern bool option_suppress_duplicates;
 
 
 int area_manual_add(char * arg_str);
@@ -64,6 +65,7 @@ void banks_output_show_minigraph(bool do_show);
 void banks_output_show_largegraph(bool do_show);
 void set_option_all_areas_exclusive(bool value);
 void set_option_quiet_mode(bool value);
+void set_option_suppress_duplicates(bool value);
 
 
 void banks_check(area_item area);

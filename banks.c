@@ -34,12 +34,13 @@ const bank_item bank_templates[] = {
 
 static bank_item bank_list[MAX_BANKS];
 static int bank_count = 0;
-bool banks_display_areas = false;
-bool banks_display_headers = false;
-bool banks_display_minigraph = false;
-bool banks_display_largegraph = false;
+bool banks_display_areas        = false;
+bool banks_display_headers      = false;
+bool banks_display_minigraph    = false;
+bool banks_display_largegraph   = false;
 bool option_all_areas_exclusive = false;
-bool option_quiet_mode = false;
+bool option_quiet_mode          = false;
+bool option_suppress_duplicates = true;
 
 
 // Turn on/off display of areas within bank
@@ -70,6 +71,11 @@ void set_option_all_areas_exclusive(bool value) {
 // Turn on/off display of large usage graph per bank
 void set_option_quiet_mode(bool value) {
     option_quiet_mode = value;
+}
+
+// Turn on/off display of large usage graph per bank
+void set_option_suppress_duplicates(bool value) {
+    option_suppress_duplicates = value;
 }
 
 uint32_t min(uint32_t a, uint32_t b) {
@@ -118,6 +124,17 @@ static void area_check_warnings(area_item area, uint32_t size_assigned) {
             RANGE_SIZE(area.start, area.end),
             RANGE_SIZE(area.start, area.end) - size_assigned);
     }
+
+    // For records that start in banks above the unbanked region (0x000 - 0x3FFF)
+    // Warn if they cross the boundary between different banks
+    if ((area.start >= 0x00004000U) &&
+        ((area.start & 0xFFFFC000U) != (area.end & 0xFFFFC000U))) {
+        printf("* Warning: Area %s crosses bank boundary above 0x4000. From: %x -> %x, Banks: %d -> %d (overflow?)\n",
+               area.name, area.start,
+               area.end, BANK_GET_NUM(area.start),
+               BANK_GET_NUM(area.start) + ((area.end - area.start) / 0x4000));
+    }
+
 
     // Warn if length will wrap around into a bank
     if ((WITHOUT_BANK(area.start) + RANGE_SIZE(area.start, area.end) - 1)  > 0xFFFF) {
@@ -220,10 +237,12 @@ static void bank_add_area(bank_item * p_bank, area_item area) {
     // (happens due to paginating in .map file)
     for(c=0;c < p_bank->area_count; c++) {
         // Abort add if it's already present
-        if ((strstr(area.name, p_bank->area_list[c].name)) &&
-            (area.start == p_bank->area_list[c].start) &&
-            (area.end == p_bank->area_list[c].end)) {
-            return;
+        if (option_suppress_duplicates == true) {
+            if ((strstr(area.name, p_bank->area_list[c].name)) &&
+                (area.start == p_bank->area_list[c].start) &&
+                (area.end == p_bank->area_list[c].end)) {
+                return;
+            }
         }
 
         area_check_warn_overlap(area, p_bank->area_list[c]);
