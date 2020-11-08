@@ -33,7 +33,16 @@
 :00000001FF (EOF indicator)
 */
 
-#define ADDR_UNSET   0xFFFF
+/* TODO/WARNING/BUG: 100% full banks
+It may not be possible to easily tell the difference between a perfectly filled
+bank (100% and no more) and an adjacent partially filled bank that starts at
+zero - versus - the first bank overflowed into the second that is empty.
+
+Currently the 100% bank will get merged into the next one and present as overflow
+*/
+
+
+#define ADDR_UNSET   0xFFFFFFFF
 
 #define MAX_STR_LEN     4096
 #define IHX_DATA_LEN_MAX 255
@@ -49,12 +58,25 @@
 
 typedef struct ihx_record {
     uint16_t length;
-    uint16_t  byte_count;
-    uint16_t address;
-    uint16_t address_end;
-    uint16_t  type;
+    uint32_t byte_count;
+    uint32_t address;
+    uint32_t address_end;
+    uint16_t type;
     uint8_t  checksum;
 } ihx_record;
+
+uint32_t g_address_upper;
+
+// Converts sequentally stored ihx bank style (ROM0=0x0000, ROM1=0x4000, ROM2=0x8000)
+// into map/noi banked style (ROM0=0x0000, ROM1=0x04000, ROM2=0x14000)
+uint32_t ihx_bank_2_mapnoi_bank(uint32_t addr) {
+
+    // If above 0x4000, upshift any address bits beyond 0x3FFF
+    // into upper 16 bits and force 0x4000 as base address
+    if (addr >= 0x4000)
+        addr = (addr & 0x3FFF) | ((addr & 0xFFFFC000) << 2) + 0x4000;
+    return addr;
+}
 
 
 // Return false if any character isn't a valid hex digit
@@ -111,8 +133,12 @@ int ihx_parse_and_validate_record(char * p_str, ihx_record * p_rec) {
         }
 
         // Read record header: byte count, start address, type
-        sscanf(p_str, "%2hx%4hx%2hx", &p_rec->byte_count, &p_rec->address, &p_rec->type); // fmt 'h'=unsigned short
+        sscanf(p_str, "%2x%4x%2hx", &p_rec->byte_count, &p_rec->address, &p_rec->type); // fmt 'h'=unsigned short
         p_str += (2 + 4 + 2);
+
+        // Apply extended linear address (upper 16 bits of address space)
+        // Calculate end address
+        p_rec->address |= g_address_upper;
         p_rec->address_end = p_rec->address + p_rec->byte_count - 1;
 
 
@@ -122,6 +148,13 @@ int ihx_parse_and_validate_record(char * p_str, ihx_record * p_rec) {
             printf("Warning: IHX: byte count doesn't match length available in record! Record length = %d, Calc length = %d, bytecount = %d \n", p_rec->length, calc_length, p_rec->byte_count);
             return false;
         }
+
+        // Is this an extended linear address record? Read in offset address if so
+        if (p_rec->type == IHX_REC_EXTLIN) {
+            sscanf(p_str, "%4x", &g_address_upper);
+            g_address_upper <<= 16; // Shift into upper 16 bits of address space
+        }
+
 
         // Read data segment and calculate checsum of data + headers
         checksum_calc = p_rec->byte_count + (p_rec->address & 0xFF) + ((p_rec->address >> 8) & 0xFF) + p_rec->type;
@@ -146,6 +179,14 @@ int ihx_parse_and_validate_record(char * p_str, ihx_record * p_rec) {
         return true;
 }
 
+void area_convert_and_add(area_item area) {
+    // Convert ihx banked addresses to map/noi style
+    // End should be calculated relative to start
+    area.end   = (area.end - area.start) + ihx_bank_2_mapnoi_bank(area.start);
+    area.start = ihx_bank_2_mapnoi_bank(area.start);
+    banks_check(area);
+}
+
 
 int ihx_file_process_areas(char * filename_in) {
 
@@ -154,6 +195,9 @@ int ihx_file_process_areas(char * filename_in) {
     FILE * ihx_file = fopen(filename_in, "r");
     area_item area;
     ihx_record ihx_rec;
+
+    // Initialize global upper address modifier
+    g_address_upper = 0x0000;
 
     // Initialize area record
     snprintf(area.name, sizeof(area.name), "ihx record");
@@ -173,10 +217,15 @@ int ihx_file_process_areas(char * filename_in) {
             // Process the pending record and exit if last record (EOF)
             // Also ignore non-default data records (don't seem to occur for gbz80)
             if (ihx_rec.type == IHX_REC_EOF) {
-                banks_check(area);
+                area_convert_and_add(area);
                 continue;
-            } else if (ihx_rec.type != IHX_REC_DATA)
+            } else if (ihx_rec.type == IHX_REC_EXTLIN) {
+                // printf("Extended linear address changed to %08x %s\n\n\n", g_address_upper, strline_in);
                 continue;
+            } else if (ihx_rec.type != IHX_REC_DATA) {
+                printf("Warning: IHX: dropped record %s of type %d\n", strline_in, ihx_rec.type);
+                continue;
+            }
 
             // Records are left pending (non-processed) until they don't merge
             // with the current incoming record *or* the final (EOF) record is found.
@@ -190,8 +239,9 @@ int ihx_file_process_areas(char * filename_in) {
             } else {
                 // New record was *not* adjacent to last,
                 // so process the last/pending record
-                if (area.start != ADDR_UNSET)
-                    banks_check(area);
+                if (area.start != ADDR_UNSET) {
+                    area_convert_and_add(area);
+                }
 
                 // Now queue current record as pending for next loop
                 area.start = ihx_rec.address;

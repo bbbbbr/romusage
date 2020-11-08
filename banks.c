@@ -294,6 +294,12 @@ void banks_check(area_item area) {
     uint32_t size_used;
     uint32_t size_assigned = 0;
     int      bank_num;
+    uint32_t start, end;
+
+    // Strip banks from address.
+    // Calculating END relative is important to not accidentally loosing it's full size
+    start = WITHOUT_BANK(area.start);
+    end   = (area.end - area.start) + WITHOUT_BANK(area.start);
 
     // Loop through all banks and log any that overlap
     // (may be more than one)
@@ -301,13 +307,17 @@ void banks_check(area_item area) {
 
         // Check a given ROM/RAM bank template for overlap
         size_used = addrs_get_overlap(bank_templates[c].start, bank_templates[c].end,
-                                      WITHOUT_BANK(area.start), WITHOUT_BANK(area.end));
+                                      start, end);
 
         // If overlap was found, determine bank number and log it
         if (size_used > 0) {
             bank_num = BANK_GET_NUM(area.start);
             banklist_add(bank_templates[c], area, bank_num);
             size_assigned += size_used; // Log space assigned to bank
+
+            // Only allow overflow to other banks if first bank is non-banked
+            if (bank_templates[c].is_banked != BANKED_NO)
+                break;
         }
     }
 
