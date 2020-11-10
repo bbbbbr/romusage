@@ -41,6 +41,8 @@ bool banks_display_largegraph   = false;
 bool option_all_areas_exclusive = false;
 bool option_quiet_mode          = false;
 bool option_suppress_duplicates = true;
+bool option_error_on_warning    = false;
+bool exit_error                 = false;
 
 
 // Turn on/off display of areas within bank
@@ -68,15 +70,30 @@ void banks_output_show_largegraph(bool do_show) {
 void set_option_all_areas_exclusive(bool value) {
     option_all_areas_exclusive = value;
 }
-// Turn on/off display of large usage graph per bank
+// Turn on/off quiet mode
 void set_option_quiet_mode(bool value) {
     option_quiet_mode = value;
 }
 
-// Turn on/off display of large usage graph per bank
+// Turn on/off suppression of duplicates
 void set_option_suppress_duplicates(bool value) {
     option_suppress_duplicates = value;
 }
+
+// Turn on/off setting an error on exit for serious warnings encountered
+void set_option_error_on_warning(bool value) {
+    option_error_on_warning = value;
+}
+
+void set_exit_error(void) {
+    exit_error = true;
+}
+
+bool get_exit_error(void) {
+    return exit_error;
+}
+
+
 
 uint32_t min(uint32_t a, uint32_t b) {
     return (a < b) ? a : b;
@@ -135,6 +152,9 @@ static void area_check_region_overflow(area_item area) {
                    area.start, area.end,
                    (area.start & 0xFFFF0000U) + bank_templates[c].overflow_end,
                    (area.end - ((area.start & 0xFFFF0000U) + bank_templates[c].overflow_end)));
+
+            if (option_error_on_warning)
+                set_exit_error();
         }
     }
 }
@@ -178,6 +198,8 @@ static void area_check_warn_overlap(area_item area_a, area_item area_b) {
                 area_b.name, area_b.start, area_b.end, RANGE_SIZE(area_b.start, area_b.end),
                 (area_b.exclusive) ? ", EXCLUSIVE" : " ");
 
+            if (option_error_on_warning)
+                set_exit_error();
         }
     }
 }

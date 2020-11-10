@@ -29,16 +29,18 @@ Options
 -e  : Manually specify an Area that should not overlap -e:NAME:HEXADDR:HEXLENGTH
 -E  : All areas are exclusive (except HEADERs), warn for any overlaps
 -q  : Quiet, no output except warnings and errors
+-R  : Return error code for Area warnings and errors
 
-Use: Read a .map, .noi or .ihx file to display area sizes and usage.
+Use: Read a .map, .noi or .ihx file to display area sizes.
 Example 1: "romusage build/MyProject.map"
 Example 2: "romusage build/MyProject.noi -a -e:STACK:DEFF:100 -e:SHADOW_OAM:C000:A0"
 Example 3: "romusage build/MyProject.ihx -g"
+Example 4: "romusage build/MyProject.map -q -R"
 
 Note: Estimates are as close as possible, but may not be complete.
       Unless specified with -m/-e they *do not* factor regions lacking
       complete ranges in the Map/Noi/Ihx file, for example Shadow OAM and Stack.
-
+      IHX files can only detect overlaps, not detect memory region overflows.
 ```
 
 

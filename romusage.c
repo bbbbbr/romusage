@@ -18,6 +18,7 @@ void display_help(void);
 int handle_args(int argc, char * argv[]);
 
 char filename_in[MAX_STR_LEN] = {'\0'};
+int  show_help_and_exit = false;
 
 
 void display_help(void) {
@@ -34,15 +35,18 @@ void display_help(void) {
            "-e  : Manually specify an Area that should not overlap -e:NAME:HEXADDR:HEXLENGTH\n"
            "-E  : All areas are exclusive (except HEADERs), warn for any overlaps\n"
            "-q  : Quiet, no output except warnings and errors\n"
+           "-R  : Return error code for Area warnings and errors \n"
            "\n"
            "Use: Read a .map, .noi or .ihx file to display area sizes.\n"
            "Example 1: \"romusage build/MyProject.map\"\n"
-           "Example 2: \"romusage build/MyProject.noi -a\"\n"
-           "Example 3: \"romusage build/MyProject.ihx -g -e:STACK:DEFF:100 -e:SHADOW_OAM:C000:A0\"\n"
+           "Example 2: \"romusage build/MyProject.noi -a -e:STACK:DEFF:100 -e:SHADOW_OAM:C000:A0\"\n"
+           "Example 3: \"romusage build/MyProject.ihx -g\"\n"
+           "Example 4: \"romusage build/MyProject.map -q -R\"\n"
            "\n"
            "Note: Estimates are as close as possible, but may not be complete.\n"
            "      Unless specified with -m/-e they *do not* factor regions lacking\n"
            "      complete ranges in the Map/Noi/Ihx file, for example Shadow OAM and Stack.\n"
+           "      IHX files can only detect overlaps, not detect memory region overflows.\n"
            );
 }
 
@@ -65,7 +69,8 @@ int handle_args(int argc, char * argv[]) {
 
         if (strstr(argv[i], "-h")) {
             display_help();
-            return false;  // Don't parse input when -h is used
+            show_help_and_exit = true;
+            return true;  // Don't parse further input when -h is used
         } else if (strstr(argv[i], "-a")) {
             banks_output_show_areas(true);
         } else if (strstr(argv[i], "-sH")) {
@@ -77,19 +82,22 @@ int handle_args(int argc, char * argv[]) {
             banks_output_show_largegraph(true);
         } else if (strstr(argv[i], "-E")) {
             set_option_all_areas_exclusive(true);
+
         } else if (strstr(argv[i], "-q")) {
             set_option_quiet_mode(true);
+        } else if (strstr(argv[i], "-R")) {
+            set_option_error_on_warning(true);
 
         } else if (strstr(argv[i], "-m") || strstr(argv[i], "-e")) {
             if (!area_manual_add(argv[i])) {
             fprintf(stdout,"malformed manual area argument: %s\n\n", argv[i]);
             display_help();
-            return false;  // Don't parse input when -h is used
+            return false;
             }
         } else if (argv[i][0] == '-') {
             fprintf(stdout,"Unknown argument: %s\n\n", argv[i]);
             display_help();
-            return false;  // Don't parse input when -h is used
+            return false;
         }
 
     }
@@ -105,32 +113,40 @@ int matches_extension(char * filename, char * extension) {
 
 int main( int argc, char *argv[] )  {
 
+    int ret = EXIT_FAILURE; // Default to failure on exit
+
     if (handle_args(argc, argv)) {
 
-        // Must at least have extension
-        if (strlen(filename_in) >=5) {
+        if (show_help_and_exit) {
+            ret = EXIT_SUCCESS;
+        }
+        else if (strlen(filename_in) >=5) { // Must at least have extension
             // detect file extension
             if (matches_extension(filename_in, (char *)".noi")) {
                 if (noi_file_process_areas(filename_in)) {
                     banklist_finalize_and_show();
-                    return 0; // Exit with success
+                    ret = EXIT_SUCCESS; // Exit with success
                 }
             } else if (matches_extension(filename_in, (char *)".map")) {
                 if (map_file_process_areas(filename_in)) {
                     banklist_finalize_and_show();
-                    return 0; // Exit with success
+                    ret = EXIT_SUCCESS; // Exit with success
                 }
             } else if (matches_extension(filename_in, (char *)".ihx")) {
                 if (ihx_file_process_areas(filename_in)) {
                     banklist_finalize_and_show();
-                    return 0; // Exit with success
+                    ret = EXIT_SUCCESS; // Exit with success
                 }
             }
         }
-    } else {
-        return 1;
     }
 
-    printf("Problem with filename or unable to open file! %s\n", filename_in);
-    return 1; // Exit with failure by default
+    if (ret == EXIT_FAILURE)
+        printf("Problem with filename or unable to open file! %s\n", filename_in);
+
+    // Override exit code if was set during processing
+    if (get_exit_error())
+        ret = EXIT_FAILURE;
+
+    return ret;
 }
