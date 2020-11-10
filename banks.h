@@ -44,6 +44,8 @@ typedef struct bank_item {
     uint32_t size_used;
     int      bank_num;
 
+    // TODO: track overflow bytes and report them in graph
+
     area_item area_list[MAX_AREAS]; // TODO: dynamic allcoation
     int       area_count;
 } bank_item;
