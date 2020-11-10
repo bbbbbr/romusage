@@ -57,6 +57,15 @@ WRAM_1_0       0xD000 -> 0xDFFF   4096   2150   52%    1946    47% |############
 
 ```
 
+Example of quiet mode (-q) that just reports errors and warnings, and then returns an error on exit (-R) if any are present.
+```
+romusage banks.map -R -q
+* WARNING: Area _DATA_1  at  1a000 ->  1ee35 extends past end of memory region at  1bfff (overflow? 11830 bytes)
+* WARNING: Area _CODE_1  at  14000 ->  1c023 extends past end of memory region at  17fff (overflow? 16420 bytes)
+* WARNING: Area _CODE_2  at  24000 ->  28000 extends past end of memory region at  27fff (overflow?     1 bytes)
+* WARNING: Area _CODE_12 at  c4000 ->  c801f extends past end of memory region at  c7fff (overflow?    32 bytes)
+```
+
 And another example, with display of areas in the banks enabled. Reading from the .noi file.
 ```
 romusage gbdk/examples/gb/new_banks.noi -a
