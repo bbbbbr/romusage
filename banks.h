@@ -37,6 +37,7 @@ typedef struct bank_item {
     uint32_t start;
     uint32_t end;
     int      is_banked;
+    uint32_t overflow_end;
 
     // Updateable values
     uint32_t size_total;

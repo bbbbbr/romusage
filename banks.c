@@ -23,12 +23,12 @@
 
 
 const bank_item bank_templates[] = {
-    {"ROM  ",   0x0000, 0x3FFF, BANKED_NO,  0,0,0},
-    {"ROM_",    0x4000, 0x7FFF, BANKED_YES, 0,0,0},
-    {"VRAM_",   0x8000, 0x9FFF, BANKED_YES, 0,0,0},
-    {"XRAM_",   0xA000, 0xBFFF, BANKED_YES, 0,0,0},
-    {"WRAM  ",  0xC000, 0xCFFF, BANKED_NO,  0,0,0},
-    {"WRAM_1_", 0xD000, 0xDFFF, BANKED_YES, 0,0,0},
+    {"ROM  ",   0x0000, 0x3FFF, BANKED_NO,  0x7FFF, 0,0,0},
+    {"ROM_",    0x4000, 0x7FFF, BANKED_YES, 0x7FFF, 0,0,0},
+    {"VRAM_",   0x8000, 0x9FFF, BANKED_YES, 0x9FFF, 0,0,0},
+    {"XRAM_",   0xA000, 0xBFFF, BANKED_YES, 0xBFFF, 0,0,0},
+    {"WRAM  ",  0xC000, 0xCFFF, BANKED_NO,  0xDFFF, 0,0,0},
+    {"WRAM_1_", 0xD000, 0xDFFF, BANKED_YES, 0xDFFF, 0,0,0},
 };
 
 
@@ -114,31 +114,50 @@ static void area_clip_to_range(uint32_t start, uint32_t end, area_item * p_area)
 }
 
 
+static void area_check_region_overflow(area_item area) {
+
+    int c;
+
+    // Find bank template the area starts in and check to see
+    // whether the area extends past the end of it's memory region.
+    //
+    // Non-banked areas with banks above them have the upper bound
+    // set to the end of the bank above them.
+    for(c = 0; c < ARRAY_LEN(bank_templates); c++) {
+
+        // Warn about overflow in any ROM bank GBZ80 areas that cross past the (relative) end of their region
+        if (((area.start & 0x0000FFFF) >= bank_templates[c].start) &&
+            ((area.start & 0x0000FFFF) <= bank_templates[c].end) &&
+             (area.end   > ((area.start & 0xFFFF0000U) + bank_templates[c].overflow_end))) {
+            printf("* WARNING: Area %-8s at %6x -> %6x extends past end of memory region at %6x (overflow? %5d bytes)\n",
+                   area.name,
+                   // BANK_GET_NUM(area.start),
+                   area.start, area.end,
+                   (area.start & 0xFFFF0000U) + bank_templates[c].overflow_end,
+                   (area.end - ((area.start & 0xFFFF0000U) + bank_templates[c].overflow_end)));
+        }
+    }
+}
+
+
 static void area_check_warnings(area_item area, uint32_t size_assigned) {
 
-    // Warn if there are unassigned bytes left over
-    if (size_assigned < RANGE_SIZE(area.start, area.end)) {
-        printf("\n* Warning: Area %s 0x%x -> 0x%x (%d bytes): %d bytes not assigned to any bank (overflow?)\n",
-            area.name,
-            area.start, area.end,
-            RANGE_SIZE(area.start, area.end),
-            RANGE_SIZE(area.start, area.end) - size_assigned);
-    }
+    // Unassigned warning is mostly redundant with area_check_bank_overflow()
+    //
+    // // Warn if there are unassigned bytes left over
+    // if (size_assigned < RANGE_SIZE(area.start, area.end)) {
+    //     printf("\n* Warning: Area %s 0x%x -> 0x%x (%d bytes): %d bytes not assigned to any bank (overflow?)\n",
+    //         area.name,
+    //         area.start, area.end,
+    //         RANGE_SIZE(area.start, area.end),
+    //         RANGE_SIZE(area.start, area.end) - size_assigned);
+    // }
 
-    // For records that start in banks above the unbanked region (0x000 - 0x3FFF)
-    // Warn if they cross the boundary between different banks
-    if ((area.start >= 0x00004000U) &&
-        ((area.start & 0xFFFFC000U) != (area.end & 0xFFFFC000U))) {
-        printf("* Warning: Area %s crosses bank boundary above 0x4000. From: %x -> %x, Banks: %d -> %d (overflow?)\n",
-               area.name, area.start,
-               area.end, BANK_GET_NUM(area.start),
-               BANK_GET_NUM(area.start) + ((area.end - area.start) / 0x4000));
-    }
-
+    area_check_region_overflow(area);
 
     // Warn if length will wrap around into a bank
     if ((WITHOUT_BANK(area.start) + RANGE_SIZE(area.start, area.end) - 1)  > 0xFFFF) {
-            printf("\n* Warning: Area %s 0x%x -> 0x%x (%d bytes): extends past 0xFFFF into bank addressing bits\n",
+            printf("\n* WARNING: Area %s 0x%x -> 0x%x (%d bytes): extends past relative 0xFFFF into bank addressing bits\n",
                 area.name,
                 area.start, area.end,
                 RANGE_SIZE(area.start, area.end));
@@ -151,7 +170,7 @@ static void area_check_warn_overlap(area_item area_a, area_item area_b) {
     if (area_a.exclusive || area_b.exclusive) {
         if (addrs_get_overlap(WITHOUT_BANK(area_a.start), WITHOUT_BANK(area_a.end),
                               WITHOUT_BANK(area_b.start), WITHOUT_BANK(area_b.end)) > 0) {
-            printf("\n* Warning: Overlap with exclusive area: "
+            printf("\n* WARNING: Overlap with exclusive area: "
                    "%s 0x%x -> 0x%x (%d bytes%s) --and-- "
                    "%s 0x%x -> 0x%x (%d bytes%s)\n",
                 area_a.name, area_a.start, area_a.end, RANGE_SIZE(area_a.start, area_a.end),
@@ -253,7 +272,7 @@ static void bank_add_area(bank_item * p_bank, area_item area) {
         p_bank->area_list[ p_bank->area_count ] = area;
         p_bank->area_count++;
     } else
-        printf("Warning: ran out of areas in bank %s\n", p_bank->name);
+        printf("WARNING: ran out of areas in bank %s\n", p_bank->name);
 
     p_bank->size_used += area_size;
 }
