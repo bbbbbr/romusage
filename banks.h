@@ -5,10 +5,15 @@
 #ifndef _BANKS_H
 #define _BANKS_H
 
-#define ARRAY_LEN(A)  (sizeof(A) / sizeof(A[0]))
-#define WITHOUT_BANK(addr)  (addr & 0x0000FFFF)
-#define BANK_GET_NUM(addr)     ((addr & 0xFFFF0000) >> 16)
+
+#define MAX_ADDR_UNBANKED 0x0000FFFFU
+
+#define ARRAY_LEN(A)         (sizeof(A) / sizeof(A[0]))
+#define WITHOUT_BANK(addr)   (addr & 0x0000FFFFU)
+#define BANK_GET_NUM(addr)   ((addr & 0xFFFF0000U) >> 16)
+#define BANK_ONLY(addr)      (addr & 0xFFFF0000U)
 #define RANGE_SIZE(MIN, MAX) (MAX - MIN + 1)
+#define UNBANKED_END(start, end)  ((end - start) + WITHOUT_BANK(start))
 
 #define AREA_MAX_STR 20
 #define MAX_AREAS     250 // Max areas per bank // TODO: dynamic area per-bank allocation
@@ -26,6 +31,8 @@ typedef struct area_item {
     char     name[AREA_MAX_STR];
     uint32_t start;
     uint32_t end;
+    uint32_t start_unbanked;
+    uint32_t end_unbanked;
     uint32_t length;
     bool     exclusive;
 } area_item;

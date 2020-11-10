@@ -143,20 +143,43 @@ static void area_check_region_overflow(area_item area) {
     for(c = 0; c < ARRAY_LEN(bank_templates); c++) {
 
         // Warn about overflow in any ROM bank GBZ80 areas that cross past the (relative) end of their region
-        if (((area.start & 0x0000FFFF) >= bank_templates[c].start) &&
-            ((area.start & 0x0000FFFF) <= bank_templates[c].end) &&
-             (area.end   > ((area.start & 0xFFFF0000U) + bank_templates[c].overflow_end))) {
-            printf("* WARNING: Area %-8s at %6x -> %6x extends past end of memory region at %6x (overflow? %5d bytes)\n",
+        if ((WITHOUT_BANK(area.start) >= bank_templates[c].start) &&
+            (WITHOUT_BANK(area.start) <= bank_templates[c].end) &&
+             (area.end   > (BANK_ONLY(area.start) + bank_templates[c].overflow_end))) {
+            printf("* WARNING: Area %-8s at %6x -> %6x extends past end of memory region at %6x (overflow by %5d bytes?)\n",
                    area.name,
                    // BANK_GET_NUM(area.start),
                    area.start, area.end,
-                   (area.start & 0xFFFF0000U) + bank_templates[c].overflow_end,
-                   (area.end - ((area.start & 0xFFFF0000U) + bank_templates[c].overflow_end)));
+                   BANK_ONLY(area.start) + bank_templates[c].overflow_end,
+                   (area.end - (BANK_ONLY(area.start) + bank_templates[c].overflow_end)));
 
             if (option_error_on_warning)
                 set_exit_error();
         }
     }
+}
+
+
+// Warn if length extends past end of unbanked address space (0xFFFF)
+// and will underflow / wrap around
+static bool area_check_underflow(area_item area, bool notify) {
+
+    if (area.end > (BANK_ONLY(area.start) + MAX_ADDR_UNBANKED)) {
+
+        if (notify) {
+            printf("* WARNING: Area %-8s at %6x -> %6x (%d bytes) extends past %x (underflow error?)\n",
+                area.name,
+                area.start, area.end,
+                RANGE_SIZE(area.start, area.end),
+                BANK_ONLY(area.start) + MAX_ADDR_UNBANKED);
+
+            if (option_error_on_warning)
+                set_exit_error();
+        }
+
+        return true;
+    }
+    else return false;
 }
 
 
@@ -166,7 +189,7 @@ static void area_check_warnings(area_item area, uint32_t size_assigned) {
     //
     // // Warn if there are unassigned bytes left over
     // if (size_assigned < RANGE_SIZE(area.start, area.end)) {
-    //     printf("\n* Warning: Area %s 0x%x -> 0x%x (%d bytes): %d bytes not assigned to any bank (overflow?)\n",
+    //     printf("\n* Warning: Area %s 0x%x -> 0x%x (%d bytes): %d bytes not assigned to any bank (overflow error?)\n",
     //         area.name,
     //         area.start, area.end,
     //         RANGE_SIZE(area.start, area.end),
@@ -175,13 +198,7 @@ static void area_check_warnings(area_item area, uint32_t size_assigned) {
 
     area_check_region_overflow(area);
 
-    // Warn if length will wrap around into a bank
-    if ((WITHOUT_BANK(area.start) + RANGE_SIZE(area.start, area.end) - 1)  > 0xFFFF) {
-            printf("\n* WARNING: Area %s 0x%x -> 0x%x (%d bytes): extends past relative 0xFFFF into bank addressing bits\n",
-                area.name,
-                area.start, area.end,
-                RANGE_SIZE(area.start, area.end));
-    }
+    area_check_underflow(area, true);
 }
 
 
@@ -306,8 +323,8 @@ static void banklist_add(bank_item bank_template, area_item area, int bank_num) 
     int c;
 
     // Strip bank indicator bits and limit area range to within bank
-    area.start = WITHOUT_BANK(area.start);
-    area.end = WITHOUT_BANK(area.end);
+    area.start = area.start_unbanked;
+    area.end = area.end_unbanked;
     area_clip_to_range(bank_template.start, bank_template.end, &area);
 
     // Check to see if key matches any entries,
@@ -345,6 +362,24 @@ static void banklist_add(bank_item bank_template, area_item area, int bank_num) 
 }
 
 
+// Strip banks from address start and end, set start/end_unbanked
+static void area_calc_unbanked_range(area_item * p_area) {
+
+    p_area->start_unbanked = WITHOUT_BANK(p_area->start);
+
+    // * Calculating End relative to start is important for
+    //   not accidentally loosing it's full size.
+    // * Unbanked End is also capped at 0xFFFF to
+    //   prevent wraparound range size errors
+    if (area_check_underflow(*p_area, false)) {
+        // area_check_warnings() will warn about this later
+        p_area->end_unbanked = MAX_ADDR_UNBANKED;
+    } else {
+        p_area->end_unbanked = UNBANKED_END(p_area->start, p_area->end);
+    }
+}
+
+
 // Check to see if an area overlaps with any of the bank templates.
 // If it does then try to create/update a bank entry
 // and add/append the area entry
@@ -354,12 +389,10 @@ void banks_check(area_item area) {
     uint32_t size_used;
     uint32_t size_assigned = 0;
     int      bank_num;
-    uint32_t start, end;
 
-    // Strip banks from address.
-    // Calculating END relative is important to not accidentally loosing it's full size
-    start = WITHOUT_BANK(area.start);
-    end   = (area.end - area.start) + WITHOUT_BANK(area.start);
+    // Set the unbanked address range for comparison
+    // with (unbanked) bank templates
+    area_calc_unbanked_range(&area);
 
     // Loop through all banks and log any that overlap
     // (may be more than one)
@@ -367,7 +400,7 @@ void banks_check(area_item area) {
 
         // Check a given ROM/RAM bank template for overlap
         size_used = addrs_get_overlap(bank_templates[c].start, bank_templates[c].end,
-                                      start, end);
+                                      area.start_unbanked, area.end_unbanked);
 
         // If overlap was found, determine bank number and log it
         if (size_used > 0) {
