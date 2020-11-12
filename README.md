@@ -61,10 +61,10 @@ Example of quiet mode (-q) that just reports errors and warnings, and can return
 ```
 romusage banks.map -R -q
 
-* WARNING: Area _DATA    at   c0a0 ->  115a4 extends past end of address range at ffff (Underflow error by 5541 bytes)
-* WARNING: Area _DATA    at   c0a0 ->  115a4 extends past end of memory region at dfff (Overflow by 13733 bytes)
-* WARNING: Area _CODE_1  at  14000 ->  1c023 extends past end of memory region at 17fff (Overflow by 16420 bytes)
-* WARNING: Area _CODE_12 at  c4000 ->  c801f extends past end of memory region at c7fff (Overflow by 32 bytes)
+* WARNING: Area _DATA    at  c0a0 -> 115a4 extends past end of address space at  ffff (Underflow error by 5541 bytes)
+* WARNING: Area _DATA    at  c0a0 -> 115a4 extends past end of memory region at  dfff (Overflow by 13733 bytes)
+* WARNING: Area _CODE_1  at 14000 -> 1c023 extends past end of memory region at 17fff (Overflow by 16420 bytes)
+* WARNING: Area _CODE_12 at c4000 -> c801f extends past end of memory region at c7fff (Overflow by 32 bytes)
 
 ```
 

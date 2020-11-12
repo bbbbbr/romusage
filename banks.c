@@ -146,7 +146,7 @@ static void area_check_region_overflow(area_item area) {
         if ((WITHOUT_BANK(area.start) >= bank_templates[c].start) &&
             (WITHOUT_BANK(area.start) <= bank_templates[c].end) &&
              (area.end   > (BANK_ONLY(area.start) + bank_templates[c].overflow_end))) {
-            printf("* WARNING: Area %-8s at %6x -> %6x extends past end of memory region at %x (Overflow by %d bytes)\n",
+            printf("* WARNING: Area %-8s at %5x -> %5x extends past end of memory region at %5x (Overflow by %d bytes)\n",
                    area.name,
                    // BANK_GET_NUM(area.start),
                    area.start, area.end,
@@ -167,7 +167,7 @@ static bool area_check_underflow(area_item area, bool notify) {
     if (area.end > (BANK_ONLY(area.start) + MAX_ADDR_UNBANKED)) {
 
         if (notify) {
-            printf("* WARNING: Area %-8s at %6x -> %6x extends past end of address space at %x (Underflow error by %d bytes)\n",
+            printf("* WARNING: Area %-8s at %5x -> %5x extends past end of address space at %5x (Underflow error by %d bytes)\n",
                 area.name,
                 area.start, area.end,
                 BANK_ONLY(area.start) + MAX_ADDR_UNBANKED,
