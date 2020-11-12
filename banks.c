@@ -146,12 +146,12 @@ static void area_check_region_overflow(area_item area) {
         if ((WITHOUT_BANK(area.start) >= bank_templates[c].start) &&
             (WITHOUT_BANK(area.start) <= bank_templates[c].end) &&
              (area.end   > (BANK_ONLY(area.start) + bank_templates[c].overflow_end))) {
-            printf("* WARNING: Area %-8s at %6x -> %6x extends past end of memory region at %6x (overflow by %5d bytes?)\n",
+            printf("* WARNING: Area %-8s at %6x -> %6x extends past end of memory region at %x (Overflow by %d bytes)\n",
                    area.name,
                    // BANK_GET_NUM(area.start),
                    area.start, area.end,
                    BANK_ONLY(area.start) + bank_templates[c].overflow_end,
-                   (area.end - (BANK_ONLY(area.start) + bank_templates[c].overflow_end)));
+                   area.end - (BANK_ONLY(area.start) + bank_templates[c].overflow_end));
 
             if (option_error_on_warning)
                 set_exit_error();
@@ -167,11 +167,11 @@ static bool area_check_underflow(area_item area, bool notify) {
     if (area.end > (BANK_ONLY(area.start) + MAX_ADDR_UNBANKED)) {
 
         if (notify) {
-            printf("* WARNING: Area %-8s at %6x -> %6x (%d bytes) extends past %x (underflow error?)\n",
+            printf("* WARNING: Area %-8s at %6x -> %6x extends past end of address space at %x (Underflow error by %d bytes)\n",
                 area.name,
                 area.start, area.end,
-                RANGE_SIZE(area.start, area.end),
-                BANK_ONLY(area.start) + MAX_ADDR_UNBANKED);
+                BANK_ONLY(area.start) + MAX_ADDR_UNBANKED,
+                area.end - (BANK_ONLY(area.start) + MAX_ADDR_UNBANKED));
 
             if (option_error_on_warning)
                 set_exit_error();
@@ -189,16 +189,15 @@ static void area_check_warnings(area_item area, uint32_t size_assigned) {
     //
     // // Warn if there are unassigned bytes left over
     // if (size_assigned < RANGE_SIZE(area.start, area.end)) {
-    //     printf("\n* Warning: Area %s 0x%x -> 0x%x (%d bytes): %d bytes not assigned to any bank (overflow error?)\n",
+    //     printf("\n* Warning: Area %s 0x%x -> 0x%x (%d bytes): %d bytes not assigned to any bank (overflow error)\n",
     //         area.name,
     //         area.start, area.end,
     //         RANGE_SIZE(area.start, area.end),
     //         RANGE_SIZE(area.start, area.end) - size_assigned);
     // }
 
-    area_check_region_overflow(area);
-
     area_check_underflow(area, true);
+    area_check_region_overflow(area);
 }
 
 
