@@ -1,4 +1,7 @@
 
 *.o
+*.ihx
+*.noi
+*.map
 /romusage
 /romusage.exe
