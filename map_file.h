@@ -4,6 +4,5 @@
 
 #define MAX_STR_LEN     4096
 #define MAX_STR_AREALEN 20
-#define MAX_SPLIT_WORDS 6
 
 int map_file_process_areas(char * filename_in);

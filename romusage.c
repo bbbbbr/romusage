@@ -11,7 +11,6 @@
 
 #include "banks.h"
 #include "map_file.h"
-#include "map_file_rgbds.h"
 #include "noi_file.h"
 #include "ihx_file.h"
 
@@ -44,10 +43,12 @@ void display_help(void) {
            "Example 3: \"romusage build/MyProject.ihx -g\"\n"
            "Example 4: \"romusage build/MyProject.map -q -R\"\n"
            "\n"
-           "Note: Estimates are as close as possible, but may not be complete.\n"
-           "      Unless specified with -m/-e they *do not* factor regions lacking\n"
-           "      complete ranges in the Map/Noi/Ihx file, for example Shadow OAM and Stack.\n"
-           "      IHX files can only detect overlaps, not detect memory region overflows.\n"
+           "Notes:\n"
+           "  * GBDK / RGBDS map file format detection is automatic.\n"
+           "  * Estimates are as close as possible, but may not be complete.\n"
+           "    Unless specified with -m/-e they *do not* factor regions lacking\n"
+           "    complete ranges in the Map/Noi/Ihx file, for example Shadow OAM and Stack.\n"
+           "  * IHX files can only detect overlaps, not detect memory region overflows.\n"
            );
 }
 
@@ -129,8 +130,7 @@ int main( int argc, char *argv[] )  {
                     ret = EXIT_SUCCESS; // Exit with success
                 }
             } else if (matches_extension(filename_in, (char *)".map")) {
-                if (map_file_rgbds_process_areas(filename_in)) {
-//                if (map_file_process_areas(filename_in)) {
+                if (map_file_process_areas(filename_in)) {
                     banklist_finalize_and_show();
                     ret = EXIT_SUCCESS; // Exit with success
                 }

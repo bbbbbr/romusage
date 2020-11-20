@@ -5,7 +5,7 @@ A small command line tool for estimating usage of Game Boy ROMs from a .map, .no
 
 It produces a trimmed, sorted output of ROM/RAMs, their usage and optionally the Areas located in them.
 
-Runs on Linux and Windows, meant for use with [GBDK 2020](https://github.com/Zal0/gbdk-2020/). If map file output is not already enabled, use either `-Wl-m` with `lcc` or `-m` with `sdldgb` directly.
+Runs on Linux and Windows, it can be used with [GBDK 2020](https://github.com/Zal0/gbdk-2020/) and [RGBDS](https://github.com/gbdev/rgbds). If map file output is not already enabled, use either `-Wl-m` with `lcc` or `-m` with `sdldgb` directly.
 
 The usage calculation will attempt to merge overlapping areas to avoid counting shared space multiple times (such as HEADER areas). Optionally it can warn of overlap in exclusive areas, such as the Stack.
 
@@ -37,10 +37,13 @@ Example 2: "romusage build/MyProject.noi -a -e:STACK:DEFF:100 -e:SHADOW_OAM:C000
 Example 3: "romusage build/MyProject.ihx -g"
 Example 4: "romusage build/MyProject.map -q -R"
 
-Note: Estimates are as close as possible, but may not be complete.
-      Unless specified with -m/-e they *do not* factor regions lacking
-      complete ranges in the Map/Noi/Ihx file, for example Shadow OAM and Stack.
-      IHX files can only detect overlaps, not detect memory region overflows.
+Notes:
+  * GBDK / RGBDS map file format detection is automatic.
+  * Estimates are as close as possible, but may not be complete.
+    Unless specified with -m/-e they *do not* factor regions lacking
+    complete ranges in the Map/Noi/Ihx file, for example Shadow OAM and Stack.
+  * IHX files can only detect overlaps, not detect memory region overflows.
+
 ```
 
 
