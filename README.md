@@ -1,7 +1,7 @@
 romusage
 ===========
 
-A small command line tool for estimating usage of Game Boy ROMs from a .map, .noi or ihx file.
+A small command line tool for estimating usage (free space) of Game Boy ROMs from a .map, .noi or ihx file.
 
 It produces a trimmed, sorted output of ROM/RAMs, their usage and optionally the Areas located in them.
 
