@@ -197,12 +197,28 @@ int ihx_parse_and_validate_record(char * p_str, ihx_record * p_rec) {
 }
 
 void area_convert_and_add(area_item area) {
+
+    area_item t_area;
+
     // Convert ihx banked addresses to map/noi style
     // End should be calculated relative to start
+
+    // Records which cross from (< 0x4000) into (>= 0x4000)
+    // could produce ROM_0 entries that should be in ROM_1.
+    // These are not warned about earlier since it could be
+    // legit behavior for a 32K unbanked ROM.
     //
-    // Warning: Known bug that records which cross from (< 0x4000) into (>= 0x4000)
-    //          for 32K unbanked roms will produce ROM_0 entries that should be in ROM_1.
-    //          The only solution would be to split them apart.
+    // Split them on the bank boundary to avoid that.
+    if ((area.start < 0x00004000U) && (area.end >= 0x00004000U))
+    {
+        // Copy area and drop part in the lower unbanked bank area
+        t_area = area;
+        t_area.start = 0x00004000U;
+        area_convert_and_add(t_area);
+        // Truncate original area at unbanked ROM boundary
+        area.end = 0x00003FFFU;
+    }
+
     area.end   = (area.end - area.start) + ihx_bank_2_mapnoi_bank(area.start);
     area.start = ihx_bank_2_mapnoi_bank(area.start);
     banks_check(area);
