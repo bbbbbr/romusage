@@ -139,12 +139,6 @@ int ihx_parse_and_validate_record(char * p_str, ihx_record * p_rec) {
         sscanf(p_str, "%2x%4x%2x", &p_rec->byte_count, &p_rec->address, &p_rec->type);
         p_str += (2 + 4 + 2);
 
-        // Apply extended linear address (upper 16 bits of address space)
-        // Calculate end address
-        p_rec->address |= g_address_upper;
-        p_rec->address_end = p_rec->address + p_rec->byte_count - 1;
-
-
         // Require expected data byte count to fit within record length (at 2 chars per hex byte)
         calc_length = IHX_REC_LEN_MIN + (p_rec->byte_count * 2);
         if (p_rec->length != calc_length) {
@@ -156,6 +150,19 @@ int ihx_parse_and_validate_record(char * p_str, ihx_record * p_rec) {
         if (p_rec->type == IHX_REC_EXTLIN) {
             sscanf(p_str, "%4x", &g_address_upper);
             g_address_upper <<= 16; // Shift into upper 16 bits of address space
+        }
+        else if (p_rec->type == IHX_REC_DATA) {
+
+            // Don't process records with zero bytes of length
+            if (p_rec->byte_count == 0) {
+                printf("Warning: IHX: Zero length record starting at %x\n", p_rec->address);
+                return false;
+            }
+
+            // Apply extended linear address (upper 16 bits of address space)
+            // Calculate end address
+            p_rec->address |= g_address_upper;
+            p_rec->address_end = p_rec->address + p_rec->byte_count - 1;
         }
 
         // Read data segment and calculate checsum of data + headers
@@ -182,7 +189,7 @@ int ihx_parse_and_validate_record(char * p_str, ihx_record * p_rec) {
         // Warn if they cross the boundary between different banks
         if ((p_rec->address >= 0x00004000U) &&
             ((p_rec->address & 0xFFFFC000U) != (p_rec->address_end & 0xFFFFC000U))) {
-            printf("Warning: Write from one bank spans into the next. Bank overflow? %x -> %x (bank %d -> %d)\n",
+            printf("Warning: IHX: Write from one bank spans into the next. Bank overflow? %x -> %x (bank %d -> %d)\n",
                    p_rec->address, p_rec->address_end, BANK_NUM(p_rec->address), BANK_NUM(p_rec->address_end));
         }
 
@@ -192,6 +199,10 @@ int ihx_parse_and_validate_record(char * p_str, ihx_record * p_rec) {
 void area_convert_and_add(area_item area) {
     // Convert ihx banked addresses to map/noi style
     // End should be calculated relative to start
+    //
+    // Warning: Known bug that records which cross from (< 0x4000) into (>= 0x4000)
+    //          for 32K unbanked roms will produce ROM_0 entries that should be in ROM_1.
+    //          The only solution would be to split them apart.
     area.end   = (area.end - area.start) + ihx_bank_2_mapnoi_bank(area.start);
     area.start = ihx_bank_2_mapnoi_bank(area.start);
     banks_check(area);
