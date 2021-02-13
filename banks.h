@@ -15,7 +15,7 @@
 #define RANGE_SIZE(MIN, MAX) (MAX - MIN + 1)
 #define UNBANKED_END(start, end)  ((end - start) + WITHOUT_BANK(start))
 
-#define AREA_MAX_STR 20
+#define AREA_MAX_STR 30
 #define MAX_AREAS     250 // Max areas per bank // TODO: dynamic area per-bank allocation
 
 #define BANK_MAX_STR 20

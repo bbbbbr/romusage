@@ -13,6 +13,7 @@
 #include "map_file.h"
 #include "noi_file.h"
 #include "ihx_file.h"
+#include "cdb_file.h"
 
 void display_help(void);
 int handle_args(int argc, char * argv[]);
@@ -23,7 +24,7 @@ int  show_help_and_exit = false;
 
 void display_help(void) {
     fprintf(stdout,
-           "romusage input_file.[map|noi|ihx] [options]\n"
+           "romusage input_file.[map|noi|ihx|cdb] [options]\n"
            "\n"
            "Options\n"
            "-h  : Show this help\n"
@@ -37,7 +38,7 @@ void display_help(void) {
            "-q  : Quiet, no output except warnings and errors\n"
            "-R  : Return error code for Area warnings and errors \n"
            "\n"
-           "Use: Read a .map, .noi or .ihx file to display area sizes.\n"
+           "Use: Read a .map, .noi, .cdb or .ihx file to display area sizes.\n"
            "Example 1: \"romusage build/MyProject.map\"\n"
            "Example 2: \"romusage build/MyProject.noi -a -e:STACK:DEFF:100 -e:SHADOW_OAM:C000:A0\"\n"
            "Example 3: \"romusage build/MyProject.ihx -g\"\n"
@@ -136,6 +137,11 @@ int main( int argc, char *argv[] )  {
                 }
             } else if (matches_extension(filename_in, (char *)".ihx")) {
                 if (ihx_file_process_areas(filename_in)) {
+                    banklist_finalize_and_show();
+                    ret = EXIT_SUCCESS; // Exit with success
+                }
+            } else if (matches_extension(filename_in, (char *)".cdb")) {
+                if (cdb_file_process_symbols(filename_in)) {
                     banklist_finalize_and_show();
                     ret = EXIT_SUCCESS; // Exit with success
                 }
