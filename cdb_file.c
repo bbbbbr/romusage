@@ -113,7 +113,7 @@ static void cdb_symbollist_add_all_to_banks() {
         if ((symbol_list[c].length == AREA_VAL_UNSET) &&
             (symbol_list[c].start != AREA_VAL_UNSET) &&
             (symbol_list[c].end != AREA_VAL_UNSET)) {
-            symbol_list[c].length = symbol_list[c].end - symbol_list[c].start + 1;
+            symbol_list[c].length = symbol_list[c].end - symbol_list[c].start + 1;            
         }
 
         
@@ -124,6 +124,50 @@ static void cdb_symbollist_add_all_to_banks() {
         }
     }
 }
+
+
+// Adds start/end address from a Linker Record
+// Requires either separate calls for Start and End, or one call for
+// start and a separate cdb_add_record_symbol() call to set length
+static void cdb_add_record_linker(char * type, char * name, char * address) {
+
+    // Retrieve existing symbol or create a new one
+    int symbol_id = symbollist_get_id_by_name(name);
+
+    if (symbol_id != ERR_NO_AREAS_LEFT) {
+
+        // Check Linker record for start-address or end-address
+        // Bank number is in the address bits, no need to modify it
+        if (strncmp(type, CDB_L_REC_FUNC_END, 4) == 0)
+            symbol_list[symbol_id].end = strtol(address, NULL, 16);   // Start address
+        else if (strncmp(type, CDB_L_REC_FUNC_START, 4) == 0)
+            symbol_list[symbol_id].start = strtol(address, NULL, 16); // End address
+    }
+}
+
+
+// Adds length from a symbol record
+// To get a complete entry requires a start address call to cdb_add_record_linker()
+static void cdb_add_record_symbol(char * addr_space, char * name, char * length) {
+    
+    // Only allow certain address spaces
+    if ((addr_space[0] == 'C') || // Address Space: Code
+        (addr_space[0] == 'D') || // Address Space: Code / static segment
+        (addr_space[0] == 'E') || // Address Space: Internal RAM (lower 128) bytes
+        (addr_space[0] == 'F') || // Address Space: External RAM
+        (addr_space[0] == 'G')) { // Address Space: Internal RAM
+
+        // Exclude zero length or small (2 byte) entries
+        if (strtol(length, NULL, 10) > 2) {
+            // Retrieve existing symbol or create a new one
+            int symbol_id = symbollist_get_id_by_name(name); // [2] Area Name
+            if (symbol_id != ERR_NO_AREAS_LEFT) {
+                symbol_list[symbol_id].length = strtol(length, NULL, 10); // [5] Symbol decimal length
+            }
+        }
+    }
+}
+
 
 int cdb_file_process_symbols(char * filename_in) {
 
@@ -170,35 +214,16 @@ int cdb_file_process_symbols(char * filename_in) {
                     if ((p_words[0][0] == CDB_REC_L) &&
                         (cols == CDB_REC_L_COUNT_MATCH)) {
 
-                        int symbol_id = symbollist_get_id_by_name(p_words[2]); // [2] Area Name1
-                        if (symbol_id != ERR_NO_AREAS_LEFT) {
-                        
-                            // Check Linker record for start-address or end-address
-                            // Bank number is in the address bits, no need to modify it
-                            if (strncmp(p_words[1], CDB_L_REC_FUNC_END, 4) == 0)
-                                symbol_list[symbol_id].end = strtol(p_words[5], NULL, 16);   // [5]: Start address
-                            else if (strncmp(p_words[1], CDB_L_REC_FUNC_START, 4) == 0)
-                                symbol_list[symbol_id].start = strtol(p_words[5], NULL, 16); // [5]: End address
-                        }
+                        // [1] Start/End, [2] Area Name1, [5] Address
+                        cdb_add_record_linker(p_words[1], p_words[2], p_words[5]);
                     }
 
                     // Symbol record (length)
                     if ((p_words[0][0] == CDB_REC_S) &&
                         (cols == CDB_REC_S_COUNT_MATCH)) {
-                        // Only allow certain address spaces
-                        if ((p_words[9][0] == 'C') || // Address Space: Code
-                            (p_words[9][0] == 'D') || // Address Space: Code / static segment
-                            (p_words[9][0] == 'E') || // Address Space: Internal RAM (lower 128) bytes
-                            (p_words[9][0] == 'F') || // Address Space: External RAM
-                            (p_words[9][0] == 'G')) { // Address Space: Internal RAM
-                            // Exclude zero length entries
-                            if (strtol(p_words[5], NULL, 10) > 2) { //  0) {
-                                int symbol_id = symbollist_get_id_by_name(p_words[2]); // [2] Area Name1
-                                if (symbol_id != ERR_NO_AREAS_LEFT) {
-                                    symbol_list[symbol_id].length = strtol(p_words[5], NULL, 10); // [2] Symbol decimal length
-                                }
-                            }
-                        }
+
+                        // [9] address space, [2] Area Name, [5] Symbol decimal length
+                        cdb_add_record_symbol(p_words[9], p_words[2], p_words[5]);
                     }
 
                 } // end: if valid start of line
