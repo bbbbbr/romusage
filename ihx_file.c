@@ -234,6 +234,7 @@ int ihx_file_process_areas(char * filename_in) {
     area_item area;
     ihx_record ihx_rec;
 
+    set_option_input_source(OPT_INPUT_SRC_IHX);
 
     // IHX record areas don't have distinct names, so turn
     // off duplicate suppression to avoid any being dropped.

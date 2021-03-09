@@ -45,6 +45,9 @@ bool option_all_areas_exclusive = false;
 bool option_quiet_mode          = false;
 bool option_suppress_duplicates = true;
 bool option_error_on_warning    = false;
+bool option_hide_banners        = false;
+int  option_input_source        = OPT_INPUT_SRC_NONE;
+int  option_area_sort           = OPT_AREA_SORT_DEFAULT;
 bool exit_error                 = false;
 
 
@@ -87,6 +90,34 @@ void set_option_suppress_duplicates(bool value) {
 void set_option_error_on_warning(bool value) {
     option_error_on_warning = value;
 }
+
+// Turn on/off banners
+void set_option_hide_banners(bool value) {
+    option_hide_banners = value;
+}
+
+// Input source file format
+void set_option_input_source(int value) {
+    option_input_source = value;
+}
+
+// Area output sort order
+void set_option_area_sort(int value) {
+    option_area_sort = value;
+}
+
+// Area output sort order
+int get_option_area_sort(void) {
+    return option_area_sort;
+}
+
+// Turn on/off banners
+bool get_option_hide_banners() {
+    return option_hide_banners;
+}
+
+
+
 
 void set_exit_error(void) {
     exit_error = true;
@@ -476,6 +507,23 @@ static int area_item_compare(const void* a, const void* b) {
 }
 
 
+// qsort compare rule function: sort by size address first, then name
+static int area_item_compare_size_desc(const void* a, const void* b) {
+
+    if (((area_item *)a)->length != ((area_item *)b)->length)
+        return (((area_item *)a)->length < ((area_item *)b)->length);
+    else
+        return strcmp(((area_item *)a)->name, ((area_item *)b)->name);
+}
+
+
+// qsort compare rule function: sort by start address
+static int area_item_compare_addr_asc(const void* a, const void* b) {
+
+    return (((area_item *)a)->start > ((area_item *)b)->start);
+}
+
+
 // qsort compare rule function
 static int bank_item_compare(const void* a, const void* b) {
 
@@ -492,6 +540,45 @@ static int bank_item_compare(const void* a, const void* b) {
 
 
 
+// Fill in gaps between symbols with "?" symbols --TODO: rename function to symbols
+static void bank_fill_area_gaps_with_unknown(void) {
+
+    uint32_t last_addr, cur_addr;
+    int c, b, t_area_count;
+    area_item area;
+
+    for (c = 0; c < bank_count; c++) {
+        // Sort areas by ascending address so that gaps can be found
+        qsort (bank_list[c].area_list, bank_list[c].area_count, sizeof(area_item), area_item_compare_addr_asc);
+
+        t_area_count = bank_list[c].area_count; // Temp area count to avoid processing newly added areas
+        last_addr = bank_list[c].start;         // Set last to start of current bank
+
+        for(b = 0; b < t_area_count; b++) {
+
+            if ((banks_display_headers) || !(strstr(bank_list[c].area_list[b].name,"HEADER"))) {
+
+                cur_addr = bank_list[c].area_list[b].start;
+
+                if (cur_addr > last_addr + 1) {
+
+                    snprintf(area.name, sizeof(area.name), "-?-");
+                    area.start  = last_addr + 1;
+                    area.end    = cur_addr - 1;
+                    area.length = area.end - area.start + 1;
+                    area.exclusive = false;
+                    bank_add_area(&(bank_list[c]), area); // Add to bank, skip bank_check since parent bank is known
+                }
+
+                // Update previous area reference
+                last_addr = bank_list[c].area_list[b].end;
+            }
+        }
+    }
+}
+
+
+
 // Print banks to output
 void banklist_finalize_and_show(void) {
 
@@ -500,8 +587,19 @@ void banklist_finalize_and_show(void) {
     // Sort banks by start address then bank num
     qsort (bank_list, bank_count, sizeof(bank_item), bank_item_compare);
 
+    if (option_input_source == OPT_INPUT_SRC_CDB)
+        bank_fill_area_gaps_with_unknown();
+
     for (c = 0; c < bank_count; c++) {
+        // Sort areas in bank and calculate usage
         bank_list[c].size_used = bank_areas_calc_used(&bank_list[c], bank_list[c].start, bank_list[c].end);
+
+        if (option_area_sort == OPT_AREA_SORT_SIZE_DESC) 
+            qsort (bank_list[c].area_list, bank_list[c].area_count, sizeof(area_item), area_item_compare_size_desc);
+        else if (option_area_sort == OPT_AREA_SORT_ADDR_ASC) 
+            qsort (bank_list[c].area_list, bank_list[c].area_count, sizeof(area_item), area_item_compare_addr_asc);        
+        else
+            qsort (bank_list[c].area_list, bank_list[c].area_count, sizeof(area_item), area_item_compare);
     }
 
     // Only print if quiet mode is not enabled

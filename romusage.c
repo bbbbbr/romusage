@@ -15,21 +15,33 @@
 #include "ihx_file.h"
 #include "cdb_file.h"
 
-void display_help(void);
+void static display_cdb_warning(void);
+void static display_help(void);
 int handle_args(int argc, char * argv[]);
 
 char filename_in[MAX_STR_LEN] = {'\0'};
 int  show_help_and_exit = false;
 
 
-void display_help(void) {
+static void display_cdb_warning() {
+    printf("\n"
+           "   ************************ NOTICE ************************ \n"
+           "    .cdb output ONLY counts (most) data from C sources.     \n"
+           "   It cannot count functions and data from ASM and LIBs.    \n"
+           "   Bank totals may be incorrect/missing. (-nB to hide this) \n"
+           "   ************************ NOTICE ************************ \n");
+}
+
+static void display_help(void) {
     fprintf(stdout,
            "romusage input_file.[map|noi|ihx|cdb] [options]\n"
            "\n"
            "Options\n"
            "-h  : Show this help\n"
-           "-a  : Show Areas in each Bank\n"
+           "-a  : Show Areas in each Bank. Optional sort by, address:\"-aA\" or size:\"-aS\" \n"
            "-sH : Show HEADER Areas (normally hidden)\n"
+           "-nB : Hide warning banner (for .cdb output)\n"
+           "-nA : Hide areas (shown by defailt in .cdb output)\n"
            "-g  : Show a small usage graph per bank\n"
            "-G  : Show a large usage graph per bank\n"
            "-m  : Manually specify an Area -m:NAME:HEXADDR:HEXLENGTH\n"
@@ -74,10 +86,19 @@ int handle_args(int argc, char * argv[]) {
             display_help();
             show_help_and_exit = true;
             return true;  // Don't parse further input when -h is used
-        } else if (strstr(argv[i], "-a")) {
+        } else if (strstr(argv[i], "-a")) {            
             banks_output_show_areas(true);
+            if      (argv[i][2] == 'S') set_option_area_sort(OPT_AREA_SORT_SIZE_DESC);
+            else if (argv[i][2] == 'A') set_option_area_sort(OPT_AREA_SORT_ADDR_ASC);
+
         } else if (strstr(argv[i], "-sH")) {
             banks_output_show_headers(true);
+
+        } else if (strstr(argv[i], "-nB")) {
+            set_option_hide_banners(true);
+
+        } else if (strstr(argv[i], "-nA")) {
+            set_option_area_sort(OPT_AREA_SORT_HIDE);
 
         } else if (strstr(argv[i], "-g")) {
             banks_output_show_minigraph(true);
@@ -142,7 +163,11 @@ int main( int argc, char *argv[] )  {
                 }
             } else if (matches_extension(filename_in, (char *)".cdb")) {
                 if (cdb_file_process_symbols(filename_in)) {
+                    if (!get_option_hide_banners()) display_cdb_warning();
+
                     banklist_finalize_and_show();
+
+                    if (!get_option_hide_banners()) display_cdb_warning();
                     ret = EXIT_SUCCESS; // Exit with success
                 }
             }

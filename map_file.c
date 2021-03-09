@@ -102,6 +102,8 @@ int map_file_process_areas(char * filename_in) {
     char strline_in[MAX_STR_LEN] = "";
     FILE * map_file = fopen(filename_in, "r");
 
+    set_option_input_source(OPT_INPUT_SRC_MAP);
+
     cur_bank_rgbds = BANK_NUM_UNSET;
 
     if (map_file) {

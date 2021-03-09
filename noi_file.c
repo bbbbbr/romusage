@@ -89,6 +89,8 @@ int noi_file_process_areas(char * filename_in) {
     area_item area;
     int area_id;
 
+    set_option_input_source(OPT_INPUT_SRC_NOI);
+
     if (noi_file) {
 
         // Read one line at a time into \0 terminated string

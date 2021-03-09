@@ -16,18 +16,27 @@
 static area_item symbol_list[CDB_MAX_AREA_COUNT]; // TODO: dynamic reallocation
 static int symbol_count = 0;
 
+#define CDB_L_REC_FUNC_START "G"
+#define CDB_L_REC_FUNC_END "XG"
+
 
 // Example data to parse from a .cdb file:
-
-
+//
 // 0 1 2---------- 3-- 4 5----
 // L:G$big_const_4$0_0$0:24039 <-- bank 2
 // L:G$big_const_3$0_0$0:1784E <-- Bank 1
-
+//
 // 0 1 2---------- 3-- 4  5-- 6----- 7  8  9 10 11
 // S:G$big_const_3$0_0$0({256}DA256d,SC:U),D,0,0     <--- size 256 bytes (SC=signed char)
 // S:G$big_const_4$0_0$0({15360}DA15360d,SC:U),D,0,0 <--- size 15360 bytes (SC=signed char)
 
+// functions use L:XG to mark their last line
+//   basxto:    L:XG$init_map$0$0:BCA - L:G$init_map$0$0:AFB = should be the length
+//     L:G$board_handle_new_piece$0$0:6284
+//     L:XG$board_handle_new_piece$0$0:62DD
+//
+// https://github.com/roybaer/sdcc-wiki/wiki/CDB-File-Format
+//
 // Address Space field (S: record)
 // A   External stack
 // B   Internal stack
@@ -41,7 +50,7 @@ static int symbol_count = 0;
 // J   SBIT space
 // R   Register space
 // Z   Used for function records, or any undefined space code 
-
+//
 // Types in a Section 4.4 Type Chain Record (S: record)
 // DA <n>  Array of n elements
 // DF  Function
@@ -60,10 +69,6 @@ static int symbol_count = 0;
 // ST <name>   Structure of name <name>
 // SX  sbit
 // SB <n>  Bit field of <n> bits 
-
-
-
-
 
 
 // Find a matching symbol, if none matches a new one is added and returned
@@ -104,6 +109,14 @@ static void cdb_symbollist_add_all_to_banks() {
     // Only process completed symbols (start and length both set)
     for(c=0;c < symbol_count; c++) {
 
+        // Functions need length calculated from start and end
+        if ((symbol_list[c].length == AREA_VAL_UNSET) &&
+            (symbol_list[c].start != AREA_VAL_UNSET) &&
+            (symbol_list[c].end != AREA_VAL_UNSET)) {
+            symbol_list[c].length = symbol_list[c].end - symbol_list[c].start + 1;
+        }
+
+        
         if ((symbol_list[c].start != AREA_VAL_UNSET) &&
             (symbol_list[c].length != AREA_VAL_UNSET)) {
             symbol_list[c].end = symbol_list[c].start + symbol_list[c].length - 1;
@@ -122,6 +135,15 @@ int cdb_file_process_symbols(char * filename_in) {
     area_item symbol;
     int symbol_id;
 
+    // CDB defaults to showing areas
+    banks_output_show_areas(true);
+
+    // CDB defaults to size descending, but don't override explicit options
+    if (get_option_area_sort() == OPT_AREA_SORT_DEFAULT)
+        set_option_area_sort(OPT_AREA_SORT_SIZE_DESC);
+
+    set_option_input_source(OPT_INPUT_SRC_CDB);
+
     if (cdb_file) {
 
         // Read one line at a time into \0 terminated string
@@ -129,7 +151,7 @@ int cdb_file_process_symbols(char * filename_in) {
 
             // Require minimum length to match
             if (strlen(strline_in) >= CDB_REC_START_LEN) {
-printf("%s", strline_in);
+
                 // Match either _S_egment or _L_ength records
                 if ( (strncmp(strline_in, "L:", CDB_REC_START_LEN) == 0) ||
                      (strncmp(strline_in, "S:", CDB_REC_START_LEN) == 0)) {
@@ -140,28 +162,27 @@ printf("%s", strline_in);
                     while (p_str != NULL)
                     {
                         p_words[cols++] = p_str;
-                        // // Only split on underscore for the second match
-                        // if (cols == 1)
-                        //     p_str = strtok(NULL, ":$");
-                        // else
-                            p_str = strtok(NULL, ":$({}),");
+                        p_str = strtok(NULL, ":$({}),");
                         if (cols >= CDB_MAX_SPLIT_WORDS) break;
                     }
 
-// extract name
-                    // Linker record (start address)
+                    // Linker record (start or end address)
                     if ((p_words[0][0] == CDB_REC_L) &&
                         (cols == CDB_REC_L_COUNT_MATCH)) {
 
-// printf(" %s %s %s\n", p_words[0], p_words[2], p_words[5]);
                         int symbol_id = symbollist_get_id_by_name(p_words[2]); // [2] Area Name1
                         if (symbol_id != ERR_NO_AREAS_LEFT) {
-                            symbol_list[symbol_id].start = strtol(p_words[5], NULL, 16);   // [5]: Start address with 0x0xFF0000 as bank mask
-printf(" (%d) --> %s %s %s\n", symbol_id, p_words[0], p_words[2], p_words[5]);
+                        
+                            // Check Linker record for start-address or end-address
+                            // Bank number is in the address bits, no need to modify it
+                            if (strncmp(p_words[1], CDB_L_REC_FUNC_END, 4) == 0)
+                                symbol_list[symbol_id].end = strtol(p_words[5], NULL, 16);   // [5]: Start address
+                            else if (strncmp(p_words[1], CDB_L_REC_FUNC_START, 4) == 0)
+                                symbol_list[symbol_id].start = strtol(p_words[5], NULL, 16); // [5]: End address
                         }
                     }
 
-                    // Sybol record (length)
+                    // Symbol record (length)
                     if ((p_words[0][0] == CDB_REC_S) &&
                         (cols == CDB_REC_S_COUNT_MATCH)) {
                         // Only allow certain address spaces
@@ -175,10 +196,6 @@ printf(" (%d) --> %s %s %s\n", symbol_id, p_words[0], p_words[2], p_words[5]);
                                 int symbol_id = symbollist_get_id_by_name(p_words[2]); // [2] Area Name1
                                 if (symbol_id != ERR_NO_AREAS_LEFT) {
                                     symbol_list[symbol_id].length = strtol(p_words[5], NULL, 10); // [2] Symbol decimal length
-printf(" (%d) --> %s %s %s %s\n", symbol_id, p_words[0], p_words[2], p_words[5], p_words[9]);
-// int t;
-// for(t=0;t<cols;t++) printf("%d:--%s--\n", t, p_words[t]);
-// printf("----> %s\n",  p_words[9]);
                                 }
                             }
                         }
