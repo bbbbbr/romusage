@@ -148,8 +148,8 @@ static void cdb_add_record_linker(char * type, char * name, char * address) {
 
 // Adds length from a symbol record
 // To get a complete entry requires a start address call to cdb_add_record_linker()
-static void cdb_add_record_symbol(char * addr_space, char * name, char * length) {
-    
+static void cdb_add_record_symbol(char * addr_space, char * name, char * length, char * dcl_type) {
+
     // Only allow certain address spaces
     if ((addr_space[0] == 'C') || // Address Space: Code
         (addr_space[0] == 'D') || // Address Space: Code / static segment
@@ -157,12 +157,15 @@ static void cdb_add_record_symbol(char * addr_space, char * name, char * length)
         (addr_space[0] == 'F') || // Address Space: External RAM
         (addr_space[0] == 'G')) { // Address Space: Internal RAM
 
-        // Exclude zero length or small (2 byte) entries
-        if (strtol(length, NULL, 10) > 2) {
+        // Exclude zero length entries
+        // Don't let function ~entry points override function bodies(<DCLType> = DF, function which are two bytes in size)
+        if ((strtol(length, NULL, 10) > 0) &&
+            (!strstr(dcl_type, "DF")))
+        {
             // Retrieve existing symbol or create a new one
             int symbol_id = symbollist_get_id_by_name(name); // [2] Area Name
             if (symbol_id != ERR_NO_AREAS_LEFT) {
-                symbol_list[symbol_id].length = strtol(length, NULL, 10); // [5] Symbol decimal length
+                    symbol_list[symbol_id].length = strtol(length, NULL, 10); // [5] Symbol decimal length
             }
         }
     }
@@ -222,8 +225,8 @@ int cdb_file_process_symbols(char * filename_in) {
                     if ((p_words[0][0] == CDB_REC_S) &&
                         (cols == CDB_REC_S_COUNT_MATCH)) {
 
-                        // [9] address space, [2] Area Name, [5] Symbol decimal length
-                        cdb_add_record_symbol(p_words[9], p_words[2], p_words[5]);
+                        // [9] address space, [2] Area Name, [5] Symbol decimal length, [6] DCLType
+                        cdb_add_record_symbol(p_words[9], p_words[2], p_words[5], p_words[6]);
                     }
 
                 } // end: if valid start of line
