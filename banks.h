@@ -68,6 +68,7 @@ typedef struct bank_item {
 #define OPT_INPUT_SRC_MAP  3
 #define OPT_INPUT_SRC_IHX  4
 
+#define OPT_AREA_HIDE_SIZE_DEFAULT 0
 
 extern bool banks_display_areas;
 extern bool banks_display_headers;
@@ -80,6 +81,7 @@ extern bool option_error_on_warning;
 extern bool option_hide_banners;
 extern int  option_input_source;
 extern int  option_area_sort ;
+extern uint32_t option_area_hide_size;
 extern bool exit_error;
 
 int area_manual_add(char * arg_str);
@@ -97,9 +99,11 @@ void set_option_error_on_warning(bool value);
 void set_option_hide_banners(bool value);
 void set_option_input_source(int value);
 void set_option_area_sort(int value);
+void set_option_area_hide_size(uint32_t value);
 
 int get_option_area_sort(void);
 bool get_option_hide_banners(void);
+uint32_t get_option_area_hide_size(void);
 
 
 void set_exit_error(void);

@@ -61,6 +61,7 @@ static void banklist_print_large_graph(bank_item bank_list[], int bank_count) {
 static void bank_print_area(bank_item *p_bank) {
 
     int b;
+    int hidden_count = 0;
 
     for(b = 0; b < p_bank->area_count; b++) {
         if (b == 0)
@@ -71,15 +72,24 @@ static void bank_print_area(bank_item *p_bank) {
         // Don't display headers unless requested
         if ((banks_display_headers) || !(strstr(p_bank->area_list[b].name,"HEADER"))) {
 
-            fprintf(stdout,"+ %-32s", p_bank->area_list[b].name);           // Name
-            fprintf(stdout,"0x%04X -> 0x%04X",p_bank->area_list[b].start,
-                                              p_bank->area_list[b].end); // Address Start -> End
+            // Optionally hide areas below a given size
+            if (RANGE_SIZE(p_bank->area_list[b].start, p_bank->area_list[b].end)
+                >= get_option_area_hide_size()) {
 
-            fprintf(stdout,"%8d", RANGE_SIZE(p_bank->area_list[b].start,
-                                             p_bank->area_list[b].end));
-            fprintf(stdout,"\n");
+                fprintf(stdout,"+ %-32s", p_bank->area_list[b].name);           // Name
+                fprintf(stdout,"0x%04X -> 0x%04X",p_bank->area_list[b].start,
+                                                  p_bank->area_list[b].end); // Address Start -> End
+
+                fprintf(stdout,"%8d", RANGE_SIZE(p_bank->area_list[b].start,
+                                                 p_bank->area_list[b].end));
+                fprintf(stdout,"\n");
+            } else
+                hidden_count++;
         }
     }
+    if (hidden_count > 0)
+        fprintf(stdout,"+ (%d items below size:%d are hidden)\n ", hidden_count, get_option_area_hide_size());
+
     fprintf(stdout,"\n");
 }
 

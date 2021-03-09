@@ -39,16 +39,19 @@ static void display_help(void) {
            "Options\n"
            "-h  : Show this help\n"
            "-a  : Show Areas in each Bank. Optional sort by, address:\"-aA\" or size:\"-aS\" \n"
-           "-sH : Show HEADER Areas (normally hidden)\n"
-           "-nB : Hide warning banner (for .cdb output)\n"
-           "-nA : Hide areas (shown by defailt in .cdb output)\n"
            "-g  : Show a small usage graph per bank\n"
            "-G  : Show a large usage graph per bank\n"
+           "\n"
            "-m  : Manually specify an Area -m:NAME:HEXADDR:HEXLENGTH\n"
            "-e  : Manually specify an Area that should not overlap -e:NAME:HEXADDR:HEXLENGTH\n"
            "-E  : All areas are exclusive (except HEADERs), warn for any overlaps\n"
            "-q  : Quiet, no output except warnings and errors\n"
            "-R  : Return error code for Area warnings and errors \n"
+           "\n"
+           "-sH : Show HEADER Areas (normally hidden)\n"
+           "-nB : Hide warning banner (for .cdb output)\n"
+           "-nA : Hide areas (shown by defailt in .cdb output)\n"
+           "-z  : Hide areas smaller than SIZE -z:DECSIZE\n"           
            "\n"
            "Use: Read a .map, .noi, .cdb or .ihx file to display area sizes.\n"
            "Example 1: \"romusage build/MyProject.map\"\n"
@@ -111,6 +114,9 @@ int handle_args(int argc, char * argv[]) {
             set_option_quiet_mode(true);
         } else if (strstr(argv[i], "-R")) {
             set_option_error_on_warning(true);
+
+        } else if (strstr(argv[i], "-z:")) {
+            set_option_area_hide_size( strtol(argv[i] + 3, NULL, 10));
 
         } else if (strstr(argv[i], "-m") || strstr(argv[i], "-e")) {
             if (!area_manual_add(argv[i])) {
