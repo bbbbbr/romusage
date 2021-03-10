@@ -332,8 +332,11 @@ uint32_t bank_areas_calc_used(bank_item * p_bank, uint32_t clip_start, uint32_t 
 
 // Add an area to a bank's list of areas
 static void bank_add_area(bank_item * p_bank, area_item area) {
+
     int c;
-    uint32_t area_size = RANGE_SIZE(area.start, area.end);
+
+    // Make sure the area length/size is set
+    area.length = RANGE_SIZE(area.start, area.end);
 
     // Check for duplicate entries
     // (happens due to paginating in .map file)
@@ -357,7 +360,7 @@ static void bank_add_area(bank_item * p_bank, area_item area) {
     } else
         printf("WARNING: ran out of areas in bank %s\n", p_bank->name);
 
-    p_bank->size_used += area_size;
+    p_bank->size_used += area.length;
 }
 
 
@@ -517,20 +520,20 @@ static int area_item_compare(const void* a, const void* b) {
 }
 
 
-// qsort compare rule function: sort by size address first, then name
+// qsort compare rule function: sort by size descending first, then name
 static int area_item_compare_size_desc(const void* a, const void* b) {
 
     if (((area_item *)a)->length != ((area_item *)b)->length)
-        return (((area_item *)a)->length < ((area_item *)b)->length);
+        return (((area_item *)a)->length < ((area_item *)b)->length) ? 1 : -1;
     else
         return strcmp(((area_item *)a)->name, ((area_item *)b)->name);
 }
 
 
-// qsort compare rule function: sort by start address
+// qsort compare rule function: sort by start address ascending
 static int area_item_compare_addr_asc(const void* a, const void* b) {
 
-    return (((area_item *)a)->start > ((area_item *)b)->start);
+    return (((area_item *)a)->start < ((area_item *)b)->start) ? -1 : 1;
 }
 
 
