@@ -88,7 +88,8 @@ static void bank_print_area(bank_item *p_bank) {
         }
     }
     if (hidden_count > 0)
-        fprintf(stdout,"+ (%d items below size:%d are hidden)\n ", hidden_count, get_option_area_hide_size());
+        fprintf(stdout,"+ (%d hidden items below %d bytes, -z:%d)\n",
+                        hidden_count, get_option_area_hide_size(), get_option_area_hide_size());
 
     fprintf(stdout,"\n");
 }
