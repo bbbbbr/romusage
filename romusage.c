@@ -65,6 +65,9 @@ static void display_help(void) {
            "    Unless specified with -m/-e they *do not* factor regions lacking\n"
            "    complete ranges in the Map/Noi/Ihx file, for example Shadow OAM and Stack.\n"
            "  * IHX files can only detect overlaps, not detect memory region overflows.\n"
+           "  * CDB file output ONLY counts (most) data from C sources.\n"
+           "    It cannot count functions and data from ASM and LIBs,\n"
+           "    so bank totals may be incorrect/missing.\n"
            );
 }
 
