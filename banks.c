@@ -21,6 +21,9 @@
 //  D000-DFFF   4KB Work RAM Bank 1 (WRAM)  (switchable bank 1-7 in CGB Mode)
 //  E000-FDFF   Same as C000-DDFF (ECHO)    (typically not used)
 
+static int area_item_compare(const void* a, const void* b);
+static int bank_item_compare(const void* a, const void* b);
+
 
 const bank_item bank_templates[] = {
     {"ROM  ",   0x0000, 0x3FFF, BANKED_NO,  0x7FFF, 0,0,0},
@@ -226,8 +229,6 @@ static void area_check_warn_overlap(area_item area_a, area_item area_b) {
 // Attempts to merge overlapping areas to avoid
 // counting shared space multiple times.
 //
-// Note: Expects areas to be sorted ascending
-//       by .start then by .end before being called
 uint32_t bank_areas_calc_used(bank_item * p_bank, uint32_t clip_start, uint32_t clip_end) {
     int c,sub;
     uint32_t start, end;
@@ -235,6 +236,10 @@ uint32_t bank_areas_calc_used(bank_item * p_bank, uint32_t clip_start, uint32_t 
     area_item t_area, sub_area;
 
     size_used = 0;
+
+    // The calculation requires areas to fiorst be
+    //  sorted ascending by .start addr then by .end addr
+    qsort (p_bank->area_list, p_bank->area_count, sizeof(area_item), area_item_compare);
 
     // Iterate over all areas
     c = 0;
@@ -276,11 +281,10 @@ uint32_t bank_areas_calc_used(bank_item * p_bank, uint32_t clip_start, uint32_t 
 
         // Store space used by updated range
         size_used += RANGE_SIZE(start, end);
-        // fprintf(stdout,"  * %d, %d Final Size> 0x%04X -> 0x%04X = %d ((%d))\n",c, sub, start, end, RANGE_SIZE(start, end), p_bank->size_used);
+        // fprintf(stdout,"  * %d, %d Final Size> 0x%04X -> 0x%04X = %d ((%d))\n",c, sub, start, end, RANGE_SIZE(start, end), size_used);
     }
 
     return size_used;
-
 }
 
 
@@ -453,29 +457,39 @@ int area_manual_add(char * arg_str) {
 
 }
 
-
+// NOTE: All the comparisons and their particular order are 
+//       required for bank_areas_calc_used() to work properly.
 // qsort compare rule function
 static int area_item_compare(const void* a, const void* b) {
 
-    // sort by start address first, then bank number if needed
+    // First sort by start address
     if (((area_item *)a)->start != ((area_item *)b)->start)
-        return (((area_item *)a)->start > ((area_item *)b)->start);
-    else if (((area_item *)a)->end != ((area_item *)b)->end)
-        return (((area_item *)a)->end > ((area_item *)b)->end);
-    else
-        return strcmp(((area_item *)a)->name, ((area_item *)b)->name);
+        return (((area_item *)a)->start < ((area_item *)b)->start) ? -1 : 1;
+
+    // Otherwise end address
+    if (((area_item *)a)->end != ((area_item *)b)->end)
+        return (((area_item *)a)->end < ((area_item *)b)->end) ? -1 : 1;
+
+    // If above match, then sort based on name
+    return strcmp(((area_item *)a)->name, ((area_item *)b)->name);
+
 }
 
 
 // qsort compare rule function
 static int bank_item_compare(const void* a, const void* b) {
 
-    // sort by start address first, then bank number if needed
+    // First sort by start address
     if (((bank_item *)a)->start != ((bank_item *)b)->start)
-        return (((bank_item *)a)->start > ((bank_item *)b)->start);
-    else
-        return (((bank_item *)a)->bank_num > ((bank_item *)b)->bank_num);
+        return (((bank_item *)a)->start < ((bank_item *)b)->start) ? -1 : 1;
+
+    // Otherwise based on bank number
+    if (((bank_item *)a)->bank_num != ((bank_item *)b)->bank_num)
+        return (((bank_item *)a)->bank_num < ((bank_item *)b)->bank_num) ? -1 : 1;
+
+    return 0; // Otherwise return equivalent
 }
+
 
 
 // Print banks to output
@@ -483,12 +497,10 @@ void banklist_finalize_and_show(void) {
 
     int c;
 
-    // Sort banks by name
+    // Sort banks by start address then bank num
     qsort (bank_list, bank_count, sizeof(bank_item), bank_item_compare);
 
     for (c = 0; c < bank_count; c++) {
-        // Sort areas in bank and calculate usage
-        qsort (bank_list[c].area_list, bank_list[c].area_count, sizeof(area_item), area_item_compare);
         bank_list[c].size_used = bank_areas_calc_used(&bank_list[c], bank_list[c].start, bank_list[c].end);
     }
 
