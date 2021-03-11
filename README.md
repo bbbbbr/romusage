@@ -128,7 +128,6 @@ WRAM             0xC000 -> 0xCFFF    4096     102     2%    3994    97%
 What's taking up space? Example of .cdb file output showing which functions and variables area larger than 500 bytes (-z:500), with cdb banner noticed suppressed (-nB).
 ```
  $ romusage Petris_Debug.cdb -z:500 -nB
-make: 'romusage' is up to date.
 
 Bank           Range             Size   Used   Used%   Free  Free% 
 ----------     ----------------  -----  -----  -----  -----  -----
