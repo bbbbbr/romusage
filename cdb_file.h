@@ -9,7 +9,6 @@
 #define CDB_REC_L_COUNT_MATCH 6
 #define CDB_REC_S_COUNT_MATCH 12
 
-#define CDB_MAX_AREA_COUNT    2000
 #define ERR_NO_AREAS_LEFT -1
 #define AREA_VAL_UNSET   0xFFFFFFFF
 
@@ -19,3 +18,6 @@
 
 
 int cdb_file_process_symbols(char * filename_in);
+
+void cdb_init(void);
+void cdb_cleanup(void);

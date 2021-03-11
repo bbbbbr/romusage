@@ -8,7 +8,6 @@
 
 #define NOI_REC_COUNT_MATCH 4
 
-#define MAX_AREA_COUNT    1000
 #define ERR_NO_AREAS_LEFT -1
 #define AREA_VAL_UNSET   0xFFFFFFFF
 
@@ -18,3 +17,6 @@
 
 
 int noi_file_process_areas(char * filename_in);
+
+void noi_init(void);
+void noi_cleanup(void);

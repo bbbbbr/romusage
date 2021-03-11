@@ -9,13 +9,25 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "list.h"
 #include "banks.h"
 #include "noi_file.h"
 
 
-static area_item area_list[MAX_AREA_COUNT];
-static int area_count = 0;
+list_type area_list;
 
+// Initialize the symbol list
+void noi_init(void) {
+
+    list_init(&area_list, sizeof(area_item));
+}
+
+
+// Free the symbol list
+void noi_cleanup(void) {
+
+    list_cleanup(&area_list);
+}
 
 // Example data to parse from a .map file (excluding unwanted lines):
 /*
@@ -35,49 +47,72 @@ DEF s__BASE 0x6D4F
 
 // Find a matching area, if none matches a new one is added and returned
 static int arealist_get_id_by_name(char * area_name) {
+
+    area_item * areas = (area_item *)area_list.p_array;
+    area_item new_area;
     int c;
 
     // Check for matching area name
-    for(c=0;c < area_count; c++) {
+    for(c=0;c < area_list.count; c++) {
         // Return matching area index if present
-        if (strncmp(area_name, area_list[c].name, AREA_MAX_STR) == 0) {
+        if (strncmp(area_name, areas[c].name, AREA_MAX_STR) == 0) {
             return c;
         }
     }
 
-    // no match was found, add area if possible
-    if (area_count < MAX_AREA_COUNT) {
-        snprintf(area_list[area_count].name, sizeof(area_list[area_count].name), "%s", area_name);
-        area_list[area_count].start  = AREA_VAL_UNSET;
-        area_list[area_count].end    = AREA_VAL_UNSET;
-        area_list[area_count].length = AREA_VAL_UNSET;
-        if (strstr(area_name,"HEADER"))
-            area_list[area_count].exclusive = false; // HEADER areas almost always overlap, ignore them
-        else
-            area_list[area_count].exclusive = option_all_areas_exclusive; // Default is false
-        area_count++;
-        return (area_count - 1);
-    }
+    // no match was found, add area
+    snprintf(new_area.name, sizeof(new_area.name), "%s", area_name);
+    new_area.start  = AREA_VAL_UNSET;
+    new_area.end    = AREA_VAL_UNSET;
+    new_area.length = AREA_VAL_UNSET;
+    if (strstr(area_name,"HEADER"))
+        new_area.exclusive = false; // HEADER areas almost always overlap, ignore them
+    else
+        new_area.exclusive = option_all_areas_exclusive; // Default is false
+    
+    list_additem(&area_list, &new_area);
 
-    return ERR_NO_AREAS_LEFT;
+    return (area_list.count - 1);
 }
 
 
 // Process list of areas and add them to banks
 static void noi_arealist_add_all_to_banks() {
 
+    area_item * areas = (area_item *)area_list.p_array;
     int c;
 
     // Only process completed areas (start and length both set)
-    for(c=0;c < area_count; c++) {
+    for(c=0;c < area_list.count; c++) {
 
-        if ((area_list[c].start != AREA_VAL_UNSET) &&
-            (area_list[c].length != AREA_VAL_UNSET)) {
-            area_list[c].end = area_list[c].start + area_list[c].length - 1;
-            banks_check(area_list[c]);
+        if ((areas[c].start != AREA_VAL_UNSET) &&
+            (areas[c].length != AREA_VAL_UNSET)) {
+            areas[c].end = areas[c].start + areas[c].length - 1;
+            banks_check(areas[c]);
         }
     }
 }
+
+
+static void noi_arealist_add(char * rec_type, char * name, char * value) {
+
+    area_item * areas = (area_item *)area_list.p_array;
+
+    int area_id = arealist_get_id_by_name(name); // [2] Area Name1
+    if (area_id != ERR_NO_AREAS_LEFT) {
+
+        // Handle whether it's a start-of-address or a length record for the given area
+        if (rec_type[0] == NOI_REC_START)
+            areas[area_id].start = strtol(value, NULL, 16); // [2] Area Hex Address Start
+        else if (rec_type[0] == NOI_REC_LENGTH) {
+            // Don't add lengths of zero
+            if (strtol(value, NULL, 16) > 0)
+                areas[area_id].length = strtol(value, NULL, 16); // [2] Area Hex Length
+        }
+    }
+
+}
+
 
 int noi_file_process_areas(char * filename_in) {
 
@@ -122,18 +157,7 @@ int noi_file_process_areas(char * filename_in) {
                         if ( !(strstr(p_words[2], "SFR")) &&        // Exclude SFR areas (not actually located at addresses in area listing)
                              !(strstr(p_words[2], "HRAM")) ) {    // Exclude HRAM area
 
-                            int area_id = arealist_get_id_by_name(p_words[2]); // [2] Area Name1
-                            if (area_id != ERR_NO_AREAS_LEFT) {
-
-                                // Handle whether it's a start-of-address or a length record for the given area
-                                if (p_words[1][0] == NOI_REC_START)
-                                    area_list[area_id].start = strtol(p_words[3], NULL, 16); // [2] Area Hex Address Start
-                                else if (p_words[1][0] == NOI_REC_LENGTH) {
-                                    // Don't add lengths of zero
-                                    if (strtol(p_words[3], NULL, 16) > 0)
-                                        area_list[area_id].length = strtol(p_words[3], NULL, 16); // [2] Area Hex Length
-                                }
-                            }
+                            noi_arealist_add(p_words[1], p_words[2], p_words[3]);
                         }
                     }
                 } // end: if valid start of line

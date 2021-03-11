@@ -8,6 +8,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "list.h"
 #include "banks.h"
 #include "banks_print.h"
 
@@ -39,20 +40,21 @@ static void bank_print_graph(bank_item * p_bank, uint32_t num_chars) {
 
 // Show a large usage graph for each bank
 // Currently 16 bytes per character
-static void banklist_print_large_graph(bank_item bank_list[], int bank_count) {
+static void banklist_print_large_graph(list_type * p_bank_list) {
 
+    bank_item * banks = (bank_item *)p_bank_list->p_array;
     int c;
 
-        for (c = 0; c < bank_count; c++) {
+        for (c = 0; c < p_bank_list->count; c++) {
 
-            fprintf(stdout,"\n\nStart: %s  ",bank_list[c].name); // Name
-            fprintf(stdout,"0x%04X -> 0x%04X",bank_list[c].start,
-                                              bank_list[c].end); // Address Start -> End
+            fprintf(stdout,"\n\nStart: %s  ",banks[c].name); // Name
+            fprintf(stdout,"0x%04X -> 0x%04X",banks[c].start,
+                                              banks[c].end); // Address Start -> End
             fprintf(stdout,"\n"); // Name
 
-            bank_print_graph(&bank_list[c], bank_list[c].size_total / LARGEGRAPH_BYTES_PER_CHAR);
+            bank_print_graph(&banks[c], banks[c].size_total / LARGEGRAPH_BYTES_PER_CHAR);
 
-            fprintf(stdout,"End: %s\n",bank_list[c].name); // Name
+            fprintf(stdout,"End: %s\n",banks[c].name); // Name
         }
 }
 
@@ -60,28 +62,33 @@ static void banklist_print_large_graph(bank_item bank_list[], int bank_count) {
 // Display all areas for a bank
 static void bank_print_area(bank_item *p_bank) {
 
+    area_item * areas;
     int b;
     int hidden_count = 0;
 
-    for(b = 0; b < p_bank->area_count; b++) {
+    for(b = 0; b < p_bank->area_list.count; b++) {
+
+        // Load the area list for the bank
+        areas = (area_item *)p_bank->area_list.p_array;
+
         if (b == 0)
             fprintf(stdout,"|\n"
                            "| Name                            Start  -> End      Size \n"
                            "| ---------------------           ----------------   -----\n");
 
         // Don't display headers unless requested
-        if ((banks_display_headers) || !(strstr(p_bank->area_list[b].name,"HEADER"))) {
+        if ((banks_display_headers) || !(strstr(areas[b].name,"HEADER"))) {
 
             // Optionally hide areas below a given size
-            if (RANGE_SIZE(p_bank->area_list[b].start, p_bank->area_list[b].end)
+            if (RANGE_SIZE(areas[b].start, areas[b].end)
                 >= get_option_area_hide_size()) {
 
-                fprintf(stdout,"+ %-32s", p_bank->area_list[b].name);           // Name
-                fprintf(stdout,"0x%04X -> 0x%04X",p_bank->area_list[b].start,
-                                                  p_bank->area_list[b].end); // Address Start -> End
+                fprintf(stdout,"+ %-32s", areas[b].name);           // Name
+                fprintf(stdout,"0x%04X -> 0x%04X",areas[b].start,
+                                                  areas[b].end); // Address Start -> End
 
-                fprintf(stdout,"%8d", RANGE_SIZE(p_bank->area_list[b].start,
-                                                 p_bank->area_list[b].end));
+                fprintf(stdout,"%8d", RANGE_SIZE(areas[b].start,
+                                                 areas[b].end));
                 fprintf(stdout,"\n");
             } else
                 hidden_count++;
@@ -119,7 +126,9 @@ static void bank_print_info(bank_item *p_bank) {
 
 // Display all banks along with space used.
 // Optionally show areas.
-void banklist_printall(bank_item bank_list[], int bank_count) {
+void banklist_printall(list_type * p_bank_list) {
+
+    bank_item * banks = (bank_item *)p_bank_list->p_array;
     int c;
     int b;
 
@@ -128,19 +137,19 @@ void banklist_printall(bank_item bank_list[], int bank_count) {
                    "----------     ----------------  -----  -----  -----  -----  -----\n");
 
     // Print all banks
-    for (c = 0; c < bank_count; c++) {
+    for (c = 0; c < p_bank_list->count; c++) {
 
-        bank_print_info(&bank_list[c]);
+        bank_print_info(&banks[c]);
         fprintf(stdout,"\n");
 
         if (option_area_sort != OPT_AREA_SORT_HIDE) // This is a hack-workaround, TODO:fixme
             if (banks_display_areas)
-                bank_print_area(&bank_list[c]);
+                bank_print_area(&banks[c]);
 
     } // End: Print all banks loop
 
         // Print a large graph per-bank if requested
     if (banks_display_largegraph)
-        banklist_print_large_graph(bank_list, bank_count);
+        banklist_print_large_graph(p_bank_list);
 
 }

@@ -8,6 +8,6 @@
 
 #include "banks.h"
 
-void banklist_printall(bank_item [], int);
+void banklist_printall(list_type *);
 
 #endif // _BANKS_PRINT_H

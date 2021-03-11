@@ -9,12 +9,12 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "list.h"
 #include "banks.h"
 #include "cdb_file.h"
 
 
-static area_item symbol_list[CDB_MAX_AREA_COUNT]; // TODO: dynamic reallocation
-static int symbol_count = 0;
+list_type symbol_list;
 
 #define CDB_L_REC_FUNC_START "G"
 #define CDB_L_REC_FUNC_END "XG"
@@ -71,56 +71,72 @@ static int symbol_count = 0;
 // SB <n>  Bit field of <n> bits 
 
 
+// Initialize the symbol list
+void cdb_init(void) {
+
+    list_init(&symbol_list, sizeof(area_item));
+}
+
+
+// Free the symbol list
+void cdb_cleanup(void) {
+
+    list_cleanup(&symbol_list);
+}
+
+
 // Find a matching symbol, if none matches a new one is added and returned
 static int symbollist_get_id_by_name(char * symbol_name) {
+
+    area_item * symbols = (area_item *)symbol_list.p_array;
+    area_item new_symbol;
+
     int c;
 
     // Check for matching symbol name
-    for(c=0;c < symbol_count; c++) {
+    for(c=0;c < symbol_list.count; c++) {
         // Return matching symbol index if present
-        if (strncmp(symbol_name, symbol_list[c].name, AREA_MAX_STR) == 0) {
+        if (strncmp(symbol_name, symbols[c].name, AREA_MAX_STR) == 0) {
             return c;
         }
     }
 
-    // no match was found, add symbol if possible
-    if (symbol_count < CDB_MAX_AREA_COUNT) {
-        snprintf(symbol_list[symbol_count].name, sizeof(symbol_list[symbol_count].name), "%s", symbol_name);
-        symbol_list[symbol_count].start  = AREA_VAL_UNSET;
-        symbol_list[symbol_count].end    = AREA_VAL_UNSET;
-        symbol_list[symbol_count].length = AREA_VAL_UNSET;
-        if (strstr(symbol_name,"HEADER"))
-            symbol_list[symbol_count].exclusive = false; // HEADER symbols almost always overlap, ignore them
-        else
-            symbol_list[symbol_count].exclusive = option_all_areas_exclusive; // Default is false
-        symbol_count++;
-        return (symbol_count - 1);
-    }
+    snprintf(new_symbol.name, sizeof(new_symbol.name), "%s", symbol_name);
+    new_symbol.start  = AREA_VAL_UNSET;
+    new_symbol.end    = AREA_VAL_UNSET;
+    new_symbol.length = AREA_VAL_UNSET;
+    if (strstr(symbol_name,"HEADER"))
+        new_symbol.exclusive = false; // HEADER symbols almost always overlap, ignore them
+    else
+        new_symbol.exclusive = option_all_areas_exclusive; // Default is false
 
-    return ERR_NO_AREAS_LEFT;
+    list_additem(&symbol_list, &new_symbol);
+
+    return (symbol_list.count - 1);
 }
 
 
 // Process list of symbols and add them to banks
 static void cdb_symbollist_add_all_to_banks() {
 
+    area_item * symbols = (area_item *)symbol_list.p_array;
     int c;
 
     // Only process completed symbols (start and length both set)
-    for(c=0;c < symbol_count; c++) {
+    for(c=0;c < symbol_list.count; c++) {
 
         // Functions need length calculated from start and end
-        if ((symbol_list[c].length == AREA_VAL_UNSET) &&
-            (symbol_list[c].start != AREA_VAL_UNSET) &&
-            (symbol_list[c].end != AREA_VAL_UNSET)) {
-            symbol_list[c].length = symbol_list[c].end - symbol_list[c].start + 1;            
+        if ((symbols[c].length == AREA_VAL_UNSET) &&
+            (symbols[c].start != AREA_VAL_UNSET) &&
+            (symbols[c].end != AREA_VAL_UNSET)) {
+            symbols[c].length = symbols[c].end - symbols[c].start + 1;
         }
 
         
-        if ((symbol_list[c].start != AREA_VAL_UNSET) &&
-            (symbol_list[c].length != AREA_VAL_UNSET)) {
-            symbol_list[c].end = symbol_list[c].start + symbol_list[c].length - 1;
-            banks_check(symbol_list[c]);
+        if ((symbols[c].start != AREA_VAL_UNSET) &&
+            (symbols[c].length != AREA_VAL_UNSET)) {
+            symbols[c].end = symbols[c].start + symbols[c].length - 1;
+            banks_check(symbols[c]);
         }
     }
 }
@@ -131,6 +147,8 @@ static void cdb_symbollist_add_all_to_banks() {
 // start and a separate cdb_add_record_symbol() call to set length
 static void cdb_add_record_linker(char * type, char * name, char * address) {
 
+    area_item * symbols = (area_item *)symbol_list.p_array;
+
     // Retrieve existing symbol or create a new one
     int symbol_id = symbollist_get_id_by_name(name);
 
@@ -139,9 +157,9 @@ static void cdb_add_record_linker(char * type, char * name, char * address) {
         // Check Linker record for start-address or end-address
         // Bank number is in the address bits, no need to modify it
         if (strncmp(type, CDB_L_REC_FUNC_END, 4) == 0)
-            symbol_list[symbol_id].end = strtol(address, NULL, 16);   // Start address
+            symbols[symbol_id].end = strtol(address, NULL, 16);   // Start address
         else if (strncmp(type, CDB_L_REC_FUNC_START, 4) == 0)
-            symbol_list[symbol_id].start = strtol(address, NULL, 16); // End address
+            symbols[symbol_id].start = strtol(address, NULL, 16); // End address
     }
 }
 
@@ -149,6 +167,8 @@ static void cdb_add_record_linker(char * type, char * name, char * address) {
 // Adds length from a symbol record
 // To get a complete entry requires a start address call to cdb_add_record_linker()
 static void cdb_add_record_symbol(char * addr_space, char * name, char * length, char * dcl_type) {
+
+    area_item * symbols = (area_item *)symbol_list.p_array;
 
     // Only allow certain address spaces
     if ((addr_space[0] == 'C') || // Address Space: Code
@@ -165,7 +185,7 @@ static void cdb_add_record_symbol(char * addr_space, char * name, char * length,
             // Retrieve existing symbol or create a new one
             int symbol_id = symbollist_get_id_by_name(name); // [2] Area Name
             if (symbol_id != ERR_NO_AREAS_LEFT) {
-                    symbol_list[symbol_id].length = strtol(length, NULL, 10); // [5] Symbol decimal length
+                    symbols[symbol_id].length = strtol(length, NULL, 10); // [5] Symbol decimal length
             }
         }
     }

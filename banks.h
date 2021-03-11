@@ -5,6 +5,8 @@
 #ifndef _BANKS_H
 #define _BANKS_H
 
+#include "list.h"
+
 
 #define MAX_ADDR_UNBANKED 0x0000FFFFU
 
@@ -16,12 +18,10 @@
 #define UNBANKED_END(start, end)  ((end - start) + WITHOUT_BANK(start))
 
 #define AREA_MAX_STR 30
-#define MAX_AREAS     250 // Max areas per bank // TODO: dynamic area per-bank allocation
 
 #define BANK_MAX_STR 20
 #define BANKED_NO     0
 #define BANKED_YES    1
-#define MAX_BANKS     200  // TODO: Should probably make this grow dynamically
 
 #define MINIGRAPH_SIZE (2 * 14) // Number of characters wide (inside edge brackets)
 #define LARGEGRAPH_BYTES_PER_CHAR 16
@@ -52,9 +52,7 @@ typedef struct bank_item {
     int      bank_num;
 
     // TODO: track overflow bytes and report them in graph
-
-    area_item area_list[MAX_AREAS]; // TODO: dynamic allcoation
-    int       area_count;
+    list_type area_list;
 } bank_item;
 
 #define OPT_AREA_SORT_DEFAULT    0
@@ -104,6 +102,9 @@ void set_option_area_hide_size(uint32_t value);
 int get_option_area_sort(void);
 bool get_option_hide_banners(void);
 uint32_t get_option_area_hide_size(void);
+
+void banks_init(void);
+void banks_cleanup(void);
 
 
 void set_exit_error(void);

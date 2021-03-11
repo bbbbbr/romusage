@@ -18,6 +18,10 @@
 void static display_cdb_warning(void);
 void static display_help(void);
 int handle_args(int argc, char * argv[]);
+static int matches_extension(char *, char *);
+static void init(void);
+void cleanup(void);
+
 
 char filename_in[MAX_STR_LEN] = {'\0'};
 int  show_help_and_exit = false;
@@ -139,14 +143,34 @@ int handle_args(int argc, char * argv[]) {
 }
 
 
-int matches_extension(char * filename, char * extension) {
+static int matches_extension(char * filename, char * extension) {
     return (strcmp(filename + (strlen(filename) - strlen(extension)), extension) == 0);
+}
+
+
+static void init(void) {
+    cdb_init();
+    noi_init();
+    banks_init();
+}
+
+
+// Register as an exit handler
+void cleanup(void) {
+    cdb_cleanup();
+    noi_cleanup();
+    banks_cleanup();
 }
 
 
 int main( int argc, char *argv[] )  {
 
-    int ret = EXIT_FAILURE; // Default to failure on exit
+    int ret = EXIT_FAILURE; // Default to failure on exit    
+
+    // Register cleanup with exit handler
+    atexit(cleanup);
+
+    init();
 
     if (handle_args(argc, argv)) {
 
