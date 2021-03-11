@@ -76,7 +76,7 @@ WRAM_1_0       0xD000 -> 0xDFFF   4096   2150   52%    1946    47% |############
 
 ```
 
-Example of quiet mode (-q) that just reports errors and warnings, and can returns an error on exit (-R) if any are present.
+Example of quiet mode (-q) that just reports errors and warnings, and can return an error on exit (-R) if any are present.
 ```
 romusage banks.map -R -q
 
