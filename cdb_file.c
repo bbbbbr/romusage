@@ -9,6 +9,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "common.h"
 #include "list.h"
 #include "banks.h"
 #include "cdb_file.h"

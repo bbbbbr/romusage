@@ -9,6 +9,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "common.h"
 #include "banks.h"
 #include "ihx_file.h"
 

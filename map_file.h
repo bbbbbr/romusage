@@ -3,6 +3,6 @@
 // bbbbbr 2020
 
 #define MAX_STR_LEN     4096
-#define MAX_STR_AREALEN 100
+// #define MAX_STR_AREALEN 100
 
 int map_file_process_areas(char * filename_in);
