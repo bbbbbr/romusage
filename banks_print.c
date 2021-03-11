@@ -66,6 +66,7 @@ static void bank_print_area(bank_item *p_bank) {
     area_item * areas;
     int b;
     int hidden_count = 0;
+    uint32_t hidden_total = 0;
 
     for(b = 0; b < p_bank->area_list.count; b++) {
 
@@ -86,23 +87,22 @@ static void bank_print_area(bank_item *p_bank) {
         if ((banks_display_headers) || !(strstr(areas[b].name,"HEADER"))) {
 
             // Optionally hide areas below a given size
-            if (RANGE_SIZE(areas[b].start, areas[b].end)
-                >= get_option_area_hide_size()) {
+            if (areas[b].length >= get_option_area_hide_size()) {
 
                 fprintf(stdout,"+ %-32s", areas[b].name);           // Name
                 fprintf(stdout,"0x%04X -> 0x%04X",areas[b].start,
                                                   areas[b].end); // Address Start -> End
-
-                fprintf(stdout,"%8d", RANGE_SIZE(areas[b].start,
-                                                 areas[b].end));
+                fprintf(stdout,"%8d", areas[b].length);
                 fprintf(stdout,"\n");
-            } else
+            } else {
                 hidden_count++;
+                hidden_total += areas[b].length;
+            }
         }
     }
     if (hidden_count > 0)
-        fprintf(stdout,"+ (%d hidden items below %d bytes, -z:%d)\n",
-                        hidden_count, get_option_area_hide_size(), get_option_area_hide_size());
+        fprintf(stdout,"+ (%d items < %d hidden = %d total bytes)\n",
+                        hidden_count, get_option_area_hide_size(), hidden_total);
 
     fprintf(stdout,"\n");
 }
