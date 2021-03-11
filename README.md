@@ -42,7 +42,7 @@ Options
 
 -sH : Show HEADER Areas (normally hidden)
 -nB : Hide warning banner (for .cdb output)
--nA : Hide areas (shown by defailt in .cdb output)
+-nA : Hide areas (shown by default in .cdb output)
 -z  : Hide areas smaller than SIZE -z:DECSIZE
 
 Use: Read a .map, .noi, .cdb or .ihx file to display area sizes.

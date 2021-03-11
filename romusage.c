@@ -16,6 +16,8 @@
 #include "ihx_file.h"
 #include "cdb_file.h"
 
+#define VERSION "version 1.1"
+
 void static display_cdb_warning(void);
 void static display_help(void);
 int handle_args(int argc, char * argv[]);
@@ -40,6 +42,7 @@ static void display_cdb_warning() {
 static void display_help(void) {
     fprintf(stdout,
            "romusage input_file.[map|noi|ihx|cdb] [options]\n"
+           VERSION"\n"
            "\n"
            "Options\n"
            "-h  : Show this help\n"
@@ -55,7 +58,7 @@ static void display_help(void) {
            "\n"
            "-sH : Show HEADER Areas (normally hidden)\n"
            "-nB : Hide warning banner (for .cdb output)\n"
-           "-nA : Hide areas (shown by defailt in .cdb output)\n"
+           "-nA : Hide areas (shown by default in .cdb output)\n"
            "-z  : Hide areas smaller than SIZE -z:DECSIZE\n"           
            "\n"
            "Use: Read a .map, .noi, .cdb or .ihx file to display area sizes.\n"
