@@ -1,7 +1,11 @@
 romusage
 ===========
 
-A small command line tool for estimating usage (free space) of Game Boy ROMs from a .map, .noi or ihx file.
+A small command line tool for estimating usage (free space) of Game Boy ROMs from the following file types:
+- .map (sdcc, rgbds)
+- .noi (sdcc)
+- .ihx (sdcc)
+- .cdb (sdcc)
 
 It produces a trimmed, sorted output of ROM/RAMs, their usage and optionally the Areas located in them.
 
@@ -13,25 +17,35 @@ IHX Files:
 - For .ihx files bank overflow can only be guessed at (aside from duplicate writes). It's often not possible to tell the difference two banks with data that perfectly aligns on a shared boundary and a single bank that spills over into the unused area of a following bank. It's better to use .map and .noi files to check for overflow.
 - Due to their nature, RAM estimates are unavailable with .ihx files
 
+CDB Files:
+- To enable .cdb output use the additional debug flags `-Wl-y` with `lcc` or `-y` with `sdldgb` directly.
+- For .cdb files the calculated output ONLY reports (most) data from C source files. It cannot count functions and data from ASM sources and LIBs, so bank totals may be incorrect/missing. It's main use is finding the size of individual functions and variables (what's using up space), not estimating the free/used space of banks.
+
+
 Binaries are [here](/bin/)
 
 
 ```
-romusage input_file.[map|noi|ihx] [options]
+romusage input_file.[map|noi|ihx|cdb] [options]
 
 Options
 -h  : Show this help
--a  : Show Areas in each Bank
--sH : Show HEADER Areas (normally hidden)
+-a  : Show Areas in each Bank. Optional sort by, address:"-aA" or size:"-aS" 
 -g  : Show a small usage graph per bank
 -G  : Show a large usage graph per bank
+
 -m  : Manually specify an Area -m:NAME:HEXADDR:HEXLENGTH
 -e  : Manually specify an Area that should not overlap -e:NAME:HEXADDR:HEXLENGTH
 -E  : All areas are exclusive (except HEADERs), warn for any overlaps
 -q  : Quiet, no output except warnings and errors
--R  : Return error code for Area warnings and errors
+-R  : Return error code for Area warnings and errors 
 
-Use: Read a .map, .noi or .ihx file to display area sizes.
+-sH : Show HEADER Areas (normally hidden)
+-nB : Hide warning banner (for .cdb output)
+-nA : Hide areas (shown by defailt in .cdb output)
+-z  : Hide areas smaller than SIZE -z:DECSIZE
+
+Use: Read a .map, .noi, .cdb or .ihx file to display area sizes.
 Example 1: "romusage build/MyProject.map"
 Example 2: "romusage build/MyProject.noi -a -e:STACK:DEFF:100 -e:SHADOW_OAM:C000:A0"
 Example 3: "romusage build/MyProject.ihx -g"
@@ -43,7 +57,9 @@ Notes:
     Unless specified with -m/-e they *do not* factor regions lacking
     complete ranges in the Map/Noi/Ihx file, for example Shadow OAM and Stack.
   * IHX files can only detect overlaps, not detect memory region overflows.
-
+  * CDB file output ONLY counts (most) data from C sources.
+    It cannot count functions and data from ASM and LIBs,
+    so bank totals may be incorrect/missing.
 ```
 
 
@@ -107,6 +123,51 @@ WRAM             0xC000 -> 0xCFFF    4096     102     2%    3994    97%
 +_BSS            0xC0B6 -> 0xC105      80
 
 ```
+
+
+What's taking up space? Example of .cdb file output showing which functions and variables area larger than 500 bytes (-z:500), with cdb banner noticed suppressed (-nB).
+```
+ $ romusage Petris_Debug.cdb -z:500 -nB
+make: 'romusage' is up to date.
+
+Bank           Range             Size   Used   Used%   Free  Free% 
+----------     ----------------  -----  -----  -----  -----  -----
+ROM            0x0000 -> 0x3FFF  16384  16383   99%       1     0%
+|
+| Name                            Start  -> End      Size 
+| ---------------------           ----------------   -----
++ -?-                             0x1E32 -> 0x2937    2822
++ intro_screen_tiles              0x0FB0 -> 0x145F    1200
++ twilight_drive_mod              0x15A2 -> 0x1909     872
++ font_tiles                      0x06D0 -> 0x099F     720
++ pet_tiles                       0x0A50 -> 0x0CDF     656
++ freeost_charselect_mod          0x1BE7 -> 0x1E31     587
++ villainsofhiphop_mod            0x1924 -> 0x1B5C     569
++ -?-                             0x0001 -> 0x01FF     511
++ (102 items < 500 hidden = 8446 total bytes)
+
+ROM_0          0x4000 -> 0x7FFF  16384  11001   67%    5383    32%
+|
+| Name                            Start  -> End      Size 
+| ---------------------           ----------------   -----
++ board_check_completed_pet_xy    0x65DB -> 0x6843     617
++ hinting_petlength_add           0x5807 -> 0x59FB     501
++ (106 items < 500 hidden = 9883 total bytes)
+
+WRAM           0xC000 -> 0xCFFF   4096   4095   99%       1     0%
+|
+| Name                            Start  -> End      Size 
+| ---------------------           ----------------   -----
++ music_decompressed              0xC0ED -> 0xCD08    3100
++ (16 items < 500 hidden = 995 total bytes)
+
+WRAM_1_0       0xD000 -> 0xDFFF   4096   1827   44%    2269    55%
+|
+| Name                            Start  -> End      Size 
+| ---------------------           ----------------   -----
++ (24 items < 500 hidden = 1827 total bytes)
+```
+
 
 Example output with a large graph (-G) for a 32k non-banked ROM, called after completion of the link stage. Manually specify Shadow OAM and Stack as exclusive ranges (-e). Reading from the .map file.
 ```
