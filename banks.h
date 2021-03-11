@@ -7,6 +7,7 @@
 
 #include "list.h"
 
+#define DEFAULT_STR_LEN 100
 
 #define MAX_ADDR_UNBANKED 0x0000FFFFU
 
@@ -17,9 +18,9 @@
 #define RANGE_SIZE(MIN, MAX) (MAX - MIN + 1)
 #define UNBANKED_END(start, end)  ((end - start) + WITHOUT_BANK(start))
 
-#define AREA_MAX_STR 30
+#define AREA_MAX_STR DEFAULT_STR_LEN
 
-#define BANK_MAX_STR 20
+#define BANK_MAX_STR DEFAULT_STR_LEN
 #define BANKED_NO     0
 #define BANKED_YES    1
 

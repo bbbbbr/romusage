@@ -3,7 +3,7 @@
 // bbbbbr 2020
 
 #define MAX_STR_LEN     4096
-#define MAX_STR_AREALEN 20
+#define MAX_STR_AREALEN 100
 #define MAX_SPLIT_WORDS 6
 
 #define NOI_REC_COUNT_MATCH 4

@@ -3,7 +3,7 @@
 // bbbbbr 2020
 
 #define CDB_MAX_STR_LEN     4096
-#define CDB_MAX_STR_AREALEN 20
+#define CDB_MAX_STR_AREALEN 100
 #define CDB_MAX_SPLIT_WORDS 12
 
 #define CDB_REC_L_COUNT_MATCH 6
