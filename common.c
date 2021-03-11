@@ -83,18 +83,25 @@ void set_option_area_hide_size(uint32_t value) {
     option_area_hide_size = value;
 }
 
+
+// Input source file format
+int get_option_input_source(void) {
+    return option_input_source;
+}
+
+
 // Area output sort order
 int get_option_area_sort(void) {
     return option_area_sort;
 }
 
 // Turn on/off banners
-bool get_option_hide_banners() {
+bool get_option_hide_banners(void) {
     return option_hide_banners;
 }
 
 // Hide areas smaller than size
-uint32_t  get_option_area_hide_size() {
+uint32_t  get_option_area_hide_size(void) {
     return option_area_hide_size;
 }
 

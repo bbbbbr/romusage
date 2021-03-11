@@ -44,6 +44,7 @@ void set_option_input_source(int value);
 void set_option_area_sort(int value);
 void set_option_area_hide_size(uint32_t value);
 
+int get_option_input_source(void);
 int get_option_area_sort(void);
 bool get_option_hide_banners(void);
 uint32_t get_option_area_hide_size(void);

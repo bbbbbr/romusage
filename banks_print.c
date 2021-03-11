@@ -72,10 +72,15 @@ static void bank_print_area(bank_item *p_bank) {
         // Load the area list for the bank
         areas = (area_item *)p_bank->area_list.p_array;
 
-        if (b == 0)
-            fprintf(stdout,"|\n"
+        if (b == 0) {
+            fprintf(stdout,"|\n");
+
+            // Only show sub column headers for CDB output since there are a lot more areas
+            if (get_option_input_source() == OPT_INPUT_SRC_CDB)
+                fprintf(stdout,
                            "| Name                            Start  -> End      Size \n"
                            "| ---------------------           ----------------   -----\n");
+        }
 
         // Don't display headers unless requested
         if ((banks_display_headers) || !(strstr(areas[b].name,"HEADER"))) {
