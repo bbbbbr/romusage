@@ -34,6 +34,7 @@ const bank_item bank_templates[] = {
     {"XRAM_",   0xA000, 0xBFFF, BANKED_YES, 0xBFFF, 0,0,0},
     {"WRAM  ",  0xC000, 0xCFFF, BANKED_NO,  0xDFFF, 0,0,0},
     {"WRAM_1_", 0xD000, 0xDFFF, BANKED_YES, 0xDFFF, 0,0,0},
+    {"HRAM",    0xFF80, 0xFFFE, BANKED_NO,  0xFFFE, 0,0,0},
 };
 
 

@@ -88,11 +88,7 @@ static void add_area_rgbds(char * p_words[], int current_bank) {
 
 static int get_bank_num_rgbds(char * p_words[]) {
 
-    // Exclude sections following HRAM bank nums by unsetting the bank number
-    if (strstr(p_words[0], "HRAM"))
-        return BANK_NUM_UNSET;
-    else
-        return strtol(p_words[2], NULL, 10);
+    return strtol(p_words[2], NULL, 10);
 }
 
 
