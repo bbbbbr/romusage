@@ -1,6 +1,12 @@
 Changelog
 =========
 
+# Version 1.1.2
+* Minor argument handling fixes
+
+# Version 1.1.1
+* Turned on HRAM area for RGBDS
+
 # Version 1.1
 * Fixed bank totals that were sometimes incorrect (Windows/MinGW)
 * Fixed sorting that was sometimes incomplete (Linux & Windows/MinGW)

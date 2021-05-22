@@ -16,7 +16,7 @@
 #include "ihx_file.h"
 #include "cdb_file.h"
 
-#define VERSION "version 1.1.1"
+#define VERSION "version 1.1.2"
 
 void static display_cdb_warning(void);
 void static display_help(void);
