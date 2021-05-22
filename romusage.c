@@ -96,40 +96,41 @@ int handle_args(int argc, char * argv[]) {
     // Start at first optional argument, argc is zero based
     for (i = 1; i <= (argc -1); i++ ) {
 
-        if (strstr(argv[i], "-h")) {
+        if (strstr(argv[i], "-h") == argv[i]) {
             display_help();
             show_help_and_exit = true;
             return true;  // Don't parse further input when -h is used
-        } else if (strstr(argv[i], "-a")) {            
+        } else if (strstr(argv[i], "-a") == argv[i]) {
             banks_output_show_areas(true);
             if      (argv[i][2] == 'S') set_option_area_sort(OPT_AREA_SORT_SIZE_DESC);
             else if (argv[i][2] == 'A') set_option_area_sort(OPT_AREA_SORT_ADDR_ASC);
 
-        } else if (strstr(argv[i], "-sH")) {
+        } else if (strstr(argv[i], "-sH") == argv[i]) {
             banks_output_show_headers(true);
 
-        } else if (strstr(argv[i], "-nB")) {
+        } else if (strstr(argv[i], "-nB") == argv[i]) {
             set_option_hide_banners(true);
 
         } else if (strstr(argv[i], "-nA")) {
             set_option_area_sort(OPT_AREA_SORT_HIDE);
 
-        } else if (strstr(argv[i], "-g")) {
+        } else if (strstr(argv[i], "-g") == argv[i]) {
             banks_output_show_minigraph(true);
-        } else if (strstr(argv[i], "-G")) {
+        } else if (strstr(argv[i], "-G") == argv[i]) {
             banks_output_show_largegraph(true);
-        } else if (strstr(argv[i], "-E")) {
+        } else if (strstr(argv[i], "-E") == argv[i]) {
             set_option_all_areas_exclusive(true);
 
-        } else if (strstr(argv[i], "-q")) {
+        } else if (strstr(argv[i], "-q") == argv[i]) {
             set_option_quiet_mode(true);
-        } else if (strstr(argv[i], "-R")) {
+        } else if (strstr(argv[i], "-R") == argv[i]) {
             set_option_error_on_warning(true);
 
-        } else if (strstr(argv[i], "-z:")) {
+        } else if (strstr(argv[i], "-z:") == argv[i]) {
             set_option_area_hide_size( strtol(argv[i] + 3, NULL, 10));
 
-        } else if (strstr(argv[i], "-m") || strstr(argv[i], "-e")) {
+        } else if ((strstr(argv[i], "-m") == argv[i]) ||
+                   (strstr(argv[i], "-e") == argv[i])) {
             if (!area_manual_add(argv[i])) {
             fprintf(stdout,"malformed manual area argument: %s\n\n", argv[i]);
             display_help();
