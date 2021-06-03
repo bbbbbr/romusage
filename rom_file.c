@@ -41,7 +41,7 @@ uint8_t * file_read_into_buffer(char * filename, uint32_t *ret_size) {
         if (fsize != -1L) {
             fseek(file_in, 0, SEEK_SET);
 
-            filedata = malloc(fsize);
+            filedata = (uint8_t *)malloc(fsize);
             if (filedata) {
                 if (fsize != fread(filedata, 1, fsize, file_in)) {
                     printf("Warning: File read size didn't match expected for %s\n", filename);
