@@ -6,6 +6,7 @@ A small command line tool for estimating usage (free space) of Game Boy ROMs fro
 - .noi (sdcc)
 - .ihx (sdcc)
 - .cdb (sdcc)
+- .gb / .gbc (ROM image)
 
 It produces a trimmed, sorted output of ROM/RAMs, their usage and optionally the Areas located in them.
 
@@ -21,12 +22,15 @@ CDB Files:
 - To enable .cdb output use the additional debug flags `-Wl-y` with `lcc` or `-y` with `sdldgb` directly.
 - For .cdb files the calculated output ONLY reports (most) data from C source files. It cannot count functions and data from ASM sources and LIBs, so bank totals may be incorrect/missing. It's main use is finding the size of individual functions and variables (what's using up space), not estimating the free/used space of banks.
 
+GB / GBC ROM Files:
+- No overflow detection
+- Usage estimates can only attempt to distinguish between "empty space" (0xFF's) and data that looks like empty space (0xFF's). It may be inaccurate.
 
 Binaries are [here](/bin/)
 
 
 ```
-romusage input_file.[map|noi|ihx|cdb] [options]
+romusage input_file.[map|noi|ihx|cdb|.gb[c]] [options]
 
 Options
 -h  : Show this help
@@ -60,6 +64,7 @@ Notes:
   * CDB file output ONLY counts (most) data from C sources.
     It cannot count functions and data from ASM and LIBs,
     so bank totals may be incorrect/missing.
+  * GB/GBC files are just guessing at everything, no promises.
 ```
 
 

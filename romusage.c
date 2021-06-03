@@ -15,8 +15,9 @@
 #include "noi_file.h"
 #include "ihx_file.h"
 #include "cdb_file.h"
+#include "rom_file.h"
 
-#define VERSION "version 1.1.2"
+#define VERSION "version 1.2.0"
 
 void static display_cdb_warning(void);
 void static display_help(void);
@@ -41,7 +42,7 @@ static void display_cdb_warning() {
 
 static void display_help(void) {
     fprintf(stdout,
-           "romusage input_file.[map|noi|ihx|cdb] [options]\n"
+           "romusage input_file.[map|noi|ihx|cdb|.gb[c]] [options]\n"
            VERSION"\n"
            "\n"
            "Options\n"
@@ -76,6 +77,7 @@ static void display_help(void) {
            "  * CDB file output ONLY counts (most) data from C sources.\n"
            "    It cannot count functions and data from ASM and LIBs,\n"
            "    so bank totals may be incorrect/missing.\n"
+           "  * GB/GBC files are just guessing at everything, no promises.\n"
            );
 }
 
@@ -199,6 +201,13 @@ int main( int argc, char *argv[] )  {
                     banklist_finalize_and_show();
                     ret = EXIT_SUCCESS; // Exit with success
                 }
+            } else if ((matches_extension(filename_in, (char *)".gb"))  ||
+                       (matches_extension(filename_in, (char *)".gbc"))) {
+                printf("ROM FILE\n");
+                if (rom_file_process(filename_in)) {
+                    banklist_finalize_and_show();
+                    ret = EXIT_SUCCESS; // Exit with success
+                }
             } else if (matches_extension(filename_in, (char *)".cdb")) {
                 if (cdb_file_process_symbols(filename_in)) {
                     if (!get_option_hide_banners()) display_cdb_warning();
@@ -209,6 +218,7 @@ int main( int argc, char *argv[] )  {
                     ret = EXIT_SUCCESS; // Exit with success
                 }
             }
+
         }
     }
 

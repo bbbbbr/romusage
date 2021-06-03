@@ -17,6 +17,7 @@
 #define OPT_INPUT_SRC_NOI  2
 #define OPT_INPUT_SRC_MAP  3
 #define OPT_INPUT_SRC_IHX  4
+#define OPT_INPUT_SRC_ROM  5
 
 #define OPT_AREA_HIDE_SIZE_DEFAULT 0
 
