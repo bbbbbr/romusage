@@ -10,7 +10,7 @@ A small command line tool for estimating usage (free space) of Game Boy ROMs fro
 
 It produces a trimmed, sorted output of ROM/RAMs, their usage and optionally the Areas located in them.
 
-Runs on Linux and Windows, it can be used with [GBDK 2020](https://github.com/Zal0/gbdk-2020/), [ZGB v2020+](https://github.com/Zal0/ZGB/) and [RGBDS](https://github.com/gbdev/rgbds). If map file output is not already enabled, use either `-Wl-m` with `lcc` or `-m` with `sdldgb` directly.
+Runs on Linux, Windows and MacOS, it can be used with [GBDK 2020](https://github.com/Zal0/gbdk-2020/), [ZGB v2020+](https://github.com/Zal0/ZGB/) and [RGBDS](https://github.com/gbdev/rgbds). If map file output is not already enabled, use either `-Wl-m` with `lcc` or `-m` with `sdldgb` directly.
 
 The usage calculation will attempt to merge overlapping areas to avoid counting shared space multiple times (such as HEADER areas). Optionally it can warn of overlap in exclusive areas, such as the Stack.
 
