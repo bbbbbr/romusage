@@ -24,6 +24,7 @@ wincross: $(COBJ)
 	$(CC) -o $(BIN_WIN)  $^ $(LDFLAGS)
 
 # Linux build
+macos: linux
 linux: CC = gcc
 linux: LDFLAGS = -s
 linux: $(COBJ)
@@ -34,6 +35,12 @@ cleanobj:
 
 clean:
 	$(DEL) $(COBJ) $(BIN_WIN) $(BIN)
+
+macoszip: macos
+	mkdir -p bin
+	zip $(BIN)-macos.zip $(BIN)
+	mv $(BIN)-macos.zip bin
+	cp $(BIN) bin
 
 linuxzip: linux
 	mkdir -p bin
