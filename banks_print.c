@@ -14,10 +14,69 @@
 #include "banks_print.h"
 
 
+#ifdef _WIN32
+  #ifndef _WIN32
+     #define __WIN32__
+  #endif
+#endif
+
+
+
+// Ascii art style characters
+// Print a block character to stdout based on the percentage used (int 0 - 100)
+static void print_graph_char_asciistyle(uint32_t perc_used) {
+
+    #ifdef __WIN32__
+        // https://en.wikipedia.org/wiki/Code_page_437
+        // https://sourceforge.net/p/mingw/mailman/message/14065664/
+        // Code Page 437 (appears to be default for windows console, 
+        if      (perc_used >= 95) fprintf(stdout, "%c", 219u); // Full  Shade Block
+        else if (perc_used >= 75) fprintf(stdout, "%c", 178u); // Dark  Shade Block
+        else if (perc_used >= 50) fprintf(stdout, "%c", 177u); // Med   Shade Block
+        else if (perc_used >= 25) fprintf(stdout, "%c", 176u); // Light Shade Block
+        else                      fprintf(stdout, "."); // "_");
+
+        // All Blocks        
+        // if      (perc_used >= 99) fprintf(stdout, "%c", 219u); // Full  Shade Block
+        // else if (perc_used >= 75) fprintf(stdout, "%c", 178u); // Dark  Shade Block
+        // else if (perc_used >= 25) fprintf(stdout, "%c", 177u); // Med   Shade Block
+        // else                      fprintf(stdout, "%c", 176u); // Light Shade Block
+
+
+    #else // Non-Windows
+        // https://www.fileformat.info/info/unicode/block/block_elements/utf8test.htm
+        // https://www.fileformat.info/info/unicode/char/2588/index.htm
+        if      (perc_used >= 95) fprintf(stdout, "%s", u8"\xE2\x96\x88"); // Full         Block in UTF-8 0xE2 0x96 0x88 (e29688)
+        else if (perc_used >= 75) fprintf(stdout, "%s", u8"\xE2\x96\x93"); // Dark Shade   Block in UTF-8 0xE2 0x96 0x93 (e29693)
+        else if (perc_used >= 50) fprintf(stdout, "%s", u8"\xE2\x96\x92"); // Med Shade    Block in UTF-8 0xE2 0x96 0x92 (e29692)
+        else if (perc_used >= 25) fprintf(stdout, "%s", u8"\xE2\x96\x91"); // Light Shade  Block in UTF-8 0xE2 0x96 0x91 (e29691)
+        else                      fprintf(stdout, "%s", u8"."); //  u8"_"
+
+        // All Blocks
+        // if      (perc_used >= 95) fprintf(stdout, "%s", u8"\xE2\x96\x88"); // Full         Block in UTF-8 0xE2 0x96 0x88 (e29688)
+        // else if (perc_used >= 75) fprintf(stdout, "%s", u8"\xE2\x96\x93"); // Dark Shade   Block in UTF-8 0xE2 0x96 0x93 (e29693)
+        // else if (perc_used >= 25) fprintf(stdout, "%s", u8"\xE2\x96\x92"); // Med Shade    Block in UTF-8 0xE2 0x96 0x92 (e29692)
+        // else                      fprintf(stdout, "%s", u8"\xE2\x96\x91"); // Light Shade  Block in UTF-8 0xE2 0x96 0x91 (e29691)
+    #endif
+}
+
+
+// Standard character style
+// Print a block character to stdout based on the percentage used (int 0 - 100)
+static void print_graph_char_standard(uint32_t perc_used) {
+
+    char ch;
+
+    if (perc_used > 95)      ch = '#';
+    else if (perc_used > 25) ch = '-';
+    else                     ch = '.';
+    fprintf(stdout, "%c", ch);
+}
+
+
 static void bank_print_graph(bank_item * p_bank, uint32_t num_chars) {
 
     int c;
-    char ch;
     uint32_t range_size = RANGE_SIZE(p_bank->start, p_bank->end) / num_chars;
     uint32_t perc_used;
 
@@ -28,11 +87,13 @@ static void bank_print_graph(bank_item * p_bank, uint32_t num_chars) {
                                           p_bank->start + ((c + 1) * range_size) - 1)
                                            * (uint32_t)100) / range_size;
 
-        if (perc_used > 95)      ch = '#';
-        else if (perc_used > 25) ch = '-';
-        else                     ch = '.';
-        fprintf(stdout, "%c", ch);
+        // Non-ascii style output
+        if (!get_option_display_asciistyle())
+            print_graph_char_standard(perc_used);
+        else
+            print_graph_char_asciistyle(perc_used);
 
+        // Periodic line break if needed (for multi-line large graphs)
         if (((c + 1) % 64) == 0)
             fprintf(stdout, "\n");
     }

@@ -11,6 +11,7 @@ bool banks_display_areas        = false;
 bool banks_display_headers      = false;
 bool banks_display_minigraph    = false;
 bool banks_display_largegraph   = false;
+bool option_display_asciistyle  = false;
 bool option_all_areas_exclusive = false;
 bool option_quiet_mode          = false;
 bool option_suppress_duplicates = true;
@@ -43,11 +44,18 @@ void banks_output_show_largegraph(bool do_show) {
     banks_display_largegraph = do_show;
 }
 
+// Turn on/off whether to use ascii style
+// block characters for graphs
+void set_option_display_asciistyle(bool value) {
+    option_display_asciistyle = value;
+}
+
 // Turn on/off whether all areas are exclusive,
 // and whether to warn for any overlap
 void set_option_all_areas_exclusive(bool value) {
     option_all_areas_exclusive = value;
 }
+
 // Turn on/off quiet mode
 void set_option_quiet_mode(bool value) {
     option_quiet_mode = value;
@@ -89,7 +97,6 @@ int get_option_input_source(void) {
     return option_input_source;
 }
 
-
 // Area output sort order
 int get_option_area_sort(void) {
     return option_area_sort;
@@ -104,6 +111,13 @@ bool get_option_hide_banners(void) {
 uint32_t  get_option_area_hide_size(void) {
     return option_area_hide_size;
 }
+
+// Turn on/off whether to use ascii style
+// block characters for graphs
+bool get_option_display_asciistyle(void) {
+    return option_display_asciistyle;
+}
+
 
 
 

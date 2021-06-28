@@ -48,8 +48,8 @@ static void display_help(void) {
            "Options\n"
            "-h  : Show this help\n"
            "-a  : Show Areas in each Bank. Optional sort by, address:\"-aA\" or size:\"-aS\" \n"
-           "-g  : Show a small usage graph per bank\n"
-           "-G  : Show a large usage graph per bank\n"
+           "-g  : Show a small usage graph per bank (-gA for ascii style)\n"
+           "-G  : Show a large usage graph per bank (-GA for ascii style)\n"
            "\n"
            "-m  : Manually specify an Area -m:NAME:HEXADDR:HEXLENGTH\n"
            "-e  : Manually specify an Area that should not overlap -e:NAME:HEXADDR:HEXLENGTH\n"
@@ -118,8 +118,10 @@ int handle_args(int argc, char * argv[]) {
 
         } else if (strstr(argv[i], "-g") == argv[i]) {
             banks_output_show_minigraph(true);
+            if (argv[i][2] == 'A') set_option_display_asciistyle(true);
         } else if (strstr(argv[i], "-G") == argv[i]) {
             banks_output_show_largegraph(true);
+            if (argv[i][2] == 'A') set_option_display_asciistyle(true);
         } else if (strstr(argv[i], "-E") == argv[i]) {
             set_option_all_areas_exclusive(true);
 
