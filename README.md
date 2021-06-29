@@ -31,12 +31,13 @@ Binaries are [here](/bin/)
 
 ```
 romusage input_file.[map|noi|ihx|cdb|.gb[c]] [options]
+version 1.2.1
 
 Options
 -h  : Show this help
 -a  : Show Areas in each Bank. Optional sort by, address:"-aA" or size:"-aS" 
--g  : Show a small usage graph per bank
--G  : Show a large usage graph per bank
+-g  : Show a small usage graph per bank (-gA for ascii style)
+-G  : Show a large usage graph per bank (-GA for ascii style)
 
 -m  : Manually specify an Area -m:NAME:HEXADDR:HEXLENGTH
 -e  : Manually specify an Area that should not overlap -e:NAME:HEXADDR:HEXLENGTH
@@ -65,6 +66,7 @@ Notes:
     It cannot count functions and data from ASM and LIBs,
     so bank totals may be incorrect/missing.
   * GB/GBC files are just guessing at everything, no promises.
+
 ```
 
 

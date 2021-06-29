@@ -17,7 +17,7 @@
 #include "cdb_file.h"
 #include "rom_file.h"
 
-#define VERSION "version 1.2.0"
+#define VERSION "version 1.2.1"
 
 void static display_cdb_warning(void);
 void static display_help(void);
