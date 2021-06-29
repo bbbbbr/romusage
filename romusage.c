@@ -22,7 +22,7 @@
 void static display_cdb_warning(void);
 void static display_help(void);
 int handle_args(int argc, char * argv[]);
-static int matches_extension(char *, char *);
+static bool matches_extension(char *, char *);
 static void init(void);
 void cleanup(void);
 
@@ -152,8 +152,16 @@ int handle_args(int argc, char * argv[]) {
 }
 
 
-static int matches_extension(char * filename, char * extension) {
-    return (strcmp(filename + (strlen(filename) - strlen(extension)), extension) == 0);
+// Case insensitive
+static bool matches_extension(char * filename, char * extension) {
+
+    if (strlen(filename) >= strlen(extension)) {
+        char * str_ext = filename + (strlen(filename) - strlen(extension));
+
+        return (strncasecmp(str_ext, extension, strlen(extension)) == 0);
+    }
+    else
+        return false;
 }
 
 
