@@ -34,9 +34,9 @@ static void print_graph_char_asciistyle(uint32_t perc_used) {
         else if (perc_used >= 75) fprintf(stdout, "%c", 178u); // Dark  Shade Block
         else if (perc_used >= 50) fprintf(stdout, "%c", 177u); // Med   Shade Block
         else if (perc_used >= 25) fprintf(stdout, "%c", 176u); // Light Shade Block
-        else                      fprintf(stdout, "."); // "_");
+        else                      fprintf(stdout, "_"); // ".");
 
-        // All Blocks        
+        // All Block characters
         // if      (perc_used >= 99) fprintf(stdout, "%c", 219u); // Full  Shade Block
         // else if (perc_used >= 75) fprintf(stdout, "%c", 178u); // Dark  Shade Block
         // else if (perc_used >= 25) fprintf(stdout, "%c", 177u); // Med   Shade Block
@@ -50,9 +50,9 @@ static void print_graph_char_asciistyle(uint32_t perc_used) {
         else if (perc_used >= 75) fprintf(stdout, "%s", u8"\xE2\x96\x93"); // Dark Shade   Block in UTF-8 0xE2 0x96 0x93 (e29693)
         else if (perc_used >= 50) fprintf(stdout, "%s", u8"\xE2\x96\x92"); // Med Shade    Block in UTF-8 0xE2 0x96 0x92 (e29692)
         else if (perc_used >= 25) fprintf(stdout, "%s", u8"\xE2\x96\x91"); // Light Shade  Block in UTF-8 0xE2 0x96 0x91 (e29691)
-        else                      fprintf(stdout, "%s", u8"."); //  u8"_"
+        else                      fprintf(stdout, "%s", u8"_"); // u8".");
 
-        // All Blocks
+        // All Blocks characters
         // if      (perc_used >= 95) fprintf(stdout, "%s", u8"\xE2\x96\x88"); // Full         Block in UTF-8 0xE2 0x96 0x88 (e29688)
         // else if (perc_used >= 75) fprintf(stdout, "%s", u8"\xE2\x96\x93"); // Dark Shade   Block in UTF-8 0xE2 0x96 0x93 (e29693)
         // else if (perc_used >= 25) fprintf(stdout, "%s", u8"\xE2\x96\x92"); // Med Shade    Block in UTF-8 0xE2 0x96 0x92 (e29692)
