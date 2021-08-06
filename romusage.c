@@ -60,7 +60,7 @@ static void display_help(void) {
            "-sH : Show HEADER Areas (normally hidden)\n"
            "-nB : Hide warning banner (for .cdb output)\n"
            "-nA : Hide areas (shown by default in .cdb output)\n"
-           "-z  : Hide areas smaller than SIZE -z:DECSIZE\n"           
+           "-z  : Hide areas smaller than SIZE -z:DECSIZE\n"
            "\n"
            "Use: Read a .map, .noi, .cdb or .ihx file to display area sizes.\n"
            "Example 1: \"romusage build/MyProject.map\"\n"
@@ -211,8 +211,9 @@ int main( int argc, char *argv[] )  {
                     banklist_finalize_and_show();
                     ret = EXIT_SUCCESS; // Exit with success
                 }
-            } else if ((matches_extension(filename_in, (char *)".gb"))  ||
-                       (matches_extension(filename_in, (char *)".gbc"))) {
+            } else if (matches_extension(filename_in, (char *)".gb"    ) ||
+                       matches_extension(filename_in, (char *)".gbc"   ) ||
+                       matches_extension(filename_in, (char *)".pocket") ) {
                 printf("ROM FILE\n");
                 if (rom_file_process(filename_in)) {
                     banklist_finalize_and_show();
