@@ -200,7 +200,7 @@ void banklist_printall(list_type * p_bank_list) {
     int b;
 
     fprintf(stdout, "\n");
-    fprintf(stdout,"Bank           Range             Size   Used   Used%%   Free  Free%% \n"
+    fprintf(stdout,"Bank           Range             Size   Used   Used%%  Free   Free%% \n"
                    "----------     ----------------  -----  -----  -----  -----  -----\n");
 
     // Print all banks
