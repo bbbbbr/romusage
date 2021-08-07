@@ -1,6 +1,15 @@
 Changelog
 =========
 
+
+# Version 1.2.1
+* Adds ascii block style option for small and large graphs (-gA and -GA)
+* Make file extension detection case insensitive
+
+# romusage 1.2.0
+* Adds GB/GBC ROM File support
+* Fix argument handling that might incorrectly match a parameter
+
 # Version 1.1.2
 * Minor argument handling fixes
 
