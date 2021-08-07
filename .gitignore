@@ -8,3 +8,6 @@
 test
 todo.txt
 *.zip
+bin/
+obj/
+
