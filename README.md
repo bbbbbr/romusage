@@ -1,6 +1,10 @@
 romusage
 ===========
+### Downloads
+ - [Releases](/romusage/releases)
+ - [Unpackaged Binaries](/package/)
 
+### Description
 A small command line tool for estimating usage (free space) of Game Boy ROMs from the following file types:
 - .map (sdcc, rgbds)
 - .noi (sdcc)
@@ -26,9 +30,7 @@ GB / GBC ROM Files:
 - No overflow detection
 - Usage estimates can only attempt to distinguish between "empty space" (0xFF's) and data that looks like empty space (0xFF's). It may be inaccurate.
 
-Binaries are [here](/bin/)
-
-
+### Usage
 ```
 romusage input_file.[map|noi|ihx|cdb|.gb[c]] [options]
 version 1.2.1
@@ -68,7 +70,7 @@ Notes:
   * GB/GBC files are just guessing at everything, no promises.
 
 ```
-
+### Examples
 
 Example output with a small graph (-g) for a 32k non-banked ROM, called after completion of the link stage. Manually specify Shadow OAM and Stack as exclusive ranges (-e). Reading from the .map file.
 ```
