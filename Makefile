@@ -1,19 +1,28 @@
 DEL = rm -f
 
-# Add all c source files
-CFILES = $(wildcard *.c)
-# Remove some files that won't/can't be used
-COBJ = $(CFILES:.c=.o)
 
-BIN = romusage
+SRCDIR = src
+OBJDIR = obj
+BINDIR = bin
+PACKDIR = package
+MKDIRS = $(OBJDIR) $(BINDIR) $(PACKDIR)
+# Add all c source files from $(SRCDIR)
+# Create the object files in $(OBJDIR)
+CFILES = $(wildcard $(SRCDIR)/*.c)
+COBJ = $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(CFILES))
+
+BIN = $(BINDIR)/romusage
 BIN_WIN = $(BIN).exe
 
 
+# ignore package dicrectory that conflicts with rule target
+.PHONY: package
+
 all: linux
 
-info:
-	@echo "--> Please specify target, 'make linux' or 'make wincross' (MinGW Windows build)"
-
+# Compile .c to .o in a separate directory
+$(OBJDIR)/%.o: $(SRCDIR)/%.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
 # Linux MinGW build for Windows
 # (static linking to avoid DLL dependencies)
@@ -23,8 +32,10 @@ wincross: LDFLAGS = -s -static
 wincross: $(COBJ)
 	$(CC) -o $(BIN_WIN)  $^ $(LDFLAGS)
 
-# Linux build
+# Maxos uses linux target
 macos: linux
+
+# Linux build
 linux: CC = gcc
 linux: LDFLAGS = -s
 linux: $(COBJ)
@@ -37,25 +48,29 @@ clean:
 	$(DEL) $(COBJ) $(BIN_WIN) $(BIN)
 
 macoszip: macos
-	mkdir -p bin
+	mkdir -p $(PACKDIR)
 	zip $(BIN)-macos.zip $(BIN)
-	mv $(BIN)-macos.zip bin
-	cp $(BIN) bin
+	mv $(BIN)-macos.zip $(PACKDIR)
+	cp $(BIN) $(PACKDIR)
 
 linuxzip: linux
-	mkdir -p bin
+	mkdir -p $(PACKDIR)
 	zip $(BIN)-linux.zip $(BIN)
-	mv $(BIN)-linux.zip bin
-	cp $(BIN) bin
+	mv $(BIN)-linux.zip $(PACKDIR)
+	cp $(BIN) $(PACKDIR)
 
 wincrosszip: wincross
-	mkdir -p bin
+	mkdir -p $(PACKDIR)
 	zip $(BIN)-windows.zip $(BIN_WIN)
-	mv $(BIN)-windows.zip bin
-	cp $(BIN_WIN) bin
+	mv $(BIN)-windows.zip $(PACKDIR)
+	cp $(BIN_WIN) $(PACKDIR)
 
 package:
 	${MAKE} clean
 	${MAKE} wincrosszip
 	${MAKE} clean
 	${MAKE} linuxzip
+
+# create necessary directories after Makefile is parsed but before build
+# info prevents the command from being pasted into the makefile
+$(info $(shell mkdir -p $(MKDIRS)))
