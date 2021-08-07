@@ -1,7 +1,7 @@
 romusage
 ===========
 ### Downloads
- - [Releases](/romusage/releases)
+ - Releases: See the Releases section to the right
  - [Unpackaged Binaries](/package/)
 
 ### Description
