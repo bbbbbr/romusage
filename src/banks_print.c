@@ -29,7 +29,7 @@ static void print_graph_char_asciistyle(uint32_t perc_used) {
     #ifdef __WIN32__
         // https://en.wikipedia.org/wiki/Code_page_437
         // https://sourceforge.net/p/mingw/mailman/message/14065664/
-        // Code Page 437 (appears to be default for windows console, 
+        // Code Page 437 (appears to be default for windows console,
         if      (perc_used >= 95) fprintf(stdout, "%c", 219u); // Full  Shade Block
         else if (perc_used >= 75) fprintf(stdout, "%c", 178u); // Dark  Shade Block
         else if (perc_used >= 50) fprintf(stdout, "%c", 177u); // Med   Shade Block
@@ -200,7 +200,7 @@ void banklist_printall(list_type * p_bank_list) {
     int b;
 
     fprintf(stdout, "\n");
-    fprintf(stdout,"Bank           Range             Size   Used   Used%%   Free  Free%% \n"
+    fprintf(stdout,"Bank           Range             Size   Used   Used%%  Free   Free%% \n"
                    "----------     ----------------  -----  -----  -----  -----  -----\n");
 
     // Print all banks
