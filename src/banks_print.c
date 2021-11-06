@@ -176,9 +176,9 @@ static void bank_print_info(bank_item *p_bank) {
                                       p_bank->end); // Address Start -> End
     fprintf(stdout,"%7d", p_bank->size_total);      // Total size
     fprintf(stdout,"%7d", p_bank->size_used);       // Used
-    fprintf(stdout,"  %3d%%", (p_bank->size_used * (uint32_t)100)
+    fprintf(stdout,"  %4d%%", (p_bank->size_used * (uint32_t)100)
                                / p_bank->size_total); // Percent Used
-    fprintf(stdout,"%8d", (int32_t)p_bank->size_total - (int32_t)p_bank->size_used); // Free
+    fprintf(stdout,"%7d", (int32_t)p_bank->size_total - (int32_t)p_bank->size_used); // Free
     fprintf(stdout,"   %3d%%", (((int32_t)p_bank->size_total - (int32_t)p_bank->size_used) * (int32_t)100)
                                / (int32_t)p_bank->size_total); // Percent Free
 
