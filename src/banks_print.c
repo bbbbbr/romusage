@@ -171,13 +171,19 @@ static void bank_print_area(bank_item *p_bank) {
 
 static void bank_print_info(bank_item *p_bank) {
 
-    fprintf(stdout,"%-15s",p_bank->name);           // Name
-    fprintf(stdout,"0x%04X -> 0x%04X",p_bank->start,
-                                      p_bank->end); // Address Start -> End
-    fprintf(stdout,"%7d", p_bank->size_total);      // Total size
-    fprintf(stdout,"%7d", p_bank->size_used);       // Used
-    fprintf(stdout,"  %4d%%", (p_bank->size_used * (uint32_t)100)
-                               / p_bank->size_total); // Percent Used
+    fprintf(stdout,"%-15s",p_bank->name); // Name
+
+    // Skip some info if compact mode is enabled.
+    if (!option_compact_mode) {
+        fprintf(stdout,"0x%04X -> 0x%04X",p_bank->start,
+                                          p_bank->end); // Address Start -> End
+        fprintf(stdout,"%7d", p_bank->size_total);      // Total size
+    }
+    fprintf(stdout,"%7d", p_bank->size_used); // Used
+    if (!option_compact_mode) {
+        fprintf(stdout,"  %4d%%", (p_bank->size_used * (uint32_t)100)
+                                   / p_bank->size_total); // Percent Used
+    }
     fprintf(stdout,"%7d", (int32_t)p_bank->size_total - (int32_t)p_bank->size_used); // Free
     fprintf(stdout,"   %3d%%", (((int32_t)p_bank->size_total - (int32_t)p_bank->size_used) * (int32_t)100)
                                / (int32_t)p_bank->size_total); // Percent Free
@@ -200,8 +206,13 @@ void banklist_printall(list_type * p_bank_list) {
     int b;
 
     fprintf(stdout, "\n");
-    fprintf(stdout,"Bank           Range             Size   Used   Used%%  Free   Free%% \n"
-                   "----------     ----------------  -----  -----  -----  -----  -----\n");
+    if (option_compact_mode) {
+        fprintf(stdout,"Bank             Used   Free   Free%% \n"
+                       "----------       -----  -----  -----\n");
+    } else {
+        fprintf(stdout,"Bank           Range             Size   Used   Used%%  Free   Free%% \n"
+                       "----------     ----------------  -----  -----  -----  -----  -----\n");
+    }
 
     // Print all banks
     for (c = 0; c < p_bank_list->count; c++) {

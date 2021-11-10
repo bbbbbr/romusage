@@ -11,6 +11,7 @@ bool banks_display_areas        = false;
 bool banks_display_headers      = false;
 bool banks_display_minigraph    = false;
 bool banks_display_largegraph   = false;
+bool option_compact_mode        = false;
 bool option_display_asciistyle  = false;
 bool option_all_areas_exclusive = false;
 bool option_quiet_mode          = false;
@@ -42,6 +43,11 @@ void banks_output_show_minigraph(bool do_show) {
 // Turn on/off display of large usage graph per bank
 void banks_output_show_largegraph(bool do_show) {
     banks_display_largegraph = do_show;
+}
+
+// Turn on/off compact display mode
+void set_option_show_compact(bool value) {
+    option_compact_mode = value;
 }
 
 // Turn on/off whether to use ascii style
