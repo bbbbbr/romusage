@@ -17,7 +17,7 @@
 #include "cdb_file.h"
 #include "rom_file.h"
 
-#define VERSION "version 1.2.1"
+#define VERSION "version 1.2.2"
 
 void static display_cdb_warning(void);
 void static display_help(void);
@@ -42,7 +42,7 @@ static void display_cdb_warning() {
 
 static void display_help(void) {
     fprintf(stdout,
-           "romusage input_file.[map|noi|ihx|cdb|.gb[c]] [options]\n"
+           "romusage input_file.[map|noi|ihx|cdb|.gb[c]|.pocket|.duck] [options]\n"
            VERSION"\n"
            "\n"
            "Options\n"
@@ -55,15 +55,15 @@ static void display_help(void) {
            "-e  : Manually specify an Area that should not overlap -e:NAME:HEXADDR:HEXLENGTH\n"
            "-E  : All areas are exclusive (except HEADERs), warn for any overlaps\n"
            "-q  : Quiet, no output except warnings and errors\n"
-           "-R  : Return error code for Area warnings and errors \n"
+           "-R  : Return error code for Area warnings and errors\n"
            "\n"
-           "-sC : Enable compact mode, hiding nonessential columns.\n"
+           "-sC : Show Compact Output, hide non-essential columns\n"
            "-sH : Show HEADER Areas (normally hidden)\n"
            "-nB : Hide warning banner (for .cdb output)\n"
            "-nA : Hide areas (shown by default in .cdb output)\n"
            "-z  : Hide areas smaller than SIZE -z:DECSIZE\n"
            "\n"
-           "Use: Read a .map, .noi, .cdb or .ihx file to display area sizes.\n"
+           "Use: Read a .map, .noi, .cdb or .ihx file to display area sizes\n"
            "Example 1: \"romusage build/MyProject.map\"\n"
            "Example 2: \"romusage build/MyProject.noi -a -e:STACK:DEFF:100 -e:SHADOW_OAM:C000:A0\"\n"
            "Example 3: \"romusage build/MyProject.ihx -g\"\n"
@@ -78,7 +78,7 @@ static void display_help(void) {
            "  * CDB file output ONLY counts (most) data from C sources.\n"
            "    It cannot count functions and data from ASM and LIBs,\n"
            "    so bank totals may be incorrect/missing.\n"
-           "  * GB/GBC files are just guessing at everything, no promises.\n"
+           "  * GB/GBC/ROM files are just guessing at everything, no promises.\n"
            );
 }
 

@@ -32,8 +32,8 @@ GB / GBC ROM Files:
 
 ### Usage
 ```
-romusage input_file.[map|noi|ihx|cdb|.gb[c]] [options]
-version 1.2.1
+romusage input_file.[map|noi|ihx|cdb|.gb[c]|.pocket|.duck] [options]
+version 1.2.2
 
 Options
 -h  : Show this help
@@ -45,14 +45,15 @@ Options
 -e  : Manually specify an Area that should not overlap -e:NAME:HEXADDR:HEXLENGTH
 -E  : All areas are exclusive (except HEADERs), warn for any overlaps
 -q  : Quiet, no output except warnings and errors
--R  : Return error code for Area warnings and errors 
+-R  : Return error code for Area warnings and errors
 
+-sC : Show Compact Output, hide non-essential columns
 -sH : Show HEADER Areas (normally hidden)
 -nB : Hide warning banner (for .cdb output)
 -nA : Hide areas (shown by default in .cdb output)
 -z  : Hide areas smaller than SIZE -z:DECSIZE
 
-Use: Read a .map, .noi, .cdb or .ihx file to display area sizes.
+Use: Read a .map, .noi, .cdb or .ihx file to display area sizes
 Example 1: "romusage build/MyProject.map"
 Example 2: "romusage build/MyProject.noi -a -e:STACK:DEFF:100 -e:SHADOW_OAM:C000:A0"
 Example 3: "romusage build/MyProject.ihx -g"
@@ -67,8 +68,7 @@ Notes:
   * CDB file output ONLY counts (most) data from C sources.
     It cannot count functions and data from ASM and LIBs,
     so bank totals may be incorrect/missing.
-  * GB/GBC files are just guessing at everything, no promises.
-
+  * GB/GBC/ROM files are just guessing at everything, no promises.
 ```
 ### Examples
 
