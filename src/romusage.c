@@ -217,7 +217,8 @@ int main( int argc, char *argv[] )  {
                 }
             } else if (matches_extension(filename_in, (char *)".gb"    ) ||
                        matches_extension(filename_in, (char *)".gbc"   ) ||
-                       matches_extension(filename_in, (char *)".pocket") ) {
+                       matches_extension(filename_in, (char *)".pocket") ||
+                       matches_extension(filename_in, (char *)".duck") ) {
                 printf("ROM FILE\n");
                 if (rom_file_process(filename_in)) {
                     banklist_finalize_and_show();

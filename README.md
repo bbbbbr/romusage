@@ -10,7 +10,7 @@ A small command line tool for estimating usage (free space) of Game Boy ROMs fro
 - .noi (sdcc)
 - .ihx (sdcc)
 - .cdb (sdcc)
-- .gb / .gbc (ROM image)
+- .gb / .gbc / .pocket / .duck (ROM image file for: Game Boy / Color, Analogue Pocket, Mega Duck / Cougar Boy)
 
 It produces a trimmed, sorted output of ROM/RAMs, their usage and optionally the Areas located in them.
 
