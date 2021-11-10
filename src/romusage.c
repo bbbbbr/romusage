@@ -57,6 +57,7 @@ static void display_help(void) {
            "-q  : Quiet, no output except warnings and errors\n"
            "-R  : Return error code for Area warnings and errors \n"
            "\n"
+           "-sC : Enable compact mode, hiding nonessential columns.\n"
            "-sH : Show HEADER Areas (normally hidden)\n"
            "-nB : Hide warning banner (for .cdb output)\n"
            "-nA : Hide areas (shown by default in .cdb output)\n"
