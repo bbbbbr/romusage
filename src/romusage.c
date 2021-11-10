@@ -110,6 +110,9 @@ int handle_args(int argc, char * argv[]) {
         } else if (strstr(argv[i], "-sH") == argv[i]) {
             banks_output_show_headers(true);
 
+        } else if (strstr(argv[i], "-sC") == argv[i]) {
+            set_option_show_compact(true);
+
         } else if (strstr(argv[i], "-nB") == argv[i]) {
             set_option_hide_banners(true);
 
@@ -182,7 +185,7 @@ void cleanup(void) {
 
 int main( int argc, char *argv[] )  {
 
-    int ret = EXIT_FAILURE; // Default to failure on exit    
+    int ret = EXIT_FAILURE; // Default to failure on exit
 
     // Register cleanup with exit handler
     atexit(cleanup);

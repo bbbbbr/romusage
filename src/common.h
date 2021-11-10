@@ -25,6 +25,7 @@ extern bool banks_display_areas;
 extern bool banks_display_headers;
 extern bool banks_display_minigraph;
 extern bool banks_display_largegraph;
+extern bool option_compact_mode;
 extern bool option_all_areas_exclusive;
 extern bool option_quiet_mode;
 extern bool option_suppress_duplicates;
@@ -45,6 +46,7 @@ void set_option_input_source(int value);
 void set_option_area_sort(int value);
 void set_option_area_hide_size(uint32_t value);
 void set_option_display_asciistyle(bool value);
+void set_option_show_compact(bool value);
 
 int get_option_input_source(void);
 int get_option_area_sort(void);
