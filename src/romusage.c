@@ -198,7 +198,7 @@ int main( int argc, char *argv[] )  {
         if (show_help_and_exit) {
             ret = EXIT_SUCCESS;
         }
-        else if (strlen(filename_in) >=5) { // Must at least have extension
+        else {
             // detect file extension
             if (matches_extension(filename_in, (char *)".noi")) {
                 if (noi_file_process_areas(filename_in)) {
