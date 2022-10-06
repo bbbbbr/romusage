@@ -49,21 +49,24 @@ clean:
 
 macoszip: macos
 	mkdir -p $(PACKDIR)
+	strip $(BIN)
 	zip $(BIN)-macos.zip $(BIN)
 	mv $(BIN)-macos.zip $(PACKDIR)
-	cp $(BIN) $(PACKDIR)
+#	cp $(BIN) $(PACKDIR)
 
 linuxzip: linux
 	mkdir -p $(PACKDIR)
+	strip $(BIN)
 	zip $(BIN)-linux.zip $(BIN)
 	mv $(BIN)-linux.zip $(PACKDIR)
-	cp $(BIN) $(PACKDIR)
+#	cp $(BIN) $(PACKDIR)
 
 wincrosszip: wincross
 	mkdir -p $(PACKDIR)
+	strip $(BIN_WIN)
 	zip $(BIN)-windows.zip $(BIN_WIN)
 	mv $(BIN)-windows.zip $(PACKDIR)
-	cp $(BIN_WIN) $(PACKDIR)
+#	cp $(BIN_WIN) $(PACKDIR)
 
 package:
 	${MAKE} clean

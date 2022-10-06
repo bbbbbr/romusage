@@ -1,0 +1,68 @@
+name: Build and Package
+
+on:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+  # Triggers the workflow on push or pull request events but only for the develop branch
+  # push:
+  #   branches: [ develop ]
+  # pull_request:
+  #   branches: [ develop ]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-20.04
+            name: Linux-x64
+          - os: macos-10.15
+            name: MacOS-x64
+    steps:
+
+      # ==== Build Steps ====
+      - name: Check out repo
+        uses: actions/checkout@v2
+        with:
+          path: romusage-root
+          submodules: false
+
+      # ==== Builds ====
+      - name: Build MacOS
+        if: (matrix.name == 'MacOS-x64')
+        shell: bash
+        run: |
+          cd romusage-root
+          make macoszip
+          cd ..
+
+      - name: Build Linux
+        if: (matrix.name == 'Linux-x64')
+        shell: bash
+        run: |
+          cd romusage-root
+          make linuxzip
+          make clean
+          make wincrosszip
+          cd ..
+
+
+      # ==== Packaging ====
+      - name: Package build Linux/MacOS
+        if: (matrix.name == 'Linux-x64') || (matrix.name == 'MacOS-x64')
+        shell: bash
+        run: |
+          cd romusage-root
+          ls -la package
+          # 7z a package.zip package/*
+          cd ..
+
+      - name: Store build
+        if: (matrix.name == 'Linux-x64') || (matrix.name == 'MacOS-x64')
+        uses: actions/upload-artifact@v2
+        with:
+          name: Romusage build
+          # path: romusage-root/package/${{ env.BUILD_PACKAGE_FILENAME }}
+          path: romusage-root/package
+          # retention-days: 30
