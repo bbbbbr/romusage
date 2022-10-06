@@ -115,7 +115,7 @@ int map_file_process_areas(char * filename_in) {
             }
 
             // RGBDS Sections: Only parse lines that have Section (Area) summary info
-            else if (strstr(strline_in, "  SECTION: ")) {
+            else if (strstr(strline_in, "  SECTION: ") || strstr(strline_in, "\tSECTION: ")) {
                 if (cur_bank_rgbds != BANK_NUM_UNSET)
                     if (str_split(strline_in,p_words," :$()[]\n\t\"") == RGBDS_SECT_SPLIT_WORDS)
                         add_area_rgbds(p_words, cur_bank_rgbds);
