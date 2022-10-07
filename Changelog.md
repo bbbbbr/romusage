@@ -2,6 +2,23 @@ Changelog
 =========
 
 
+# Version 1.2.2
+* Add support for RGBDS v0.6.0 map file spaces -> tab change
+* Fix rejection of short file names (ex: a.gb)
+* Changed:
+  - XRAM -> SRAM
+  - WRAM -> WRAM_LO
+  - WRAM_1_* -> WRAM_HI_*
+  - ROM (Bank 0) -> ROM_0
+  - ROM_0 (Bank 0 overflow) -> ROM_1 (will clash and warn of overflow)
+* -E overlap / multiple write flag
+  - Additional header area warning suppression
+  - Improved warning format
+* Building: added Github Runner build workflow for Linux/Windows & Mac OSX
+
+If ((B0.overflow) && (B1))
+    B0.overflow name = ROM_0_
+
 # Version 1.2.1
 * Adds ascii block style option for small and large graphs (-gA and -GA)
 * Make file extension detection case insensitive
