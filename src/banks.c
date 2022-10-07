@@ -189,13 +189,22 @@ static void area_check_warnings(area_item area, uint32_t size_assigned) {
 
 
 static void area_check_warn_overlap(area_item area_a, area_item area_b) {
+
+    uint32_t overlap_size;
+
+    // HEADER areas almost always overlap, ignore them
+    if ((strstr(area_a.name,"HEADER")) || (strstr(area_b.name,"HEADER")))
+        return;
+
     // Check to see if an there are overlaps with exclusive areas
     if (area_a.exclusive || area_b.exclusive) {
-        if (addrs_get_overlap(WITHOUT_BANK(area_a.start), WITHOUT_BANK(area_a.end),
-                              WITHOUT_BANK(area_b.start), WITHOUT_BANK(area_b.end)) > 0) {
-            printf("\n* WARNING: Overlap with exclusive area: "
-                   "%s 0x%x -> 0x%x (%d bytes%s) --and-- "
-                   "%s 0x%x -> 0x%x (%d bytes%s)\n",
+        overlap_size = addrs_get_overlap(WITHOUT_BANK(area_a.start), WITHOUT_BANK(area_a.end),
+                                         WITHOUT_BANK(area_b.start), WITHOUT_BANK(area_b.end));
+        if (overlap_size > 0) {
+            printf("\n* WARNING: Areas overlapp by %d bytes: Possible bank overflow.\n"
+                   "%15s 0x%04x -> 0x%04x (%d bytes%s)\n"
+                   "%15s 0x%04x -> 0x%04x (%d bytes%s)\n",
+                overlap_size,
                 area_a.name, area_a.start, area_a.end, RANGE_SIZE(area_a.start, area_a.end),
                 (area_a.exclusive) ? ", EXCLUSIVE" : " ",
                 area_b.name, area_b.start, area_b.end, RANGE_SIZE(area_b.start, area_b.end),
@@ -206,7 +215,6 @@ static void area_check_warn_overlap(area_item area_a, area_item area_b) {
         }
     }
 }
-
 
 
 // Calculates amount of space used by areas in a bank.
