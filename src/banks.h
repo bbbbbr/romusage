@@ -7,12 +7,18 @@
 
 #include "list.h"
 
-#define MAX_ADDR_UNBANKED 0x0000FFFFU
+#define MAX_ADDR_UNBANKED       0x0000FFFFU
+#define BANK_ADDR_ROM_UPPER_ST  0x00004000U  // Upper ROM Bank address bit
+#define BANK_ADDR_ROM_UPPER_END 0x00007FFFU  // Upper ROM Bank address bit
+#define BANK_ADDR_VADDR_MASK    0xFFFF0000U  // Virtual addressing mask for where .noi files/etc store bank number
+#define BANK_NUM_ROM1_VADDR     (1u << 16)
+#define BANK_NUM_ROM0           (0u)
+
 
 #define ARRAY_LEN(A)         (sizeof(A) / sizeof(A[0]))
-#define WITHOUT_BANK(addr)   (addr & 0x0000FFFFU)
-#define BANK_GET_NUM(addr)   ((addr & 0xFFFF0000U) >> 16)
-#define BANK_ONLY(addr)      (addr & 0xFFFF0000U)
+#define WITHOUT_BANK(addr)   ((addr) & MAX_ADDR_UNBANKED)
+#define BANK_GET_NUM(addr)   (((addr) & BANK_ADDR_VADDR_MASK) >> 16)
+#define BANK_ONLY(addr)      ((addr) & BANK_ADDR_VADDR_MASK)
 #define RANGE_SIZE(MIN, MAX) (MAX - MIN + 1)
 #define UNBANKED_END(start, end)  ((end - start) + WITHOUT_BANK(start))
 

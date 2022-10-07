@@ -28,12 +28,12 @@ static int bank_item_compare(const void* a, const void* b);
 
 
 const bank_item bank_templates[] = {
-    {"ROM  ",   0x0000, 0x3FFF, BANKED_NO,  0x7FFF, 0,0,0},
+    {"ROM_0",   0x0000, 0x3FFF, BANKED_NO,  0x7FFF, 0,0,0},
     {"ROM_",    0x4000, 0x7FFF, BANKED_YES, 0x7FFF, 0,0,0},
     {"VRAM_",   0x8000, 0x9FFF, BANKED_YES, 0x9FFF, 0,0,0},
-    {"XRAM_",   0xA000, 0xBFFF, BANKED_YES, 0xBFFF, 0,0,0},
-    {"WRAM  ",  0xC000, 0xCFFF, BANKED_NO,  0xDFFF, 0,0,0},
-    {"WRAM_1_", 0xD000, 0xDFFF, BANKED_YES, 0xDFFF, 0,0,0},
+    {"SRAM_",   0xA000, 0xBFFF, BANKED_YES, 0xBFFF, 0,0,0},
+    {"WRAM_LO", 0xC000, 0xCFFF, BANKED_NO,  0xDFFF, 0,0,0},
+    {"WRAM_HI_",0xD000, 0xDFFF, BANKED_YES, 0xDFFF, 0,0,0},
     {"HRAM",    0xFF80, 0xFFFE, BANKED_NO,  0xFFFE, 0,0,0},
 };
 
@@ -85,6 +85,26 @@ static uint32_t addrs_get_overlap(uint32_t a_start, uint32_t a_end, uint32_t b_s
     }
     return size_used;
 
+}
+
+
+// Fixes up the missing bank number virtual addressing mask bits
+// for when ROM0 overflows into ROM1. Ex: 0x00004000 -> 0x00014000
+//
+// Note: When called from banks_check() the address will be
+//       clipped to the start of the matched bank template
+static uint32_t addr_fixup_ROM0_overflow_bank_num(uint32_t addr) {
+
+    // If it's in the upper bank range yet has
+    // a bank number of zero then it needs fixing
+    if ((WITHOUT_BANK(addr) >= BANK_ADDR_ROM_UPPER_ST) &&
+        (WITHOUT_BANK(addr) <= BANK_ADDR_ROM_UPPER_END) &&
+        (BANK_GET_NUM(addr) == BANK_NUM_ROM0)) {
+        // OR in the virtual addressing equivalent of bank ROM1
+        addr |= BANK_NUM_ROM1_VADDR;
+    }
+
+    return addr;
 }
 
 
@@ -203,8 +223,8 @@ uint32_t bank_areas_calc_used(bank_item * p_bank, uint32_t clip_start, uint32_t 
 
     size_used = 0;
 
-    // The calculation requires areas to fiorst be
-    //  sorted ascending by .start addr then by .end addr
+    // The calculation requires areas to first be
+    // sorted ascending by .start addr then by .end addr
     qsort (p_bank->area_list.p_array, p_bank->area_list.count, sizeof(area_item), area_item_compare);
 
     // Iterate over all areas
@@ -374,7 +394,16 @@ void banks_check(area_item area) {
 
         // If overlap was found, determine bank number and log it
         if (size_used > 0) {
-            bank_num = BANK_GET_NUM(area.start);
+            // Area items can span multiple banks, so don't use area.start
+            // on it's own to get bank number since it might originate
+            // in a lower bank (handled in a previous iteration of the loop).
+            // Instead use the current matched bank template start address.
+            // Then fixup missing bank number if needed
+            uint32_t addr_start_banknum = BANK_ONLY(area.start) | WITHOUT_BANK(bank_templates[c].start);
+            addr_start_banknum = addr_fixup_ROM0_overflow_bank_num(addr_start_banknum);
+            bank_num = BANK_GET_NUM(addr_start_banknum);
+
+            // Area range added to bank will get clipped to bank range
             banklist_addto(bank_templates[c], area, bank_num);
             size_assigned += size_used; // Log space assigned to bank
 
