@@ -14,10 +14,9 @@ Changelog
 * -E overlap / multiple write flag
   - Additional header area warning suppression
   - Improved warning format
+* Added -sC : Show Compact Output (by Evie)
+* Added rom .duck extension for megaduck ROMs
 * Building: added Github Runner build workflow for Linux/Windows & Mac OSX
-
-If ((B0.overflow) && (B1))
-    B0.overflow name = ROM_0_
 
 # Version 1.2.1
 * Adds ascii block style option for small and large graphs (-gA and -GA)
