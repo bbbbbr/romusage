@@ -67,7 +67,7 @@ static uint8_t bank_get_color(bank_item * p_bank) {
 
         // Color ramp from Default -> Green -> Yellow -> Red
         if      (perc_free == 0)  color_esc_code = VT_COLOR_RED_LIGHT;
-        else if (perc_free <= 5)  color_esc_code = VT_COLOR_YELLOW_LIGHT;
+        else if (perc_free <= 10) color_esc_code = VT_COLOR_YELLOW_LIGHT;
         else if (perc_free <= 25) color_esc_code = VT_COLOR_GREEN_LIGHT;
         // implied: else if (> 25) PRINT_COLOR_DEFAULT
     }
