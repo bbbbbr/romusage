@@ -61,7 +61,7 @@ Example 1: "romusage build/MyProject.map"
 Example 2: "romusage build/MyProject.noi -a -e:STACK:DEFF:100 -e:SHADOW_OAM:C000:A0"
 Example 3: "romusage build/MyProject.ihx -g"
 Example 4: "romusage build/MyProject.map -q -R"
-Example 5: "romusage build/MyProject.noi -sR -sp:90:32:90:35:33:36"
+Example 5: "romusage build/MyProject.noi -sR -sP:90:32:90:35:33:36"
 
 Notes:
   * GBDK / RGBDS map file format detection is automatic.
@@ -99,6 +99,11 @@ romusage banks.map -R -q
 * WARNING: Area _CODE_12 at c4000 -> c801f extends past end of memory region at c7fff (Overflow by 32 bytes)
 
 ```
+
+
+Examples of color output. `-sRe` with `-sRp` for percentage based color on row ends with `-g` small graphs. `-sRd` for section based color with center columns dimmed.
+![Romusage Color Examples](/info/romusage_color_examples_linux.png)
+
 
 And another example, with display of areas in the banks enabled. Reading from the .noi file.
 ```

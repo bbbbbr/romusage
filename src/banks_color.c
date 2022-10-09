@@ -144,8 +144,8 @@ void bank_render_color(bank_item * p_bank, int mode) {
 #define MAX_SPLIT_WORDS 8
 #define ARG_COLORS_CUSTOM_PAL 7u
 
-// -sp : Custom Color Palette. Each colon separated entry is decimal VT100 color code
-//       -sp:DEFAULT:ROM:VRAM:SRAM:WRAM:HRAM
+// -sP : Custom Color Palette. Each colon separated entry is decimal VT100 color code
+//       -sP:DEFAULT:ROM:VRAM:SRAM:WRAM:HRAM
 //
 // Custom color scheme for output
 bool set_option_custom_bank_colors(char * arg_str) {

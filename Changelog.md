@@ -9,7 +9,7 @@ Changelog
 * `-sR` : Custom Color Palette
   -  Colon separated entries are decimal VT100 color codes
   -  Used for section based color mode only, not Percetange based coloring
-  - `-sp:DEFAULT:ROM:VRAM:SRAM:WRAM:HRAM`
+  - `-sP:DEFAULT:ROM:VRAM:SRAM:WRAM:HRAM`
 
 # Version 1.2.2
 * Add support for RGBDS v0.6.0 map file spaces -> tab change
