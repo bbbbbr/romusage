@@ -11,6 +11,7 @@
 
 #include "common.h"
 #include "banks.h"
+#include "banks_color.h"
 #include "map_file.h"
 #include "noi_file.h"
 #include "ihx_file.h"
@@ -57,9 +58,9 @@ static void display_help(void) {
            "-q  : Quiet, no output except warnings and errors\n"
            "-R  : Return error code for Area warnings and errors\n"
            "\n"
-           "-sR : [Rainbow] Color output. (-sRe for Row Ends, -sRd for Middle Dimmed)\n"
-           "-sp : Custom Color Palette. Each colon separated entry is decimal VT100 color code\n"
-           "      -sp:DEFAULT:ROM:VRAM:SRAM:WRAM:HRAM\n"
+           "-sR : [Rainbow] Color output (-sRe for Row Ends, -sRd for Center Dimmed, -sRp %% based)\n"
+           "-sP : Custom Color Palette. Colon separated entries are decimal VT100 color codes\n"
+           "      -sp:DEFAULT:ROM:VRAM:SRAM:WRAM:HRAM (section based color only)\n"
            "-sC : Show Compact Output, hide non-essential columns\n"
            "-sH : Show HEADER Areas (normally hidden)\n"
            "-nB : Hide warning banner (for .cdb output)\n"
@@ -71,7 +72,7 @@ static void display_help(void) {
            "Example 2: \"romusage build/MyProject.noi -a -e:STACK:DEFF:100 -e:SHADOW_OAM:C000:A0\"\n"
            "Example 3: \"romusage build/MyProject.ihx -g\"\n"
            "Example 4: \"romusage build/MyProject.map -q -R\"\n"
-           "Example 5: \"romusage build/MyProject.noi -sR -sp:90:32:90:35:33:36\"\n"           
+           "Example 5: \"romusage build/MyProject.noi -sR -sp:90:32:90:35:33:36\"\n"
            "\n"
            "Notes:\n"
            "  * GBDK / RGBDS map file format detection is automatic.\n"
@@ -114,13 +115,14 @@ int handle_args(int argc, char * argv[]) {
 
         } else if (strstr(argv[i], "-sR") == argv[i]) {
             switch (argv[i][ + strlen("-sR")]) {
+                case 'p': set_option_percentage_based_color(true); break; // Turns on default color mode if not set
                 case 'e': set_option_color_mode(OPT_PRINT_COLOR_ROW_ENDS); break;
                 case 'd': set_option_color_mode(OPT_PRINT_COLOR_WHOLE_ROW_DIMMED); break;
-                case 'w': // Whole Row falls through to default
-                default: set_option_color_mode(OPT_PRINT_COLOR_WHOLE_ROW); break;
+                case 'w': set_option_color_mode(OPT_PRINT_COLOR_WHOLE_ROW); break;
+                default:  set_option_color_mode(OPT_PRINT_COLOR_DEFAULT); break;
             }
         } else if (strstr(argv[i], "-sp") == argv[i]) {
-            if (!setoption_custom_bank_colors(argv[i])) {
+            if (!set_option_custom_bank_colors(argv[i])) {
                 fprintf(stdout,"malformed custom color palette: %s\n\n", argv[i]);
                 display_help();
                 return false;

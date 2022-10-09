@@ -21,6 +21,7 @@ bool option_hide_banners        = false;
 int  option_input_source        = OPT_INPUT_SRC_NONE;
 int  option_area_sort           = OPT_AREA_SORT_DEFAULT;
 int  option_color_mode          = OPT_PRINT_COLOR_OFF;
+bool option_percentage_based_color = false;
 uint32_t option_area_hide_size  = OPT_AREA_HIDE_SIZE_DEFAULT;
 bool exit_error                 = false;
 
@@ -98,6 +99,15 @@ void set_option_color_mode(int value) {
     option_color_mode = value;
 }
 
+// Use Percentage based color
+// Turns on color mode to default if not enabled
+void set_option_percentage_based_color(bool value) {
+    option_percentage_based_color = value;
+
+    if (get_option_color_mode() == OPT_PRINT_COLOR_OFF)
+        set_option_color_mode(OPT_PRINT_COLOR_DEFAULT);
+}
+
 // Hide areas smaller than size
 void set_option_area_hide_size(uint32_t value) {
     option_area_hide_size = value;
@@ -117,6 +127,11 @@ int get_option_area_sort(void) {
 // Color output mode
 int get_option_color_mode(void) {
     return option_color_mode;
+}
+
+// Use Percentage based color
+bool get_option_percentage_based_color(void) {
+    return option_percentage_based_color;
 }
 
 // Turn on/off banners

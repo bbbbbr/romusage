@@ -217,6 +217,20 @@ static void area_check_warn_overlap(area_item area_a, area_item area_b) {
 }
 
 
+
+// Calculate free and used percentages of space in a given bank
+int bank_calc_percent_free(bank_item * p_bank) {
+
+    return (((int32_t)p_bank->size_total - (int32_t)p_bank->size_used)
+             * (int32_t)100) / (int32_t)p_bank->size_total;
+}
+
+int bank_calc_percent_used(bank_item * p_bank) {
+
+    return ((p_bank->size_used * (uint32_t)100) / p_bank->size_total);
+}
+
+
 // Calculates amount of space used by areas in a bank.
 // Attempts to merge overlapping areas to avoid
 // counting shared space multiple times.
@@ -224,7 +238,7 @@ static void area_check_warn_overlap(area_item area_a, area_item area_b) {
 uint32_t bank_areas_calc_used(bank_item * p_bank, uint32_t clip_start, uint32_t clip_end) {
 
     area_item * areas = (area_item *)p_bank->area_list.p_array;
-    int c,sub;    
+    int c,sub;
     uint32_t start, end;
     uint32_t size_used;
     area_item t_area, sub_area;
@@ -459,7 +473,7 @@ bool area_manual_add(char * arg_str) {
         return false; // Signal failure
 }
 
-// NOTE: All the comparisons and their particular order are 
+// NOTE: All the comparisons and their particular order are
 //       required for bank_areas_calc_used() to work properly.
 // qsort compare rule function
 static int area_item_compare(const void* a, const void* b) {
@@ -574,7 +588,7 @@ void banklist_finalize_and_show(void) {
         if (get_option_area_sort() == OPT_AREA_SORT_SIZE_DESC)
             qsort (banks[c].area_list.p_array, banks[c].area_list.count, sizeof(area_item), area_item_compare_size_desc);
         else if (get_option_area_sort() == OPT_AREA_SORT_ADDR_ASC)
-            qsort (banks[c].area_list.p_array, banks[c].area_list.count, sizeof(area_item), area_item_compare_addr_asc);        
+            qsort (banks[c].area_list.p_array, banks[c].area_list.count, sizeof(area_item), area_item_compare_addr_asc);
         else
             qsort (banks[c].area_list.p_array, banks[c].area_list.count, sizeof(area_item), area_item_compare);
     }

@@ -71,6 +71,10 @@ typedef struct bank_item {
 } bank_item;
 
 bool area_manual_add(char * arg_str);
+
+int bank_calc_percent_free(bank_item * p_bank);
+int bank_calc_percent_used(bank_item * p_bank);
+
 uint32_t bank_areas_calc_used(bank_item *, uint32_t, uint32_t);
 
 void banks_output_show_areas(bool do_show);

@@ -2,8 +2,14 @@ Changelog
 =========
 
 # Version 1.2.3
-* -sR : [Rainbow] Color output. (-sRe for Row Ends, -sRd for Middle Dimmed)
-
+* `-sR` : [Rainbow] Color output
+  - `-sRe` : Row Ends only
+  - `-sRd` : Middle Dimmed
+  - `-sRp` : Percentage based coloring
+* `-sR` : Custom Color Palette
+  -  Colon separated entries are decimal VT100 color codes
+  -  Used for section based color mode only, not Percetange based coloring
+  - `-sp:DEFAULT:ROM:VRAM:SRAM:WRAM:HRAM`
 
 # Version 1.2.2
 * Add support for RGBDS v0.6.0 map file spaces -> tab change

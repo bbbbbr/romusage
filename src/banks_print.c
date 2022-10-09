@@ -75,6 +75,8 @@ static void print_graph_char_standard(uint32_t perc_used) {
 }
 
 
+// Prints a graph for the bank
+// Each character represents an arbitrary amount based on the bank size
 static void bank_print_graph(bank_item * p_bank, uint32_t num_chars) {
 
     int c;
@@ -83,6 +85,7 @@ static void bank_print_graph(bank_item * p_bank, uint32_t num_chars) {
 
     for (c = 0; c <= (num_chars - 1); c++) {
 
+        // Get percentage used for range represented by current graph char
         perc_used = (bank_areas_calc_used(p_bank,
                                           p_bank->start + (c * range_size),
                                           p_bank->start + ((c + 1) * range_size) - 1)
@@ -172,10 +175,10 @@ static void bank_print_area(bank_item *p_bank) {
 
 static void bank_print_info(bank_item *p_bank) {
 
-    bank_render_color(p_bank->bank_mem_type, PRINT_REGION_ROW_START);
+    bank_render_color(p_bank, PRINT_REGION_ROW_START);
     fprintf(stdout,"%-15s",p_bank->name); // Name
 
-    bank_render_color(p_bank->bank_mem_type, PRINT_REGION_ROW_MIDDLE_START);
+    bank_render_color(p_bank, PRINT_REGION_ROW_MIDDLE_START);
     // Skip some info if compact mode is enabled.
     if (!option_compact_mode) {
         fprintf(stdout,"0x%04X -> 0x%04X",p_bank->start,
@@ -185,14 +188,12 @@ static void bank_print_info(bank_item *p_bank) {
     fprintf(stdout,"%7d", p_bank->size_used); // Used
 
     if (!option_compact_mode) {
-        fprintf(stdout,"  %4d%%", (p_bank->size_used * (uint32_t)100)
-                                   / p_bank->size_total); // Percent Used
+        fprintf(stdout,"  %4d%%", bank_calc_percent_used(p_bank)); // Percent Used
     }
 
-    bank_render_color(p_bank->bank_mem_type, PRINT_REGION_ROW_MIDDLE_END);
+    bank_render_color(p_bank, PRINT_REGION_ROW_MIDDLE_END);
     fprintf(stdout,"%7d", (int32_t)p_bank->size_total - (int32_t)p_bank->size_used); // Free
-    fprintf(stdout,"   %3d%%", (((int32_t)p_bank->size_total - (int32_t)p_bank->size_used) * (int32_t)100)
-                               / (int32_t)p_bank->size_total); // Percent Free
+    fprintf(stdout,"   %3d%%", bank_calc_percent_free(p_bank)); // Percent Free
 
     // Print a small bar graph if requested
     if (banks_display_minigraph) {
@@ -201,7 +202,7 @@ static void bank_print_info(bank_item *p_bank) {
         fprintf(stdout, "|");
     }
 
-    bank_render_color(p_bank->bank_mem_type, PRINT_REGION_ROW_END);
+    bank_render_color(p_bank, PRINT_REGION_ROW_END);
 }
 
 

@@ -25,6 +25,7 @@
 #define OPT_PRINT_COLOR_WHOLE_ROW        1
 #define OPT_PRINT_COLOR_WHOLE_ROW_DIMMED 2
 #define OPT_PRINT_COLOR_ROW_ENDS         3
+#define OPT_PRINT_COLOR_DEFAULT          (OPT_PRINT_COLOR_WHOLE_ROW)
 
 
 extern bool banks_display_areas;
@@ -53,6 +54,7 @@ void set_option_hide_banners(bool value);
 void set_option_input_source(int value);
 void set_option_area_sort(int value);
 void set_option_color_mode(int value);
+void set_option_percentage_based_color(bool value);
 void set_option_area_hide_size(uint32_t value);
 void set_option_display_asciistyle(bool value);
 void set_option_show_compact(bool value);
@@ -60,6 +62,7 @@ void set_option_show_compact(bool value);
 int  get_option_input_source(void);
 int  get_option_area_sort(void);
 int  get_option_color_mode(void);
+bool get_option_percentage_based_color(void);
 bool get_option_hide_banners(void);
 bool get_option_display_asciistyle(void);
 uint32_t get_option_area_hide_size(void);

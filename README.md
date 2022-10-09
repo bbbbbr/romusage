@@ -33,7 +33,7 @@ GB / GBC ROM Files:
 ### Usage
 ```
 romusage input_file.[map|noi|ihx|cdb|.gb[c]|.pocket|.duck] [options]
-version 1.2.2
+version 1.2.3
 
 Options
 -h  : Show this help
@@ -47,7 +47,9 @@ Options
 -q  : Quiet, no output except warnings and errors
 -R  : Return error code for Area warnings and errors
 
--sR : [Rainbow] Color output. (-sRe for Row Ends, -sRd for Middle Dimmed)
+-sR : [Rainbow] Color output (-sRe for Row Ends, -sRd for Center Dimmed, -sRp % based)
+-sP : Custom Color Palette. Colon separated entries are decimal VT100 color codes
+      -sp:DEFAULT:ROM:VRAM:SRAM:WRAM:HRAM (section based color only)
 -sC : Show Compact Output, hide non-essential columns
 -sH : Show HEADER Areas (normally hidden)
 -nB : Hide warning banner (for .cdb output)
@@ -59,6 +61,7 @@ Example 1: "romusage build/MyProject.map"
 Example 2: "romusage build/MyProject.noi -a -e:STACK:DEFF:100 -e:SHADOW_OAM:C000:A0"
 Example 3: "romusage build/MyProject.ihx -g"
 Example 4: "romusage build/MyProject.map -q -R"
+Example 5: "romusage build/MyProject.noi -sR -sp:90:32:90:35:33:36"
 
 Notes:
   * GBDK / RGBDS map file format detection is automatic.

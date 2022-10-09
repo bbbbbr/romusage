@@ -18,6 +18,11 @@
   #endif
 #endif
 
+// For GetConsoleMode()/etc..
+#ifdef __WIN32__
+    #include <windows.h>
+#endif
+
 #ifdef __WIN32__
 // Enables Windows virtual terminal sequences for handling VT escape codes
 // MS recommends this over SetConsoleTextAttribute()
@@ -52,17 +57,29 @@ color_pal_t bank_colors = {
 };
 
 
-static uint8_t bank_get_color(int bank_mem_type) {
+static uint8_t bank_get_color(bank_item * p_bank) {
 
     uint8_t color_esc_code = bank_colors.default_color;
 
-    switch (bank_mem_type) {
-        case BANK_MEM_TYPE_ROM:  color_esc_code = bank_colors.rom;  break;
-        case BANK_MEM_TYPE_VRAM: color_esc_code = bank_colors.vram; break;
-        case BANK_MEM_TYPE_SRAM: color_esc_code = bank_colors.sram; break;
-        case BANK_MEM_TYPE_WRAM: color_esc_code = bank_colors.wram; break;
-        case BANK_MEM_TYPE_HRAM: color_esc_code = bank_colors.hram; break;
-        default: break;
+    if (get_option_percentage_based_color()) {
+
+        int perc_free = bank_calc_percent_free(p_bank);
+
+        // Color ramp from Default -> Green -> Yellow -> Red
+        if      (perc_free == 0)  color_esc_code = VT_COLOR_RED_LIGHT;
+        else if (perc_free <= 5)  color_esc_code = VT_COLOR_YELLOW_LIGHT;
+        else if (perc_free <= 25) color_esc_code = VT_COLOR_GREEN_LIGHT;
+        // implied: else if (> 25) PRINT_COLOR_DEFAULT
+    }
+    else {
+        switch (p_bank->bank_mem_type) {
+            case BANK_MEM_TYPE_ROM:  color_esc_code = bank_colors.rom;  break;
+            case BANK_MEM_TYPE_VRAM: color_esc_code = bank_colors.vram; break;
+            case BANK_MEM_TYPE_SRAM: color_esc_code = bank_colors.sram; break;
+            case BANK_MEM_TYPE_WRAM: color_esc_code = bank_colors.wram; break;
+            case BANK_MEM_TYPE_HRAM: color_esc_code = bank_colors.hram; break;
+            default: break;
+        }
     }
 
     return color_esc_code;
@@ -90,14 +107,14 @@ static void write_out_color_code(uint8_t esc_num) {
 
 
 // Writes out a color escape code based on current printing region and bank type
-void bank_render_color(int bank_mem_type, int mode) {
+void bank_render_color(bank_item * p_bank, int mode) {
 
     if (get_option_color_mode() != OPT_PRINT_COLOR_OFF) {
 
         switch(mode) {
             // Start row colorizing
             case PRINT_REGION_ROW_START:
-                write_out_color_code(bank_get_color(bank_mem_type));
+                write_out_color_code(bank_get_color(p_bank));
                 break;
 
             // Based on mode, either set to dim-color, turn off coloring, or continue coloring (do nothing)
@@ -110,7 +127,7 @@ void bank_render_color(int bank_mem_type, int mode) {
             // Based on mode, either turn off dim-color, turn coloring back on, or continue coloring (do nothing)
             case PRINT_REGION_ROW_MIDDLE_END:
                 if (get_option_color_mode() == OPT_PRINT_COLOR_WHOLE_ROW_DIMMED) write_out_color_code(VT_ATTR_DIM_RESET);
-                else if (get_option_color_mode() == OPT_PRINT_COLOR_ROW_ENDS)    write_out_color_code(bank_get_color(bank_mem_type));
+                else if (get_option_color_mode() == OPT_PRINT_COLOR_ROW_ENDS)    write_out_color_code(bank_get_color(p_bank));
                 // implied: else ( == OPT_PRINT_COLOR_WHOLE_ROW) : Don't change attributes in middle
                 break;
 
