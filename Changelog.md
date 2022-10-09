@@ -6,7 +6,7 @@ Changelog
   - `-sRe` : Row Ends only
   - `-sRd` : Middle Dimmed
   - `-sRp` : Percentage based coloring
-* `-sR` : Custom Color Palette
+* `-sP` : Custom Color Palette
   -  Colon separated entries are decimal VT100 color codes
   -  Used for section based color mode only, not Percetange based coloring
   - `-sP:DEFAULT:ROM:VRAM:SRAM:WRAM:HRAM`
