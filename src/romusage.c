@@ -17,7 +17,7 @@
 #include "cdb_file.h"
 #include "rom_file.h"
 
-#define VERSION "version 1.2.2"
+#define VERSION "version 1.2.3"
 
 void static display_cdb_warning(void);
 void static display_help(void);
@@ -57,6 +57,7 @@ static void display_help(void) {
            "-q  : Quiet, no output except warnings and errors\n"
            "-R  : Return error code for Area warnings and errors\n"
            "\n"
+           "-sR : [Rainbow] Color output. (-sRe for Row Ends, -sRd for Middle Dimmed)\n"
            "-sC : Show Compact Output, hide non-essential columns\n"
            "-sH : Show HEADER Areas (normally hidden)\n"
            "-nB : Hide warning banner (for .cdb output)\n"
@@ -108,6 +109,13 @@ int handle_args(int argc, char * argv[]) {
             if      (argv[i][2] == 'S') set_option_area_sort(OPT_AREA_SORT_SIZE_DESC);
             else if (argv[i][2] == 'A') set_option_area_sort(OPT_AREA_SORT_ADDR_ASC);
 
+        } else if (strstr(argv[i], "-sR") == argv[i]) {
+            switch (argv[i][ + strlen("-sR")]) {
+                case 'e': set_option_color_mode(OPT_PRINT_COLOR_ROW_ENDS); break;
+                case 'd': set_option_color_mode(OPT_PRINT_COLOR_WHOLE_ROW_DIMMED); break;
+                case 'w': // Whole Row falls through to default
+                default: set_option_color_mode(OPT_PRINT_COLOR_WHOLE_ROW); break;
+            }
         } else if (strstr(argv[i], "-sH") == argv[i]) {
             banks_output_show_headers(true);
 
@@ -140,9 +148,9 @@ int handle_args(int argc, char * argv[]) {
         } else if ((strstr(argv[i], "-m") == argv[i]) ||
                    (strstr(argv[i], "-e") == argv[i])) {
             if (!area_manual_add(argv[i])) {
-            fprintf(stdout,"malformed manual area argument: %s\n\n", argv[i]);
-            display_help();
-            return false;
+                fprintf(stdout,"malformed manual area argument: %s\n\n", argv[i]);
+                display_help();
+                return false;
             }
         } else if (argv[i][0] == '-') {
             fprintf(stdout,"Unknown argument: %s\n\n", argv[i]);

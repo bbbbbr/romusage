@@ -28,13 +28,13 @@ static int bank_item_compare(const void* a, const void* b);
 
 
 const bank_item bank_templates[] = {
-    {"ROM_0",   0x0000, 0x3FFF, BANKED_NO,  0x7FFF, 0,0,0},
-    {"ROM_",    0x4000, 0x7FFF, BANKED_YES, 0x7FFF, 0,0,0},
-    {"VRAM_",   0x8000, 0x9FFF, BANKED_YES, 0x9FFF, 0,0,0},
-    {"SRAM_",   0xA000, 0xBFFF, BANKED_YES, 0xBFFF, 0,0,0},
-    {"WRAM_LO", 0xC000, 0xCFFF, BANKED_NO,  0xDFFF, 0,0,0},
-    {"WRAM_HI_",0xD000, 0xDFFF, BANKED_YES, 0xDFFF, 0,0,0},
-    {"HRAM",    0xFF80, 0xFFFE, BANKED_NO,  0xFFFE, 0,0,0},
+    {"ROM_0",   0x0000, 0x3FFF, BANKED_NO,  0x7FFF, 0,0,0, BANK_MEM_TYPE_ROM},
+    {"ROM_",    0x4000, 0x7FFF, BANKED_YES, 0x7FFF, 0,0,0, BANK_MEM_TYPE_ROM},
+    {"VRAM_",   0x8000, 0x9FFF, BANKED_YES, 0x9FFF, 0,0,0, BANK_MEM_TYPE_VRAM},
+    {"SRAM_",   0xA000, 0xBFFF, BANKED_YES, 0xBFFF, 0,0,0, BANK_MEM_TYPE_SRAM},
+    {"WRAM_LO", 0xC000, 0xCFFF, BANKED_NO,  0xDFFF, 0,0,0, BANK_MEM_TYPE_WRAM},
+    {"WRAM_HI_",0xD000, 0xDFFF, BANKED_YES, 0xDFFF, 0,0,0, BANK_MEM_TYPE_WRAM},
+    {"HRAM",    0xFF80, 0xFFFE, BANKED_NO,  0xFFFE, 0,0,0, BANK_MEM_TYPE_HRAM},
 };
 
 
@@ -430,7 +430,7 @@ void banks_check(area_item area) {
 
 // -m:NAME:HEX_ADDR:HEX_LENGTH or -e[same]
 // Add areas manually from command line arguments
-int area_manual_add(char * arg_str) {
+bool area_manual_add(char * arg_str) {
 
     char cols;
     char * p_str;
@@ -443,7 +443,6 @@ int area_manual_add(char * arg_str) {
     while (p_str != NULL)
     {
         p_words[cols++] = p_str;
-        // Only split on underscore for the second match
         p_str = strtok(NULL, "-:");
         if (cols >= MAX_SPLIT_WORDS) break;
     }
@@ -458,7 +457,6 @@ int area_manual_add(char * arg_str) {
         return true;
     } else
         return false; // Signal failure
-
 }
 
 // NOTE: All the comparisons and their particular order are 
@@ -566,16 +564,16 @@ void banklist_finalize_and_show(void) {
     // Sort banks by start address then bank num
     qsort (bank_list.p_array, bank_list.count, sizeof(bank_item), bank_item_compare);
 
-    if (option_input_source == OPT_INPUT_SRC_CDB)
+    if (get_option_input_source() == OPT_INPUT_SRC_CDB)
         bank_fill_area_gaps_with_unknown();
 
     for (c = 0; c < bank_list.count; c++) {
         // Sort areas in bank and calculate usage
         banks[c].size_used = bank_areas_calc_used(&banks[c], banks[c].start, banks[c].end);
 
-        if (option_area_sort == OPT_AREA_SORT_SIZE_DESC) 
+        if (get_option_area_sort() == OPT_AREA_SORT_SIZE_DESC)
             qsort (banks[c].area_list.p_array, banks[c].area_list.count, sizeof(area_item), area_item_compare_size_desc);
-        else if (option_area_sort == OPT_AREA_SORT_ADDR_ASC) 
+        else if (get_option_area_sort() == OPT_AREA_SORT_ADDR_ASC)
             qsort (banks[c].area_list.p_array, banks[c].area_list.count, sizeof(area_item), area_item_compare_addr_asc);        
         else
             qsort (banks[c].area_list.p_array, banks[c].area_list.count, sizeof(area_item), area_item_compare);

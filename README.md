@@ -47,6 +47,7 @@ Options
 -q  : Quiet, no output except warnings and errors
 -R  : Return error code for Area warnings and errors
 
+-sR : [Rainbow] Color output. (-sRe for Row Ends, -sRd for Middle Dimmed)
 -sC : Show Compact Output, hide non-essential columns
 -sH : Show HEADER Areas (normally hidden)
 -nB : Hide warning banner (for .cdb output)

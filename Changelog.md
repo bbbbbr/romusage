@@ -1,6 +1,9 @@
 Changelog
 =========
 
+# Version 1.2.3
+* -sR : [Rainbow] Color output. (-sRe for Row Ends, -sRd for Middle Dimmed)
+
 
 # Version 1.2.2
 * Add support for RGBDS v0.6.0 map file spaces -> tab change

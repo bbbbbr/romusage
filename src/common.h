@@ -21,6 +21,12 @@
 
 #define OPT_AREA_HIDE_SIZE_DEFAULT 0
 
+#define OPT_PRINT_COLOR_OFF              0
+#define OPT_PRINT_COLOR_WHOLE_ROW        1
+#define OPT_PRINT_COLOR_WHOLE_ROW_DIMMED 2
+#define OPT_PRINT_COLOR_ROW_ENDS         3
+
+
 extern bool banks_display_areas;
 extern bool banks_display_headers;
 extern bool banks_display_minigraph;
@@ -30,9 +36,11 @@ extern bool option_all_areas_exclusive;
 extern bool option_quiet_mode;
 extern bool option_suppress_duplicates;
 extern bool option_error_on_warning;
-extern bool option_hide_banners;
-extern int  option_input_source;
-extern int  option_area_sort ;
+// Use get_/set_() for these
+// extern bool option_hide_banners;
+// extern int  option_input_source;
+// extern int  option_area_sort;
+// extern int  option_color_mode;
 extern uint32_t option_area_hide_size;
 extern bool exit_error;
 
@@ -44,12 +52,14 @@ void set_option_error_on_warning(bool value);
 void set_option_hide_banners(bool value);
 void set_option_input_source(int value);
 void set_option_area_sort(int value);
+void set_option_color_mode(int value);
 void set_option_area_hide_size(uint32_t value);
 void set_option_display_asciistyle(bool value);
 void set_option_show_compact(bool value);
 
-int get_option_input_source(void);
-int get_option_area_sort(void);
+int  get_option_input_source(void);
+int  get_option_area_sort(void);
+int  get_option_color_mode(void);
 bool get_option_hide_banners(void);
 bool get_option_display_asciistyle(void);
 uint32_t get_option_area_hide_size(void);

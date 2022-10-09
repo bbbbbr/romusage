@@ -31,6 +31,14 @@
 #define MINIGRAPH_SIZE (2 * 14) // Number of characters wide (inside edge brackets)
 #define LARGEGRAPH_BYTES_PER_CHAR 16
 
+typedef enum {
+    BANK_MEM_TYPE_ROM,
+    BANK_MEM_TYPE_VRAM,
+    BANK_MEM_TYPE_SRAM,
+    BANK_MEM_TYPE_WRAM,
+    BANK_MEM_TYPE_HRAM
+} bank_mem_types;
+
 
 typedef struct area_item {
     char     name[AREA_MAX_STR];
@@ -56,12 +64,13 @@ typedef struct bank_item {
     uint32_t size_used;
     int      bank_num;
 
+    int      bank_mem_type;
+
     // TODO: track overflow bytes and report them in graph
     list_type area_list;
 } bank_item;
 
-
-int area_manual_add(char * arg_str);
+bool area_manual_add(char * arg_str);
 uint32_t bank_areas_calc_used(bank_item *, uint32_t, uint32_t);
 
 void banks_output_show_areas(bool do_show);

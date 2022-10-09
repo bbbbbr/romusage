@@ -20,6 +20,7 @@ bool option_error_on_warning    = false;
 bool option_hide_banners        = false;
 int  option_input_source        = OPT_INPUT_SRC_NONE;
 int  option_area_sort           = OPT_AREA_SORT_DEFAULT;
+int  option_color_mode          = OPT_PRINT_COLOR_OFF;
 uint32_t option_area_hide_size  = OPT_AREA_HIDE_SIZE_DEFAULT;
 bool exit_error                 = false;
 
@@ -92,6 +93,11 @@ void set_option_area_sort(int value) {
     option_area_sort = value;
 }
 
+// Color output mode
+void set_option_color_mode(int value) {
+    option_color_mode = value;
+}
+
 // Hide areas smaller than size
 void set_option_area_hide_size(uint32_t value) {
     option_area_hide_size = value;
@@ -106,6 +112,11 @@ int get_option_input_source(void) {
 // Area output sort order
 int get_option_area_sort(void) {
     return option_area_sort;
+}
+
+// Color output mode
+int get_option_color_mode(void) {
+    return option_color_mode;
 }
 
 // Turn on/off banners

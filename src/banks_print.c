@@ -12,6 +12,7 @@
 #include "list.h"
 #include "banks.h"
 #include "banks_print.h"
+#include "banks_color.h"
 
 
 #ifdef _WIN32
@@ -171,8 +172,10 @@ static void bank_print_area(bank_item *p_bank) {
 
 static void bank_print_info(bank_item *p_bank) {
 
+    bank_render_color(p_bank->bank_mem_type, PRINT_REGION_ROW_START);
     fprintf(stdout,"%-15s",p_bank->name); // Name
 
+    bank_render_color(p_bank->bank_mem_type, PRINT_REGION_ROW_MIDDLE_START);
     // Skip some info if compact mode is enabled.
     if (!option_compact_mode) {
         fprintf(stdout,"0x%04X -> 0x%04X",p_bank->start,
@@ -180,10 +183,13 @@ static void bank_print_info(bank_item *p_bank) {
         fprintf(stdout,"%7d", p_bank->size_total);      // Total size
     }
     fprintf(stdout,"%7d", p_bank->size_used); // Used
+
     if (!option_compact_mode) {
         fprintf(stdout,"  %4d%%", (p_bank->size_used * (uint32_t)100)
                                    / p_bank->size_total); // Percent Used
     }
+
+    bank_render_color(p_bank->bank_mem_type, PRINT_REGION_ROW_MIDDLE_END);
     fprintf(stdout,"%7d", (int32_t)p_bank->size_total - (int32_t)p_bank->size_used); // Free
     fprintf(stdout,"   %3d%%", (((int32_t)p_bank->size_total - (int32_t)p_bank->size_used) * (int32_t)100)
                                / (int32_t)p_bank->size_total); // Percent Free
@@ -194,6 +200,8 @@ static void bank_print_info(bank_item *p_bank) {
         bank_print_graph(p_bank, MINIGRAPH_SIZE);
         fprintf(stdout, "|");
     }
+
+    bank_render_color(p_bank->bank_mem_type, PRINT_REGION_ROW_END);
 }
 
 
@@ -204,6 +212,12 @@ void banklist_printall(list_type * p_bank_list) {
     bank_item * banks = (bank_item *)p_bank_list->p_array;
     int c;
     int b;
+
+    #ifdef __WIN32__
+        if (get_option_color_mode() != OPT_PRINT_COLOR_OFF)
+            if (!colors_try_windows_enable_virtual_term_for_vt_codes())
+                printf("Warning: Failed to enable Windows virtual terminal sequences for color!\n");
+    #endif
 
     fprintf(stdout, "\n");
     if (option_compact_mode) {
@@ -220,7 +234,7 @@ void banklist_printall(list_type * p_bank_list) {
         bank_print_info(&banks[c]);
         fprintf(stdout,"\n");
 
-        if (option_area_sort != OPT_AREA_SORT_HIDE) // This is a hack-workaround, TODO:fixme
+        if (get_option_area_sort() != OPT_AREA_SORT_HIDE) // This is a hack-workaround, TODO:fixme
             if (banks_display_areas)
                 bank_print_area(&banks[c]);
 
@@ -229,5 +243,4 @@ void banklist_printall(list_type * p_bank_list) {
         // Print a large graph per-bank if requested
     if (banks_display_largegraph)
         banklist_print_large_graph(p_bank_list);
-
 }
