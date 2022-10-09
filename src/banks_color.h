@@ -72,4 +72,6 @@ bool colors_try_windows_enable_virtual_term_for_vt_codes(void);
 
 void bank_render_color(int bank_mem_type, int mode);
 
+bool setoption_custom_bank_colors(char * arg_str);
+
 #endif // _BANKS_PRINT_H

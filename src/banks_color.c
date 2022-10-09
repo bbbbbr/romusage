@@ -122,3 +122,41 @@ void bank_render_color(int bank_mem_type, int mode) {
     }
 }
 
+
+
+#define MAX_SPLIT_WORDS 8
+#define ARG_COLORS_CUSTOM_PAL 7u
+
+// -sp : Custom Color Palette. Each colon separated entry is decimal VT100 color code
+//       -sp:DEFAULT:ROM:VRAM:SRAM:WRAM:HRAM
+//
+// Custom color scheme for output
+bool set_option_custom_bank_colors(char * arg_str) {
+
+    char cols;
+    char * p_str;
+    char * p_words[MAX_SPLIT_WORDS];
+    area_item area;
+
+    // Split string into words separated by - and : chars
+    cols = 0;
+    p_str = strtok(arg_str,"-:");
+    while (p_str != NULL)
+    {
+        p_words[cols++] = p_str;
+        p_str = strtok(NULL, "-:");
+        if (cols >= MAX_SPLIT_WORDS) break;
+    }
+
+    if (cols == ARG_COLORS_CUSTOM_PAL) {
+        bank_colors.default_color = strtol(p_words[1], NULL, 10);
+        bank_colors.rom     = strtol(p_words[2], NULL, 10);
+        bank_colors.vram    = strtol(p_words[3], NULL, 10);
+        bank_colors.sram    = strtol(p_words[4], NULL, 10);
+        bank_colors.wram    = strtol(p_words[5], NULL, 10);
+        bank_colors.hram    = strtol(p_words[6], NULL, 10);
+
+        return true;
+    } else
+        return false; // Signal failure
+}

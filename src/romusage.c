@@ -58,6 +58,8 @@ static void display_help(void) {
            "-R  : Return error code for Area warnings and errors\n"
            "\n"
            "-sR : [Rainbow] Color output. (-sRe for Row Ends, -sRd for Middle Dimmed)\n"
+           "-sp : Custom Color Palette. Each colon separated entry is decimal VT100 color code\n"
+           "      -sp:DEFAULT:ROM:VRAM:SRAM:WRAM:HRAM\n"
            "-sC : Show Compact Output, hide non-essential columns\n"
            "-sH : Show HEADER Areas (normally hidden)\n"
            "-nB : Hide warning banner (for .cdb output)\n"
@@ -69,6 +71,7 @@ static void display_help(void) {
            "Example 2: \"romusage build/MyProject.noi -a -e:STACK:DEFF:100 -e:SHADOW_OAM:C000:A0\"\n"
            "Example 3: \"romusage build/MyProject.ihx -g\"\n"
            "Example 4: \"romusage build/MyProject.map -q -R\"\n"
+           "Example 5: \"romusage build/MyProject.noi -sR -sp:90:32:90:35:33:36\"\n"           
            "\n"
            "Notes:\n"
            "  * GBDK / RGBDS map file format detection is automatic.\n"
@@ -115,6 +118,12 @@ int handle_args(int argc, char * argv[]) {
                 case 'd': set_option_color_mode(OPT_PRINT_COLOR_WHOLE_ROW_DIMMED); break;
                 case 'w': // Whole Row falls through to default
                 default: set_option_color_mode(OPT_PRINT_COLOR_WHOLE_ROW); break;
+            }
+        } else if (strstr(argv[i], "-sp") == argv[i]) {
+            if (!setoption_custom_bank_colors(argv[i])) {
+                fprintf(stdout,"malformed custom color palette: %s\n\n", argv[i]);
+                display_help();
+                return false;
             }
         } else if (strstr(argv[i], "-sH") == argv[i]) {
             banks_output_show_headers(true);
