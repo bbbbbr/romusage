@@ -27,7 +27,7 @@ _HEAP                  0000D765    00000000 =           0. bytes (REL,CON)
 _HRAM10                00000000    00000001 =           1. bytes (ABS,CON)
 */
 
-#define MAX_SPLIT_WORDS 6
+#define MAX_SPLIT_WORDS 32
 #define RGBDS_BANK_SPLIT_WORDS 3
 #define RGBDS_SECT_SPLIT_WORDS 6
 #define GBDK_AREA_SPLIT_WORDS 6
@@ -74,11 +74,17 @@ static void add_area_gbdk(char * p_words[]) {
 }
 
 
-static void add_area_rgbds(char * p_words[], int current_bank) {
+static void add_area_rgbds(char * p_words[], int p_word_count, int current_bank) {
 
     area_item area;
 
-    snprintf(area.name, sizeof(area.name), "%s", p_words[5]);   // [5] Area Name
+    area.name[0] = 0; // Make sure that the name begins with a nul character for strcat
+
+    for (int i = 5; i < p_word_count; i++) {
+        strcat(area.name, p_words[i]);
+        if (i < p_word_count)
+            strcat(area.name, " ");
+    }
     area.start = strtol(p_words[1], NULL, 16) | (current_bank << 16);   // [1] Area Hex Address Start
     area.end   = strtol(p_words[2], NULL, 16) | (current_bank << 16);   // [2] Area Hex Address End
     area.exclusive = option_all_areas_exclusive; // Default is false
@@ -116,9 +122,11 @@ int map_file_process_areas(char * filename_in) {
 
             // RGBDS Sections: Only parse lines that have Section (Area) summary info
             else if (strstr(strline_in, "  SECTION: ") || strstr(strline_in, "\tSECTION: ")) {
-                if (cur_bank_rgbds != BANK_NUM_UNSET)
-                    if (str_split(strline_in,p_words," :$()[]\n\t\"") == RGBDS_SECT_SPLIT_WORDS)
-                        add_area_rgbds(p_words, cur_bank_rgbds);
+                if (cur_bank_rgbds != BANK_NUM_UNSET) {
+                    int p_word_count = str_split(strline_in,p_words," :$()[]\n\t\"");
+                    if (p_word_count >= RGBDS_SECT_SPLIT_WORDS)
+                        add_area_rgbds(p_words, p_word_count, cur_bank_rgbds);
+                }
             }
 
             // GBDK Areas: Only parse lines that start with '_' character (Area summary lines)
