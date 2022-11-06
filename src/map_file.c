@@ -29,7 +29,8 @@ _HRAM10                00000000    00000001 =           1. bytes (ABS,CON)
 
 #define MAX_SPLIT_WORDS 6
 #define RGBDS_BANK_SPLIT_WORDS 3
-#define RGBDS_SECT_SPLIT_WORDS 6
+#define RGBDS_SECT_NAME_SPLIT_WORDS 3
+#define RGBDS_SECT_INFO_SPLIT_WORDS 5
 #define GBDK_AREA_SPLIT_WORDS 6
 #define BANK_NUM_UNSET 0xFFFFFFFF
 
@@ -74,11 +75,11 @@ static void add_area_gbdk(char * p_words[]) {
 }
 
 
-static void add_area_rgbds(char * p_words[], int current_bank) {
+static void add_area_rgbds(char * p_words[], int current_bank, char * str_area_name) {
 
     area_item area;
 
-    snprintf(area.name, sizeof(area.name), "%s", p_words[5]);   // [5] Area Name
+    snprintf(area.name, sizeof(area.name), "%s", str_area_name);        // Area Name
     area.start = strtol(p_words[1], NULL, 16) | (current_bank << 16);   // [1] Area Hex Address Start
     area.end   = strtol(p_words[2], NULL, 16) | (current_bank << 16);   // [2] Area Hex Address End
     area.exclusive = option_all_areas_exclusive; // Default is false
@@ -116,9 +117,17 @@ int map_file_process_areas(char * filename_in) {
 
             // RGBDS Sections: Only parse lines that have Section (Area) summary info
             else if (strstr(strline_in, "  SECTION: ") || strstr(strline_in, "\tSECTION: ")) {
-                if (cur_bank_rgbds != BANK_NUM_UNSET)
-                    if (str_split(strline_in,p_words," :$()[]\n\t\"") == RGBDS_SECT_SPLIT_WORDS)
-                        add_area_rgbds(p_words, cur_bank_rgbds);
+                if (cur_bank_rgbds != BANK_NUM_UNSET) {
+                    // Try to strip quote bracketed name out first
+                    int name_split_count = str_split(strline_in, p_words,"\"");
+                    if (name_split_count > 0) {
+                        // Save section name from array before splitting again (if not blank)
+                        char * str_area_name = (name_split_count == RGBDS_SECT_NAME_SPLIT_WORDS) ? p_words[1] : "";
+                        // Then split up the remaining section info from first string in split array
+                        if (str_split(p_words[0], p_words," :$()[]\n\t\"") == RGBDS_SECT_INFO_SPLIT_WORDS)
+                            add_area_rgbds(p_words, cur_bank_rgbds, str_area_name);
+                    }
+                }
             }
 
             // GBDK Areas: Only parse lines that start with '_' character (Area summary lines)
