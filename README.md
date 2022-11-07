@@ -16,6 +16,9 @@ It produces a trimmed, sorted output of ROM/RAMs, their usage and optionally the
 
 Runs on Linux, Windows and MacOS, it can be used with [GBDK 2020](https://github.com/Zal0/gbdk-2020/), [ZGB v2020+](https://github.com/Zal0/ZGB/) and [RGBDS](https://github.com/gbdev/rgbds). If map file output is not already enabled, use either `-Wl-m` with `lcc` or `-m` with `sdldgb` directly.
 
+Examples of color output. `-sRe` with `-sRp` for percentage based color on row ends with `-g` small graphs. `-sRd` for section based color with center columns dimmed.
+![Romusage Color Examples](/info/romusage_color_examples_linux.png)
+
 The usage calculation will attempt to merge overlapping areas to avoid counting shared space multiple times (such as HEADER areas). Optionally it can warn of overlap in exclusive areas, such as the Stack.
 
 IHX Files:
@@ -99,10 +102,6 @@ romusage banks.map -R -q
 * WARNING: Area _CODE_12 at c4000 -> c801f extends past end of memory region at c7fff (Overflow by 32 bytes)
 
 ```
-
-
-Examples of color output. `-sRe` with `-sRp` for percentage based color on row ends with `-g` small graphs. `-sRd` for section based color with center columns dimmed.
-![Romusage Color Examples](/info/romusage_color_examples_linux.png)
 
 
 And another example, with display of areas in the banks enabled. Reading from the .noi file.
