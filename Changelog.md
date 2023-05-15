@@ -1,6 +1,16 @@
 Changelog
 =========
 
+# Version 1.2.5
+* `-B` : Brief (summarized) mode:
+  - Useful with large numbers of banks
+  - Collapses banked regions to single lines: [Region]_[Max Used Bank] / [auto-sized Max Bank Num]
+    - Example: ROM_1...ROM_12 -> ROM_12/15
+  - Range column is unmodified. Size, used, free, graph, are adjusted to represent total size of merged banks
+
+# Version 1.2.4
+* Fix: Support spaces in RGBDS map file section (area) names
+
 # Version 1.2.3
 * `-sR` : [Rainbow] Color output
   - `-sRe` : Row Ends only

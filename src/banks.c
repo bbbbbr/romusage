@@ -13,6 +13,7 @@
 #include "list.h"
 #include "banks.h"
 #include "banks_print.h"
+#include "banks_summarized.h"
 
 // Bank info from pandocs
 //  0000-3FFF   16KB ROM Bank 00            (in cartridge, fixed at bank 00)
@@ -28,18 +29,18 @@ static int bank_item_compare(const void* a, const void* b);
 
 
 const bank_item bank_templates[] = {
-    {"ROM_0",   0x0000, 0x3FFF, BANKED_NO,  0x7FFF, 0,0,0, BANK_MEM_TYPE_ROM},
-    {"ROM_",    0x4000, 0x7FFF, BANKED_YES, 0x7FFF, 0,0,0, BANK_MEM_TYPE_ROM},
-    {"VRAM_",   0x8000, 0x9FFF, BANKED_YES, 0x9FFF, 0,0,0, BANK_MEM_TYPE_VRAM},
-    {"SRAM_",   0xA000, 0xBFFF, BANKED_YES, 0xBFFF, 0,0,0, BANK_MEM_TYPE_SRAM},
-    {"WRAM_LO", 0xC000, 0xCFFF, BANKED_NO,  0xDFFF, 0,0,0, BANK_MEM_TYPE_WRAM},
-    {"WRAM_HI_",0xD000, 0xDFFF, BANKED_YES, 0xDFFF, 0,0,0, BANK_MEM_TYPE_WRAM},
-    {"HRAM",    0xFF80, 0xFFFE, BANKED_NO,  0xFFFE, 0,0,0, BANK_MEM_TYPE_HRAM},
+    {"ROM_0",   0x0000, 0x3FFF, BANKED_NO,  0x7FFF, 0,0,0, BANK_MEM_TYPE_ROM,  BANK_STARTNUM_0},
+    {"ROM_",    0x4000, 0x7FFF, BANKED_YES, 0x7FFF, 0,0,0, BANK_MEM_TYPE_ROM,  BANK_STARTNUM_1},
+    {"VRAM_",   0x8000, 0x9FFF, BANKED_YES, 0x9FFF, 0,0,0, BANK_MEM_TYPE_VRAM, BANK_STARTNUM_0},
+    {"SRAM_",   0xA000, 0xBFFF, BANKED_YES, 0xBFFF, 0,0,0, BANK_MEM_TYPE_SRAM, BANK_STARTNUM_0},
+    {"WRAM_LO", 0xC000, 0xCFFF, BANKED_NO,  0xDFFF, 0,0,0, BANK_MEM_TYPE_WRAM, BANK_STARTNUM_0},
+    {"WRAM_HI_",0xD000, 0xDFFF, BANKED_YES, 0xDFFF, 0,0,0, BANK_MEM_TYPE_WRAM, BANK_STARTNUM_1},
+    {"HRAM",    0xFF80, 0xFFFE, BANKED_NO,  0xFFFE, 0,0,0, BANK_MEM_TYPE_HRAM, BANK_STARTNUM_0},
 };
 
 
 list_type bank_list;
-
+list_type bank_list_summarized;
 
 uint32_t min(uint32_t a, uint32_t b) {
     return (a < b) ? a : b;
@@ -55,6 +56,7 @@ uint32_t max(uint32_t a, uint32_t b) {
 void banks_init(void) {
 
     list_init(&bank_list, sizeof(bank_item));
+    list_init(&bank_list_summarized, sizeof(bank_item));
 }
 
 
@@ -352,7 +354,7 @@ static void banklist_addto(bank_item bank_template, area_item area, int bank_num
         }
     }
 
-    // No match was found, initialize new area
+    // No match was found, initialize new bank
 
     // Copy bank info from template
     newbank = bank_template;
@@ -362,8 +364,10 @@ static void banklist_addto(bank_item bank_template, area_item area, int bank_num
     newbank.size_total = RANGE_SIZE(bank_template.start, bank_template.end);
     newbank.bank_num = bank_num;
 
-    if (bank_template.is_banked == BANKED_YES)
-        sprintf(newbank.name, "%s%d", bank_template.name, bank_num);
+    if (bank_template.is_banked == BANKED_YES) {
+        // save result to suppress truncation warning, bank names will never be > 100 chars and truncation is fine if it got to that
+        int ret = snprintf(newbank.name, sizeof(newbank.name), "%s%d", bank_template.name, bank_num);
+    }
 
     // Initialize new bank's area list and add the area
     list_init(&(newbank.area_list), sizeof(area_item));
@@ -594,7 +598,13 @@ void banklist_finalize_and_show(void) {
     }
 
     // Only print if quiet mode is not enabled
-    if (!option_quiet_mode)
-        banklist_printall(&bank_list);
+    if (!option_quiet_mode) {
+        if (option_summarized_mode) {
+            banklist_collapse_to_summary(&bank_list, &bank_list_summarized);
+            banklist_printall(&bank_list_summarized);
+        }
+        else {
+            banklist_printall(&bank_list);
+        }
+    }
 }
-

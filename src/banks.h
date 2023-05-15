@@ -7,6 +7,8 @@
 
 #include "list.h"
 
+#define WRAM_X_MAX_BANKS        7
+
 #define MAX_ADDR_UNBANKED       0x0000FFFFU
 #define BANK_ADDR_ROM_UPPER_ST  0x00004000U  // Upper ROM Bank address bit
 #define BANK_ADDR_ROM_UPPER_END 0x00007FFFU  // Upper ROM Bank address bit
@@ -14,6 +16,8 @@
 #define BANK_NUM_ROM1_VADDR     (1u << 16)
 #define BANK_NUM_ROM0           (0u)
 
+#define AREA_COPY_ADDRESS_TRANSLATE_YES true
+#define AREA_COPY_ADDRESS_TRANSLATE_NO  false
 
 #define ARRAY_LEN(A)         (sizeof(A) / sizeof(A[0]))
 #define WITHOUT_BANK(addr)   ((addr) & MAX_ADDR_UNBANKED)
@@ -27,6 +31,9 @@
 #define BANK_MAX_STR DEFAULT_STR_LEN
 #define BANKED_NO     0
 #define BANKED_YES    1
+
+#define BANK_STARTNUM_0 0
+#define BANK_STARTNUM_1 1
 
 #define MINIGRAPH_SIZE (2 * 14) // Number of characters wide (inside edge brackets)
 #define LARGEGRAPH_BYTES_PER_CHAR 16
@@ -52,10 +59,10 @@ typedef struct area_item {
 
 
 typedef struct bank_item {
-    // Fixed values
+    // Mostly fixed values
     char     name[BANK_MAX_STR];
     uint32_t start;
-    uint32_t end;
+    uint32_t end;        // May get modified for summarized output
     int      is_banked;
     uint32_t overflow_end;
 
@@ -65,6 +72,7 @@ typedef struct bank_item {
     int      bank_num;
 
     int      bank_mem_type;
+    int      base_bank_num;
 
     // TODO: track overflow bytes and report them in graph
     list_type area_list;
@@ -88,8 +96,6 @@ void banks_cleanup(void);
 
 void set_exit_error(void);
 bool get_exit_error(void);
-
-
 
 void banks_check(area_item area);
 void banklist_finalize_and_show(void);

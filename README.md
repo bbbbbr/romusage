@@ -36,13 +36,14 @@ GB / GBC ROM Files:
 ### Usage
 ```
 romusage input_file.[map|noi|ihx|cdb|.gb[c]|.pocket|.duck] [options]
-version 1.2.3
+version 1.2.5, by bbbbbr
 
 Options
 -h  : Show this help
 -a  : Show Areas in each Bank. Optional sort by, address:"-aA" or size:"-aS" 
 -g  : Show a small usage graph per bank (-gA for ascii style)
 -G  : Show a large usage graph per bank (-GA for ascii style)
+-B  : Brief (summarized) output for banked regions
 
 -m  : Manually specify an Area -m:NAME:HEXADDR:HEXLENGTH
 -e  : Manually specify an Area that should not overlap -e:NAME:HEXADDR:HEXLENGTH
@@ -52,7 +53,7 @@ Options
 
 -sR : [Rainbow] Color output (-sRe for Row Ends, -sRd for Center Dimmed, -sRp % based)
 -sP : Custom Color Palette. Colon separated entries are decimal VT100 color codes
-      -sp:DEFAULT:ROM:VRAM:SRAM:WRAM:HRAM (section based color only)
+      -sP:DEFAULT:ROM:VRAM:SRAM:WRAM:HRAM (section based color only)
 -sC : Show Compact Output, hide non-essential columns
 -sH : Show HEADER Areas (normally hidden)
 -nB : Hide warning banner (for .cdb output)
@@ -75,7 +76,8 @@ Notes:
   * CDB file output ONLY counts (most) data from C sources.
     It cannot count functions and data from ASM and LIBs,
     so bank totals may be incorrect/missing.
-  * GB/GBC/ROM files are just guessing at everything, no promises.
+  * GB/GBC/ROM files are just guessing, no promises.
+  * -B Summarized mode shows [Region]_[Max Used Bank] / [auto-sized Max Bank Num]
 ```
 ### Examples
 

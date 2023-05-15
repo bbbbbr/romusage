@@ -37,6 +37,7 @@ void list_cleanup(list_type * p_list) {
 
 // Add a new item to the lists array, resize if needed
 // p_newitem *must* be the same type the list was initialized with
+// New item gets copied, so ok if it's a local var with limited lifetime
 void list_additem(list_type * p_list, void * p_newitem) {
 
     void * tmp_list;

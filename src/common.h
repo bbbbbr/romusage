@@ -5,6 +5,8 @@
 #ifndef _COMMON_H
 #define _COMMON_H
 
+#define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
+
 #define DEFAULT_STR_LEN 100
 
 #define OPT_AREA_SORT_DEFAULT    0
@@ -33,6 +35,7 @@ extern bool banks_display_headers;
 extern bool banks_display_minigraph;
 extern bool banks_display_largegraph;
 extern bool option_compact_mode;
+extern bool option_summarized_mode;
 extern bool option_all_areas_exclusive;
 extern bool option_quiet_mode;
 extern bool option_suppress_duplicates;
@@ -58,6 +61,7 @@ void set_option_percentage_based_color(bool value);
 void set_option_area_hide_size(uint32_t value);
 void set_option_display_asciistyle(bool value);
 void set_option_show_compact(bool value);
+void set_option_summarized(bool value);
 
 int  get_option_input_source(void);
 int  get_option_area_sort(void);
@@ -66,5 +70,7 @@ bool get_option_percentage_based_color(void);
 bool get_option_hide_banners(void);
 bool get_option_display_asciistyle(void);
 uint32_t get_option_area_hide_size(void);
+
+uint32_t round_up_power_of_2(uint32_t val);
 
 #endif // _COMMON_H

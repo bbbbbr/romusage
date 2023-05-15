@@ -12,6 +12,7 @@ bool banks_display_headers      = false;
 bool banks_display_minigraph    = false;
 bool banks_display_largegraph   = false;
 bool option_compact_mode        = false;
+bool option_summarized_mode     = false;
 bool option_display_asciistyle  = false;
 bool option_all_areas_exclusive = false;
 bool option_quiet_mode          = false;
@@ -50,6 +51,11 @@ void banks_output_show_largegraph(bool do_show) {
 // Turn on/off compact display mode
 void set_option_show_compact(bool value) {
     option_compact_mode = value;
+}
+
+// Turn on/off brief / summarized mode for banked regions
+void set_option_summarized(bool value) {
+    option_summarized_mode = value;
 }
 
 // Turn on/off whether to use ascii style
@@ -161,3 +167,16 @@ bool get_exit_error(void) {
     return exit_error;
 }
 
+
+uint32_t round_up_power_of_2(uint32_t val) {
+
+    val--;
+    val |= val >> 1;
+    val |= val >> 2;
+    val |= val >> 4;
+    val |= val >> 8;
+    val |= val >> 16;
+    val++;
+
+    return val;
+}

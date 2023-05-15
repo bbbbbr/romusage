@@ -18,7 +18,7 @@
 #include "cdb_file.h"
 #include "rom_file.h"
 
-#define VERSION "version 1.2.4"
+#define VERSION "version 1.2.5"
 
 void static display_cdb_warning(void);
 void static display_help(void);
@@ -44,13 +44,14 @@ static void display_cdb_warning() {
 static void display_help(void) {
     fprintf(stdout,
            "romusage input_file.[map|noi|ihx|cdb|.gb[c]|.pocket|.duck] [options]\n"
-           VERSION"\n"
+           VERSION", by bbbbbr\n"
            "\n"
            "Options\n"
            "-h  : Show this help\n"
            "-a  : Show Areas in each Bank. Optional sort by, address:\"-aA\" or size:\"-aS\" \n"
            "-g  : Show a small usage graph per bank (-gA for ascii style)\n"
            "-G  : Show a large usage graph per bank (-GA for ascii style)\n"
+           "-B  : Brief (summarized) output for banked regions. Auto scales max bank\n"
            "\n"
            "-m  : Manually specify an Area -m:NAME:HEXADDR:HEXLENGTH\n"
            "-e  : Manually specify an Area that should not overlap -e:NAME:HEXADDR:HEXLENGTH\n"
@@ -83,7 +84,8 @@ static void display_help(void) {
            "  * CDB file output ONLY counts (most) data from C sources.\n"
            "    It cannot count functions and data from ASM and LIBs,\n"
            "    so bank totals may be incorrect/missing.\n"
-           "  * GB/GBC/ROM files are just guessing at everything, no promises.\n"
+           "  * GB/GBC/ROM files are just guessing, no promises.\n"
+           "  * -B Summarized mode shows [Region]_[Max Used Bank] / [auto-sized Max Bank Num]\n"
            );
 }
 
@@ -147,6 +149,9 @@ int handle_args(int argc, char * argv[]) {
             if (argv[i][2] == 'A') set_option_display_asciistyle(true);
         } else if (strstr(argv[i], "-E") == argv[i]) {
             set_option_all_areas_exclusive(true);
+
+        } else if (strstr(argv[i], "-B") == argv[i]) {
+            set_option_summarized(true);
 
         } else if (strstr(argv[i], "-q") == argv[i]) {
             set_option_quiet_mode(true);
@@ -238,7 +243,7 @@ int main( int argc, char *argv[] )  {
                        matches_extension(filename_in, (char *)".gbc"   ) ||
                        matches_extension(filename_in, (char *)".pocket") ||
                        matches_extension(filename_in, (char *)".duck") ) {
-                printf("ROM FILE\n");
+                // printf("ROM FILE\n");
                 if (rom_file_process(filename_in)) {
                     banklist_finalize_and_show();
                     ret = EXIT_SUCCESS; // Exit with success

@@ -80,7 +80,7 @@ static void print_graph_char_standard(uint32_t perc_used) {
 static void bank_print_graph(bank_item * p_bank, uint32_t num_chars) {
 
     int c;
-    uint32_t range_size = RANGE_SIZE(p_bank->start, p_bank->end) / num_chars;
+    uint32_t range_size = p_bank->size_total / num_chars;
     uint32_t perc_used;
 
     for (c = 0; c <= (num_chars - 1); c++) {
@@ -118,7 +118,15 @@ static void banklist_print_large_graph(list_type * p_bank_list) {
                                               banks[c].end); // Address Start -> End
             fprintf(stdout,"\n"); // Name
 
-            bank_print_graph(&banks[c], banks[c].size_total / LARGEGRAPH_BYTES_PER_CHAR);
+            uint32_t graph_charscale = LARGEGRAPH_BYTES_PER_CHAR;
+
+            // Scale large graph unit size by number of banks it uses for banked items (factoring in whether bank start is 0 or 1 based)
+            if (option_summarized_mode)// && banks[c].bank_num)
+                graph_charscale *= ((banks[c].bank_num - banks[c].base_bank_num) + 1);
+
+            // TODO: FIXME - Performance is bad here for large ROMs
+            //       Generate a one pass condensed view of sufficient resolution for each bank
+            bank_print_graph(&banks[c], banks[c].size_total / graph_charscale);
 
             fprintf(stdout,"End: %s\n",banks[c].name); // Name
         }
@@ -176,23 +184,22 @@ static void bank_print_area(bank_item *p_bank) {
 static void bank_print_info(bank_item *p_bank) {
 
     bank_render_color(p_bank, PRINT_REGION_ROW_START);
-    fprintf(stdout,"%-15s",p_bank->name); // Name
+    fprintf(stdout,"%-13s",p_bank->name); // Name
 
     bank_render_color(p_bank, PRINT_REGION_ROW_MIDDLE_START);
     // Skip some info if compact mode is enabled.
     if (!option_compact_mode) {
-        fprintf(stdout,"0x%04X -> 0x%04X",p_bank->start,
-                                          p_bank->end); // Address Start -> End
-        fprintf(stdout,"%7d", p_bank->size_total);      // Total size
+        fprintf(stdout,"0x%04X -> 0x%04X",p_bank->start, p_bank->end); // Address Start -> End
+        fprintf(stdout,"%9d", p_bank->size_total);      // Total size
     }
-    fprintf(stdout,"%7d", p_bank->size_used); // Used
+    fprintf(stdout,"%9d", p_bank->size_used); // Used
 
     if (!option_compact_mode) {
         fprintf(stdout,"  %4d%%", bank_calc_percent_used(p_bank)); // Percent Used
     }
 
     bank_render_color(p_bank, PRINT_REGION_ROW_MIDDLE_END);
-    fprintf(stdout,"%7d", (int32_t)p_bank->size_total - (int32_t)p_bank->size_used); // Free
+    fprintf(stdout,"%9d", (int32_t)p_bank->size_total - (int32_t)p_bank->size_used); // Free
     fprintf(stdout,"   %3d%%", bank_calc_percent_free(p_bank)); // Percent Free
 
     // Print a small bar graph if requested
@@ -222,11 +229,11 @@ void banklist_printall(list_type * p_bank_list) {
 
     fprintf(stdout, "\n");
     if (option_compact_mode) {
-        fprintf(stdout,"Bank             Used   Free   Free%% \n"
-                       "----------       -----  -----  -----\n");
+        fprintf(stdout,"Bank              Used     Free  Free%% \n"
+                       "--------       -------  -------  -----\n");
     } else {
-        fprintf(stdout,"Bank           Range             Size   Used   Used%%  Free   Free%% \n"
-                       "----------     ----------------  -----  -----  -----  -----  -----\n");
+        fprintf(stdout,"Bank         Range                Size     Used  Used%%     Free  Free%% \n" 
+                       "--------     ----------------  -------  -------  -----  -------  -----\n");
     }
 
     // Print all banks
