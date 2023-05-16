@@ -52,6 +52,7 @@ static void display_help(void) {
            "-g  : Show a small usage graph per bank (-gA for ascii style)\n"
            "-G  : Show a large usage graph per bank (-GA for ascii style)\n"
            "-B  : Brief (summarized) output for banked regions. Auto scales max bank\n"
+           "      shows [Region]_[Max Used Bank] / [auto-sized Max Bank Num]\n"
            "\n"
            "-m  : Manually specify an Area -m:NAME:HEXADDR:HEXLENGTH\n"
            "-e  : Manually specify an Area that should not overlap -e:NAME:HEXADDR:HEXLENGTH\n"
@@ -64,6 +65,9 @@ static void display_help(void) {
            "      -sP:DEFAULT:ROM:VRAM:SRAM:WRAM:HRAM (section based color only)\n"
            "-sC : Show Compact Output, hide non-essential columns\n"
            "-sH : Show HEADER Areas (normally hidden)\n"
+           "-smWRAM : Show Merged WRAM_0 and WRAM_1 output (i.e DMG/MGB not CGB)\n"
+           "-smROM  : Show Merged ROM_0  and ROM_1  output (i.e. bare 32K ROM)\n"
+           "          -sm* compatible with banked ROM_x or WRAM_x when used with -B\n"
            "-nB : Hide warning banner (for .cdb output)\n"
            "-nA : Hide areas (shown by default in .cdb output)\n"
            "-z  : Hide areas smaller than SIZE -z:DECSIZE\n"
@@ -85,7 +89,6 @@ static void display_help(void) {
            "    It cannot count functions and data from ASM and LIBs,\n"
            "    so bank totals may be incorrect/missing.\n"
            "  * GB/GBC/ROM files are just guessing, no promises.\n"
-           "  * -B Summarized mode shows [Region]_[Max Used Bank] / [auto-sized Max Bank Num]\n"
            );
 }
 
@@ -153,6 +156,11 @@ int handle_args(int argc, char * argv[]) {
         } else if (strstr(argv[i], "-B") == argv[i]) {
             set_option_summarized(true);
 
+        } else if (strstr(argv[i], "-smWRAM") == argv[i]) {
+            set_option_merged_banks(OPT_MERGED_BANKS_WRAM);
+        } else if (strstr(argv[i], "-smROM") == argv[i]) {
+            set_option_merged_banks(OPT_MERGED_BANKS_ROM);
+
         } else if (strstr(argv[i], "-q") == argv[i]) {
             set_option_quiet_mode(true);
         } else if (strstr(argv[i], "-R") == argv[i]) {
@@ -218,6 +226,8 @@ int main( int argc, char *argv[] )  {
     init();
 
     if (handle_args(argc, argv)) {
+
+        banks_init_templates();
 
         if (show_help_and_exit) {
             ret = EXIT_SUCCESS;

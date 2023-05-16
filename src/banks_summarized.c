@@ -32,7 +32,15 @@ static void summarize_copy_modified_areas(bank_item * p_dest_bank, const bank_it
 
         area_item new_area = areas_to_copy[c];
         // Scale area address up by bank number * bank size (factoring in whether bank start is 0 or 1 based)
-        new_area.start += ((p_src_bank->bank_num - p_src_bank->base_bank_num) * p_src_bank->size_total);
+        //
+        // Handle special (-cWRAM or -cROM) case of a non-banked region merged with banked region.
+        // This causes address range size to be 2x bank size and throws of base address calc for banked data
+        // (to fix: bank - 1, and bank size / 2 )
+        if ((p_src_bank->is_merged_bank) && (p_src_bank->bank_num > 0))
+            new_area.start += (((p_src_bank->bank_num - p_src_bank->base_bank_num) - 1) * (p_src_bank->size_total / 2));
+        else
+            new_area.start += ((p_src_bank->bank_num - p_src_bank->base_bank_num) * p_src_bank->size_total);
+
         new_area.end = new_area.start + (new_area.length - 1);
 
         list_additem(&(p_dest_bank->area_list), &new_area);
@@ -84,13 +92,21 @@ static void summarize_fixup_sizes_and_names(list_type * p_bank_list_summarized) 
 
                 // Update bank total size (factoring in whether bank start is 0 or 1 based)
                 banks_summarized[c].size_total = ((banks_summarized[c].bank_num - banks_summarized[c].base_bank_num) + 1) *  banks_summarized[c].size_total;
+
+                // Handle special (-cWRAM or -cROM) case of a non-banked region merged with banked region.
+                // This causes address range size to be 2x which inflates total bank size. Divide by 2 to fix.
+                if (banks_summarized[c].is_merged_bank)
+                    banks_summarized[c].size_total /= 2;
+
                 // Don't resize .end so that bank region shows correctly when rendered. charts will use ".size_total"
                 // banks_summarized[c].end = (banks_summarized[c].size_total - 1) + banks_summarized[c].start;
 
                 // Update Bank name with Used / Max - example: "ROM_1" with "ROM_Used/Max"
                 char new_name[BANK_MAX_STR];
-                if (strlen(banks_summarized[c].name) >= 2);
-                    banks_summarized[c].name[ strlen(banks_summarized[c].name) - 2 ] = '\0'; // Truncate existing name (makes assumption name is "..._N")
+                // Strip bank name and underscore off the end if present
+                char * p_chr_underscore = strstr(banks_summarized[c].name, "_");
+                if (p_chr_underscore != NULL)
+                    *p_chr_underscore = '\0';
 
                 int ret; // save result to suppress truncation warning, bank names will never be > 100 chars and truncation is fine if it got to that
                 ret = snprintf(new_name, sizeof(new_name), "%s_%d/%d", banks_summarized[c].name, bank_num_max_used, banks_summarized[c].bank_num);

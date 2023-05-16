@@ -11,32 +11,17 @@
 #include "common.h"
 #include "list.h"
 #include "banks.h"
+#include "bank_templates.h"
 #include "banks_print.h"
 #include "banks_summarized.h"
 
-// Bank info from pandocs
-//  0000-3FFF   16KB ROM Bank 00            (in cartridge, fixed at bank 00)
-//  4000-7FFF   16KB ROM Bank 01..NN        (in cartridge, switchable bank number)
-//  8000-9FFF   8KB Video RAM (VRAM)        (switchable bank 0-1 in CGB Mode)
-//  A000-BFFF   8KB External RAM            (in cartridge, switchable bank, if any)
-//  C000-CFFF   4KB Work RAM Bank 0 (WRAM)
-//  D000-DFFF   4KB Work RAM Bank 1 (WRAM)  (switchable bank 1-7 in CGB Mode)
-//  E000-FDFF   Same as C000-DDFF (ECHO)    (typically not used)
 
 static int area_item_compare(const void* a, const void* b);
 static int bank_item_compare(const void* a, const void* b);
 
-
-const bank_item bank_templates[] = {
-    {"ROM_0",   0x0000, 0x3FFF, BANKED_NO,  0x7FFF, 0,0,0, BANK_MEM_TYPE_ROM,  BANK_STARTNUM_0},
-    {"ROM_",    0x4000, 0x7FFF, BANKED_YES, 0x7FFF, 0,0,0, BANK_MEM_TYPE_ROM,  BANK_STARTNUM_1},
-    {"VRAM_",   0x8000, 0x9FFF, BANKED_YES, 0x9FFF, 0,0,0, BANK_MEM_TYPE_VRAM, BANK_STARTNUM_0},
-    {"SRAM_",   0xA000, 0xBFFF, BANKED_YES, 0xBFFF, 0,0,0, BANK_MEM_TYPE_SRAM, BANK_STARTNUM_0},
-    {"WRAM_LO", 0xC000, 0xCFFF, BANKED_NO,  0xDFFF, 0,0,0, BANK_MEM_TYPE_WRAM, BANK_STARTNUM_0},
-    {"WRAM_HI_",0xD000, 0xDFFF, BANKED_YES, 0xDFFF, 0,0,0, BANK_MEM_TYPE_WRAM, BANK_STARTNUM_1},
-    {"HRAM",    0xFF80, 0xFFFE, BANKED_NO,  0xFFFE, 0,0,0, BANK_MEM_TYPE_HRAM, BANK_STARTNUM_0},
-};
-
+// Not ready for use until a call to banks_init_templates()
+bank_item bank_templates[BANK_TEMPLATES_MAX];
+int       bank_templates_count;
 
 list_type bank_list;
 list_type bank_list_summarized;
@@ -60,6 +45,12 @@ void banks_cleanup(void) {
         list_cleanup(&(banks[c].area_list));
     }
     list_cleanup(&bank_list);
+}
+
+
+// Load templates used for assigning areas to banks
+void banks_init_templates(void) {
+    bank_templates_count = bank_templates_load(bank_templates);
 }
 
 
@@ -119,7 +110,7 @@ static void area_check_region_overflow(area_item area) {
     //
     // Non-banked areas with banks above them have the upper bound
     // set to the end of the bank above them.
-    for(c = 0; c < ARRAY_LEN(bank_templates); c++) {
+    for(c = 0; c < bank_templates_count; c++) {
 
         // Warn about overflow in any ROM bank GBZ80 areas that cross past the (relative) end of their region
         if ((WITHOUT_BANK(area.start) >= bank_templates[c].start) &&
@@ -354,7 +345,8 @@ static void banklist_addto(bank_item bank_template, area_item area, int bank_num
     newbank.size_total = RANGE_SIZE(bank_template.start, bank_template.end);
     newbank.bank_num = bank_num;
 
-    if (bank_template.is_banked == BANKED_YES) {
+    // Don't append bank name for merged banks
+    if ((bank_template.is_banked == BANKED_YES) && (!bank_template.is_merged_bank))  {
         // save result to suppress truncation warning, bank names will never be > 100 chars and truncation is fine if it got to that
         int ret = snprintf(newbank.name, sizeof(newbank.name), "%s%d", bank_template.name, bank_num);
     }
@@ -402,7 +394,7 @@ void banks_check(area_item area) {
 
     // Loop through all banks and log any that overlap
     // (may be more than one)
-    for(c = 0; c < ARRAY_LEN(bank_templates); c++) {
+    for(c = 0; c < bank_templates_count; c++) {
 
         // Check a given ROM/RAM bank template for overlap
         size_used = addrs_get_overlap(bank_templates[c].start, bank_templates[c].end,

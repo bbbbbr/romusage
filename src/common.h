@@ -30,6 +30,11 @@
 #define OPT_PRINT_COLOR_DEFAULT          (OPT_PRINT_COLOR_WHOLE_ROW)
 
 
+// Each flags should be a unique power of 2
+#define OPT_MERGED_BANKS_NONE    0u
+#define OPT_MERGED_BANKS_WRAM    1u
+#define OPT_MERGED_BANKS_ROM     2u
+
 extern bool banks_display_areas;
 extern bool banks_display_headers;
 extern bool banks_display_minigraph;
@@ -40,6 +45,7 @@ extern bool option_all_areas_exclusive;
 extern bool option_quiet_mode;
 extern bool option_suppress_duplicates;
 extern bool option_error_on_warning;
+extern unsigned int option_merged_banks;
 // Use get_/set_() for these
 // extern bool option_hide_banners;
 // extern int  option_input_source;
@@ -62,6 +68,8 @@ void set_option_area_hide_size(uint32_t value);
 void set_option_display_asciistyle(bool value);
 void set_option_show_compact(bool value);
 void set_option_summarized(bool value);
+
+void set_option_merged_banks(unsigned int value);
 
 int  get_option_input_source(void);
 int  get_option_area_sort(void);

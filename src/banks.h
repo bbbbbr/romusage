@@ -35,6 +35,9 @@
 #define BANK_STARTNUM_0 0
 #define BANK_STARTNUM_1 1
 
+#define BANK_MERGED_NO     false
+#define BANK_MERGED_YES    true
+
 #define MINIGRAPH_SIZE (2 * 14) // Number of characters wide (inside edge brackets)
 #define LARGEGRAPH_BYTES_PER_CHAR 16
 
@@ -73,6 +76,7 @@ typedef struct bank_item {
 
     int      bank_mem_type;
     int      base_bank_num;
+    bool     is_merged_bank;
     // End of templating vars
 
     // TODO: track overflow bytes and report them in graph
@@ -93,7 +97,7 @@ void banks_output_show_largegraph(bool do_show);
 
 void banks_init(void);
 void banks_cleanup(void);
-
+void banks_init_templates(void);
 
 void set_exit_error(void);
 bool get_exit_error(void);
