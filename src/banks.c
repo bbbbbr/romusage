@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-// #include <unistd.h>
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -41,15 +40,6 @@ const bank_item bank_templates[] = {
 
 list_type bank_list;
 list_type bank_list_summarized;
-
-uint32_t min(uint32_t a, uint32_t b) {
-    return (a < b) ? a : b;
-}
-
-uint32_t max(uint32_t a, uint32_t b) {
-    return (a > b) ? a : b;
-}
-
 
 
 // Initialize the main banklist
@@ -606,5 +596,76 @@ void banklist_finalize_and_show(void) {
         else {
             banklist_printall(&bank_list);
         }
+    }
+}
+
+
+// Split a banks usage into N buckets
+//
+// Attempts to merge overlapping areas to avoid
+// counting shared space multiple times.
+//
+// Avoids losing some address slots to integer rounding errors (when
+// bucket_count is an imperfect divisor of range size) by using floats,
+// with the trade-off that bucket size is slightly variable between buckets.
+void bank_areas_split_to_buckets(bank_item * p_bank, uint32_t range_start, uint32_t range_size, uint32_t bucket_count, uint32_t * p_buckets) {
+
+    float bucket_size  = (float)range_size / (float)bucket_count;
+    if (bucket_size == 0.0) return;
+
+    uint32_t range_end = range_start + (range_size - 1);
+    uint32_t bucket_start, bucket_end;
+    uint32_t bucket_id;
+    uint32_t start, end;
+
+    area_item * areas = (area_item *)p_bank->area_list.p_array;
+
+    // The calculation requires areas to be sorted ascending by .start addr then by .end addr
+    qsort (p_bank->area_list.p_array, p_bank->area_list.count, sizeof(area_item), area_item_compare);
+
+    // Iterate over all areas, splitting areas into any buckets they overlaps with
+    int c = 0;
+    uint32_t highest_addr_used = range_start;
+    while (c < p_bank->area_list.count) {
+
+        // Only process areas not entirely covered by previous area
+        // Works since areas are sorted so current will never start before previous,
+        // and highest_addr_used is set to max from all processed areas so far
+        if (areas[c].end > highest_addr_used) {
+
+            // Calc starting bucket to skip non-overlapping ones
+            bucket_id = ((areas[c].start - range_start) / bucket_size);
+
+            // Break out if bucket exceeds range or
+            while (bucket_id < bucket_count) {
+
+                bucket_start = (uint32_t)(bucket_size * (float)bucket_id) + range_start;
+                bucket_end   = (uint32_t)((bucket_size * ((float)bucket_id + 1.0)) - 1.0) + range_start;
+
+                // Break out of bucket updates for this area once past area end
+                if (bucket_start > areas[c].end)
+                    break;
+
+                // Factor in highest addr used if it's been initialized
+                // Use that to avoid counting parts where areas overlap multiple times.
+                // +1 since start should be the address _after_ the highest used
+                if (highest_addr_used != bucket_start)
+                    start = max(bucket_start, highest_addr_used + 1);
+
+                // Clip area to be within the bucket range
+                start = max(areas[c].start, bucket_start);
+                end   = min(areas[c].end,   bucket_end);
+
+                if (start <= end)
+                    p_buckets[bucket_id] += (end - start) + 1;
+
+                // Move to next bucket and track high water mark for end of all areas
+                bucket_id++;
+                highest_addr_used = max(end, highest_addr_used);
+
+            } // End processing buckets for a given area
+        }
+        // Move to next area
+        c++;
     }
 }

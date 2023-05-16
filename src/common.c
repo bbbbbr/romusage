@@ -180,3 +180,13 @@ uint32_t round_up_power_of_2(uint32_t val) {
 
     return val;
 }
+
+
+uint32_t min(uint32_t a, uint32_t b) {
+    return (a < b) ? a : b;
+}
+
+
+uint32_t max(uint32_t a, uint32_t b) {
+    return (a > b) ? a : b;
+}

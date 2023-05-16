@@ -5,7 +5,7 @@
 #ifndef _COMMON_H
 #define _COMMON_H
 
-#define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
+// #define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
 
 #define DEFAULT_STR_LEN 100
 
@@ -72,5 +72,8 @@ bool get_option_display_asciistyle(void);
 uint32_t get_option_area_hide_size(void);
 
 uint32_t round_up_power_of_2(uint32_t val);
+
+uint32_t min(uint32_t a, uint32_t b);
+uint32_t max(uint32_t a, uint32_t b);
 
 #endif // _COMMON_H

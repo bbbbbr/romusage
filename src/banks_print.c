@@ -79,17 +79,29 @@ static void print_graph_char_standard(uint32_t perc_used) {
 // Each character represents an arbitrary amount based on the bank size
 static void bank_print_graph(bank_item * p_bank, uint32_t num_chars) {
 
-    int c;
-    uint32_t range_size = p_bank->size_total / num_chars;
-    uint32_t perc_used;
+    float bytes_per_char = p_bank->size_total / num_chars;
+    unsigned int perc_used;
+    uint32_t bucket_start, bucket_end;
+    uint32_t bucket_id;
+    uint32_t bucket_buf_size = num_chars * sizeof(uint32_t);
 
-    for (c = 0; c <= (num_chars - 1); c++) {
+    uint32_t * p_buckets = malloc(bucket_buf_size);
+    if (p_buckets == NULL) {
+        printf("Error: Failed to allocate buffer for graph!\n");
+        return;
+    }
+    memset(p_buckets, 0, bucket_buf_size);
 
-        // Get percentage used for range represented by current graph char
-        perc_used = (bank_areas_calc_used(p_bank,
-                                          p_bank->start + (c * range_size),
-                                          p_bank->start + ((c + 1) * range_size) - 1)
-                                           * (uint32_t)100) / range_size;
+    bank_areas_split_to_buckets(p_bank, p_bank->start, p_bank->size_total, num_chars, p_buckets);
+
+    for (bucket_id = 0; bucket_id <= (num_chars - 1); bucket_id++) {
+
+        // Calculate range size this way so it matches the slightly variable bucket size.
+        // See bank_areas_split_to_buckets() for details
+        bucket_start = (uint32_t)(bytes_per_char * (float)bucket_id) + p_bank->start;
+        bucket_end   = (uint32_t)((bytes_per_char * ((float)bucket_id + 1.0)) - 1.0) + p_bank->start;
+
+        perc_used = (uint32_t)((float)p_buckets[bucket_id] * 100.0) / ((bucket_end - bucket_start) + 1);
 
         // Non-ascii style output
         if (!get_option_display_asciistyle())
@@ -98,9 +110,12 @@ static void bank_print_graph(bank_item * p_bank, uint32_t num_chars) {
             print_graph_char_asciistyle(perc_used);
 
         // Periodic line break if needed (for multi-line large graphs)
-        if (((c + 1) % 64) == 0)
+        if (((bucket_id + 1) % 64) == 0)
             fprintf(stdout, "\n");
     }
+
+    if (p_buckets)
+        free(p_buckets);
 }
 
 
@@ -118,15 +133,14 @@ static void banklist_print_large_graph(list_type * p_bank_list) {
                                               banks[c].end); // Address Start -> End
             fprintf(stdout,"\n"); // Name
 
-            uint32_t graph_charscale = LARGEGRAPH_BYTES_PER_CHAR;
+            uint32_t bytes_per_char = LARGEGRAPH_BYTES_PER_CHAR;
 
-            // Scale large graph unit size by number of banks it uses for banked items (factoring in whether bank start is 0 or 1 based)
-            if (option_summarized_mode)// && banks[c].bank_num)
-                graph_charscale *= ((banks[c].bank_num - banks[c].base_bank_num) + 1);
+            // Scale large graph unit size by number of banks it uses for banked items
+            // (factoring in whether bank start is 0 or 1 based)
+            if (option_summarized_mode)
+                bytes_per_char *= ((banks[c].bank_num - banks[c].base_bank_num) + 1);
 
-            // TODO: FIXME - Performance is bad here for large ROMs
-            //       Generate a one pass condensed view of sufficient resolution for each bank
-            bank_print_graph(&banks[c], banks[c].size_total / graph_charscale);
+            bank_print_graph(&banks[c], banks[c].size_total / bytes_per_char);
 
             fprintf(stdout,"End: %s\n",banks[c].name); // Name
         }

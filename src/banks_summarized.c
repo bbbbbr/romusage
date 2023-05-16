@@ -112,7 +112,7 @@ static bool summarize_try_merge_bank(const bank_item * p_src_bank, list_type * p
         if (banks_summarized[dest_idx].start == p_src_bank->start) {
             // Found matching bank type, copy areas and bump up max bank used if needed
             summarize_copy_modified_areas(&banks_summarized[dest_idx], p_src_bank);
-            banks_summarized[dest_idx].bank_num = MAX(banks_summarized[dest_idx].bank_num, p_src_bank->bank_num);
+            banks_summarized[dest_idx].bank_num = max(banks_summarized[dest_idx].bank_num, p_src_bank->bank_num);
             return true; // Success
         }
     }

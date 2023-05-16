@@ -73,6 +73,7 @@ typedef struct bank_item {
 
     int      bank_mem_type;
     int      base_bank_num;
+    // End of templating vars
 
     // TODO: track overflow bytes and report them in graph
     list_type area_list;
@@ -99,5 +100,8 @@ bool get_exit_error(void);
 
 void banks_check(area_item area);
 void banklist_finalize_and_show(void);
+
+void bank_areas_split_to_buckets(bank_item * p_bank, uint32_t range_start, uint32_t range_size, uint32_t range_buckets, uint32_t * p_buckes);
+
 
 #endif // _BANKS_H
