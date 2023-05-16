@@ -7,7 +7,8 @@ Changelog
   - Collapses banked regions to single lines: [Region]_[Max Used Bank] / [auto-sized Max Bank Num]
     - Example: ROM_1...ROM_12 -> ROM_12/15
   - Range column is unmodified. Size, used, free, graph, are adjusted to represent total size of merged banks
-- Added mode for combined non-banked region + banked to a single line
+- Added `-F` : Force Displayed Max ROM and SRAM bank num for -B. (0 based) -F:ROM:SRAM (ex: -F:255:15)
+- Added combined non-banked region + banked to a single line mode
   - `-smWRAM` : Combined WRAM_0 and WRAM_1 display (i.e DMG/MGB not CGB)
   - `-smROM`  : Combined ROM_0 and ROM_1 display (i.e. bare 32K ROM)
   - Compatible with banked ROM_x or WRAM_x when used with `-B`
@@ -16,28 +17,28 @@ Changelog
 - Fix: Support spaces in RGBDS map file section (area) names
 
 # Version 1.2.3
-- `-sR` : [Rainbow] Color output
+- Added `-sR` : [Rainbow] Color output
   - `-sRe` : Row Ends only
   - `-sRd` : Middle Dimmed
   - `-sRp` : Percentage based coloring
-- `-sP` : Custom Color Palette
+- Added `-sP` : Custom Color Palette
   -  Colon separated entries are decimal VT100 color codes
   -  Used for section based color mode only, not Percetange based coloring
   - `-sP:DEFAULT:ROM:VRAM:SRAM:WRAM:HRAM`
 
 # Version 1.2.2
-- Add support for RGBDS v0.6.0 map file spaces -> tab change
-- Fix rejection of short file names (ex: a.gb)
+- Added support for RGBDS v0.6.0 map file spaces -> tab change
+- Fixed rejection of short file names (ex: a.gb)
 - Changed:
   - XRAM -> SRAM
   - WRAM -> WRAM_LO
   - WRAM_1_* -> WRAM_HI_*
   - ROM (Bank 0) -> ROM_0
   - ROM_0 (Bank 0 overflow) -> ROM_1 (will clash and warn of overflow)
-- -E overlap / multiple write flag
+- Added `-E` overlap / multiple write flag
   - Additional header area warning suppression
   - Improved warning format
-- Added -sC : Show Compact Output (by Evie)
+- Added `-sC` : Show Compact Output (by Evie)
 - Added rom .duck extension for megaduck ROMs
 - Building: added Github Runner build workflow for Linux/Windows & Mac OSX
 
@@ -64,7 +65,6 @@ Changelog
 - Added `-nB` : Hide warning banner (for .cdb output)
 - Added `-nA` : Hide areas (shown by default in .cdb output)
 - Added `-z`  : Hide areas smaller than SIZE. Example: hide areas smaller than 256 bytes `-z:256`
-
 
 # Version 1.0
 - .map file support

@@ -43,7 +43,9 @@ Options
 -a  : Show Areas in each Bank. Optional sort by, address:"-aA" or size:"-aS" 
 -g  : Show a small usage graph per bank (-gA for ascii style)
 -G  : Show a large usage graph per bank (-GA for ascii style)
--B  : Brief (summarized) output for banked regions
+-B  : Brief (summarized) output for banked regions. Auto scales max bank
+      shows [Region]_[Max Used Bank] / [auto-sized Max Bank Num]
+-F  : Force Max ROM and SRAM bank num for -B. (0 based) -F:ROM:SRAM (ex: -F:255:15)
 
 -m  : Manually specify an Area -m:NAME:HEXADDR:HEXLENGTH
 -e  : Manually specify an Area that should not overlap -e:NAME:HEXADDR:HEXLENGTH
@@ -56,6 +58,9 @@ Options
       -sP:DEFAULT:ROM:VRAM:SRAM:WRAM:HRAM (section based color only)
 -sC : Show Compact Output, hide non-essential columns
 -sH : Show HEADER Areas (normally hidden)
+-smROM  : Show Merged ROM_0  and ROM_1  output (i.e. bare 32K ROM)
+-smWRAM : Show Merged WRAM_0 and WRAM_1 output (i.e DMG/MGB not CGB)
+          -sm* compatible with banked ROM_x or WRAM_x when used with -B
 -nB : Hide warning banner (for .cdb output)
 -nA : Hide areas (shown by default in .cdb output)
 -z  : Hide areas smaller than SIZE -z:DECSIZE
@@ -66,6 +71,7 @@ Example 2: "romusage build/MyProject.noi -a -e:STACK:DEFF:100 -e:SHADOW_OAM:C000
 Example 3: "romusage build/MyProject.ihx -g"
 Example 4: "romusage build/MyProject.map -q -R"
 Example 5: "romusage build/MyProject.noi -sR -sP:90:32:90:35:33:36"
+Example 6: "romusage build/MyProject.map -sRp -g -B -F:255:15 -smROM -smWRAM"
 
 Notes:
   * GBDK / RGBDS map file format detection is automatic.
@@ -77,7 +83,6 @@ Notes:
     It cannot count functions and data from ASM and LIBs,
     so bank totals may be incorrect/missing.
   * GB/GBC/ROM files are just guessing, no promises.
-  * -B Summarized mode shows [Region]_[Max Used Bank] / [auto-sized Max Bank Num]
 ```
 ### Examples
 

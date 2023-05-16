@@ -8,6 +8,6 @@
 #include "list.h"
 
 // Summarized mode
-void banklist_collapse_to_summary(list_type * p_banks, list_type * p_banks_summarized);
+void banklist_collapse_to_summary(const list_type * p_banks, list_type * p_banks_summarized);
 
 #endif // _BANKS_SUMMARIZED_H

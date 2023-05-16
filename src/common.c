@@ -3,6 +3,8 @@
 // bbbbbr 2020
 
 #include <stdbool.h>
+#include <string.h>
+#include <stdlib.h>
 #include <stdint.h>
 
 #include "common.h"
@@ -14,7 +16,11 @@ bool banks_display_largegraph   = false;
 bool option_compact_mode        = false;
 bool option_summarized_mode     = false;
 
-unsigned int option_merged_banks = false;
+// -B
+unsigned int option_merged_banks = OPT_MERGED_BANKS_NONE;
+// -F
+unsigned int option_forced_display_max_bank_ROM = 0;
+unsigned int option_forced_display_max_bank_SRAM = 0;
 
 bool option_display_asciistyle  = false;
 bool option_all_areas_exclusive = false;
@@ -126,6 +132,40 @@ void set_option_percentage_based_color(bool value) {
 void set_option_area_hide_size(uint32_t value) {
     option_area_hide_size = value;
 }
+
+
+// -sP : Custom Color Palette. Each colon separated entry is decimal VT100 color code
+//       -sP:DEFAULT:ROM:VRAM:SRAM:WRAM:HRAM
+//
+// Custom color scheme for output
+bool option_set_displayed_bank_range(char * arg_str) {
+
+    #define MAX_SPLIT_WORDS 4
+    #define EXPECTED_COLS   3
+
+    char cols;
+    char * p_str;
+    char * p_words[MAX_SPLIT_WORDS];
+
+    // Split string into words separated by - and : chars
+    cols = 0;
+    p_str = strtok(arg_str,"-:");
+    while (p_str != NULL)
+    {
+        p_words[cols++] = p_str;
+        p_str = strtok(NULL, "-:");
+        if (cols >= MAX_SPLIT_WORDS) break;
+    }
+
+    if (cols == EXPECTED_COLS) {
+        option_forced_display_max_bank_ROM = strtol(p_words[1], NULL, 10);
+        option_forced_display_max_bank_SRAM = strtol(p_words[2], NULL, 10);
+        // printf("2:%s\n", p_words[2]);
+        return true;
+    } else
+        return false; // Signal failure
+}
+
 
 
 // Input source file format

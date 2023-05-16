@@ -53,6 +53,7 @@ static void display_help(void) {
            "-G  : Show a large usage graph per bank (-GA for ascii style)\n"
            "-B  : Brief (summarized) output for banked regions. Auto scales max bank\n"
            "      shows [Region]_[Max Used Bank] / [auto-sized Max Bank Num]\n"
+           "-F  : Force Max ROM and SRAM bank num for -B. (0 based) -F:ROM:SRAM (ex: -F:255:15)\n"
            "\n"
            "-m  : Manually specify an Area -m:NAME:HEXADDR:HEXLENGTH\n"
            "-e  : Manually specify an Area that should not overlap -e:NAME:HEXADDR:HEXLENGTH\n"
@@ -65,8 +66,8 @@ static void display_help(void) {
            "      -sP:DEFAULT:ROM:VRAM:SRAM:WRAM:HRAM (section based color only)\n"
            "-sC : Show Compact Output, hide non-essential columns\n"
            "-sH : Show HEADER Areas (normally hidden)\n"
-           "-smWRAM : Show Merged WRAM_0 and WRAM_1 output (i.e DMG/MGB not CGB)\n"
            "-smROM  : Show Merged ROM_0  and ROM_1  output (i.e. bare 32K ROM)\n"
+           "-smWRAM : Show Merged WRAM_0 and WRAM_1 output (i.e DMG/MGB not CGB)\n"
            "          -sm* compatible with banked ROM_x or WRAM_x when used with -B\n"
            "-nB : Hide warning banner (for .cdb output)\n"
            "-nA : Hide areas (shown by default in .cdb output)\n"
@@ -78,6 +79,7 @@ static void display_help(void) {
            "Example 3: \"romusage build/MyProject.ihx -g\"\n"
            "Example 4: \"romusage build/MyProject.map -q -R\"\n"
            "Example 5: \"romusage build/MyProject.noi -sR -sP:90:32:90:35:33:36\"\n"
+           "Example 6: \"romusage build/MyProject.map -sRp -g -B -F:255:15 -smROM -smWRAM\"\n"
            "\n"
            "Notes:\n"
            "  * GBDK / RGBDS map file format detection is automatic.\n"
@@ -155,6 +157,12 @@ int handle_args(int argc, char * argv[]) {
 
         } else if (strstr(argv[i], "-B") == argv[i]) {
             set_option_summarized(true);
+        } else if (strstr(argv[i], "-F") == argv[i]) {
+            if (!option_set_displayed_bank_range(argv[i])) {
+                fprintf(stdout,"Malformed -F forced display max bank range\n\n");
+                display_help();
+                return false;
+            }
 
         } else if (strstr(argv[i], "-smWRAM") == argv[i]) {
             set_option_merged_banks(OPT_MERGED_BANKS_WRAM);
@@ -172,7 +180,7 @@ int handle_args(int argc, char * argv[]) {
         } else if ((strstr(argv[i], "-m") == argv[i]) ||
                    (strstr(argv[i], "-e") == argv[i])) {
             if (!area_manual_add(argv[i])) {
-                fprintf(stdout,"malformed manual area argument: %s\n\n", argv[i]);
+                fprintf(stdout,"Malformed manual area argument: %s\n\n", argv[i]);
                 display_help();
                 return false;
             }

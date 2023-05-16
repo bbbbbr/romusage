@@ -85,7 +85,7 @@ static void bank_print_graph(bank_item * p_bank, uint32_t num_chars) {
     uint32_t bucket_id;
     uint32_t bucket_buf_size = num_chars * sizeof(uint32_t);
 
-    uint32_t * p_buckets = malloc(bucket_buf_size);
+    uint32_t * p_buckets = (uint32_t *)malloc(bucket_buf_size);
     if (p_buckets == NULL) {
         printf("Error: Failed to allocate buffer for graph!\n");
         return;

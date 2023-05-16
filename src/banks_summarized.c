@@ -16,6 +16,7 @@
 
 static void summarize_copy_areas(bank_item *, const bank_item *);
 static void summarize_copy_bank(bank_item *, const bank_item *);
+static bool check_apply_forced_max_bank(int * p_banknum, int bank_num_max_used, int bank_mem_type);
 static void summarize_fixup_sizes_and_names(list_type *);
 static bool summarize_try_merge_bank(const bank_item *, list_type *);
 
@@ -60,6 +61,42 @@ static void summarize_copy_bank(bank_item * p_dest_bank, const bank_item * p_src
 }
 
 
+// Checks to see whether -F  : Force displayed Max ROM and SRAM bank range needs to be applied
+// Modifies p_banknum if so and returns true
+static bool check_apply_forced_max_bank(int * p_banknum, int bank_num_max_used, int bank_mem_type) {
+
+    int forced_bank_num;
+    char str_ROM[] = "ROM";
+    char str_SRAM[] = "SRAM";
+    char str_NONE[] = "UNKNOWN";
+    char * p_str_banktype = str_NONE;
+
+    if (option_forced_display_max_bank_ROM) {
+
+        switch (bank_mem_type) {
+            case BANK_MEM_TYPE_ROM:
+                    forced_bank_num = option_forced_display_max_bank_ROM;
+                    p_str_banktype = str_ROM;
+                    break;
+            case BANK_MEM_TYPE_SRAM:
+                    forced_bank_num = option_forced_display_max_bank_SRAM;
+                    p_str_banktype = str_SRAM;
+                    break;
+        }
+
+        if (forced_bank_num < bank_num_max_used) {
+            printf("Warning! Forced Max %s Bank %d is smaller than Max Used Bank %d\n", p_str_banktype, forced_bank_num, bank_num_max_used);
+            if (option_error_on_warning)
+                set_exit_error();
+        }
+
+        *p_banknum = forced_bank_num;
+        return true; // Success
+    }
+    return false; // Failure
+}
+
+
 // After banked regions have been merged, fix their names and sizes
 static void summarize_fixup_sizes_and_names(list_type * p_bank_list_summarized) {
 
@@ -79,12 +116,16 @@ static void summarize_fixup_sizes_and_names(list_type * p_bank_list_summarized) 
                 // SRAM_X size: Round up to next (power of 4) - 1
                 // WRAM_X: Fixed number of banks on CGB, 7 always max
                 switch (banks_summarized[c].bank_mem_type) {
-                    case BANK_MEM_TYPE_ROM: banks_summarized[c].bank_num = round_up_power_of_2((uint32_t)banks_summarized[c].bank_num + 1) - 1;
+                    case BANK_MEM_TYPE_ROM:
+                            if (! check_apply_forced_max_bank(&banks_summarized[c].bank_num, bank_num_max_used, banks_summarized[c].bank_mem_type))
+                                banks_summarized[c].bank_num = round_up_power_of_2((uint32_t)banks_summarized[c].bank_num + 1) - 1;
                             break;
                     case BANK_MEM_TYPE_SRAM:
-                            if (     banks_summarized[c].bank_num > 7) banks_summarized[c].bank_num = 15;
-                            else if (banks_summarized[c].bank_num > 3) banks_summarized[c].bank_num = 7;
-                            else if (banks_summarized[c].bank_num > 1) banks_summarized[c].bank_num = 3;
+                            if (! check_apply_forced_max_bank(&banks_summarized[c].bank_num, bank_num_max_used, banks_summarized[c].bank_mem_type)) {
+                                if      (banks_summarized[c].bank_num > 7) banks_summarized[c].bank_num = 15;
+                                else if (banks_summarized[c].bank_num > 3) banks_summarized[c].bank_num = 7;
+                                else if (banks_summarized[c].bank_num > 1) banks_summarized[c].bank_num = 3;
+                            }
                             break;
                     case BANK_MEM_TYPE_WRAM: banks_summarized[c].bank_num = WRAM_X_MAX_BANKS;
                             break;
