@@ -179,7 +179,7 @@ int handle_args(int argc, char * argv[]) {
 
         } else if ((strstr(argv[i], "-m") == argv[i]) ||
                    (strstr(argv[i], "-e") == argv[i])) {
-            if (!area_manual_add(argv[i])) {
+            if (!area_manual_queue(argv[i])) {
                 fprintf(stdout,"Malformed manual area argument: %s\n\n", argv[i]);
                 display_help();
                 return false;
@@ -236,6 +236,7 @@ int main( int argc, char *argv[] )  {
     if (handle_args(argc, argv)) {
 
         banks_init_templates();
+        area_manual_apply_queued();
 
         if (show_help_and_exit) {
             ret = EXIT_SUCCESS;

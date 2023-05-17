@@ -26,6 +26,9 @@ int       bank_templates_count;
 list_type bank_list;
 list_type bank_list_summarized;
 
+#define AREA_MANUAL_QUEUE_SZ  20
+int area_manual_queue_count = 0;
+area_item areas_manual_queue[AREA_MANUAL_QUEUE_SZ];
 
 // Initialize the main banklist
 void banks_init(void) {
@@ -428,14 +431,25 @@ void banks_check(area_item area) {
 #define ARG_AREA_REC_COUNT_MATCH 4
 
 
+// Apply manually queued areas
+void area_manual_apply_queued(void) {
+    for (int c = 0; c < area_manual_queue_count; c++) {
+        banks_check(areas_manual_queue[c]);
+    }
+}
+
+
 // -m:NAME:HEX_ADDR:HEX_LENGTH or -e[same]
-// Add areas manually from command line arguments
-bool area_manual_add(char * arg_str) {
+// Queue areas to manually add from command line arguments
+//
+// Note: They're added to a queue for processing add AFTER
+// banks_init_templates() has been called, otherwise they get erased.
+// Follow up call is area_manual_apply_queued()
+bool area_manual_queue(char * arg_str) {
 
     char cols;
     char * p_str;
     char * p_words[MAX_SPLIT_WORDS];
-    area_item area;
 
     // Split string into words separated by spaces
     cols = 0;
@@ -448,12 +462,12 @@ bool area_manual_add(char * arg_str) {
     }
 
     if (cols == ARG_AREA_REC_COUNT_MATCH) {
-        snprintf(area.name, sizeof(area.name), "%s", p_words[1]);   // [1] Area Name
-        area.start = strtol(p_words[2], NULL, 16);                  // [2] Area Hex Address Start
-        area.end   = area.start + strtol(p_words[3], NULL, 16) - 1; // Start + [3] Hex Size - 1 = Area End
-        area.exclusive = (p_words[0][0] == 'e') ? true : false;        // [0] shared/exclusive
+        area_item * p_area_to_queue = &areas_manual_queue[area_manual_queue_count++];
 
-        banks_check(area);
+        snprintf(p_area_to_queue->name, sizeof(p_area_to_queue->name), "%s", p_words[1]);   // [1] Area Name
+        p_area_to_queue->start = strtol(p_words[2], NULL, 16);                  // [2] Area Hex Address Start
+        p_area_to_queue->end   = p_area_to_queue->start + strtol(p_words[3], NULL, 16) - 1; // Start + [3] Hex Size - 1 = Area End
+        p_area_to_queue->exclusive = (p_words[0][0] == 'e') ? true : false;        // [0] shared/exclusive
         return true;
     } else
         return false; // Signal failure

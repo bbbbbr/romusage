@@ -83,7 +83,8 @@ typedef struct bank_item {
     list_type area_list;
 } bank_item;
 
-bool area_manual_add(char * arg_str);
+void area_manual_apply_queued(void);
+bool area_manual_queue(char * arg_str);
 
 int bank_calc_percent_free(bank_item * p_bank);
 int bank_calc_percent_used(bank_item * p_bank);
