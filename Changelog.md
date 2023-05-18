@@ -7,11 +7,18 @@ Changelog
   - Collapses banked regions to single lines: [Region]_[Max Used Bank] / [auto-sized Max Bank Num]
     - Example: ROM_1...ROM_12 -> ROM_12/15
   - Range column is unmodified. Size, used, free, graph, are adjusted to represent total size of merged banks
+
 - Added `-F` : Force Displayed Max ROM and SRAM bank num for -B. (0 based) -F:ROM:SRAM (ex: -F:255:15)
+
 - Added combined non-banked region + banked to a single line mode
   - `-smWRAM` : Combined WRAM_0 and WRAM_1 display (i.e DMG/MGB not CGB)
   - `-smROM`  : Combined ROM_0 and ROM_1 display (i.e. bare 32K ROM)
   - Compatible with banked ROM_x or WRAM_x when used with `-B`
+
+- Added Windows "Drag and Drop" build
+  - Allows drag-and-drop a ROM/.noi/etc file onto the console `romusage_drag_and_drop.exe` program
+  - Romusage will load the file, open a console window to show output and wait for a key press before closing
+  - Uses defaults (it can't accept option settings) : `-sRp -g -B`
 
 # Version 1.2.4
 - Fix: Support spaces in RGBDS map file section (area) names

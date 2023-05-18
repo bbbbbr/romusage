@@ -11,7 +11,11 @@ MKDIRS = $(OBJDIR) $(BINDIR) $(PACKDIR)
 CFILES = $(wildcard $(SRCDIR)/*.c)
 COBJ = $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(CFILES))
 
-BIN = $(BINDIR)/romusage
+ifdef DRAG_AND_DROP_MODE
+	EXTRA_FNAME = _drag_and_drop
+	CFLAGS+= -DDRAG_AND_DROP_MODE
+endif
+BIN = $(BINDIR)/romusage$(EXTRA_FNAME)
 BIN_WIN = $(BIN).exe
 
 
@@ -75,7 +79,10 @@ package:
 	${MAKE} clean
 	${MAKE} wincrosszip
 	${MAKE} clean
+	${MAKE} wincrosszip DRAG_AND_DROP_MODE=TRUE
+	${MAKE} clean
 	${MAKE} linuxzip
+
 
 # create necessary directories after Makefile is parsed but before build
 # info prevents the command from being pasted into the makefile

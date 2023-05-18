@@ -95,6 +95,15 @@ static void display_help(void) {
 }
 
 
+// Default options for Windows Drag and Drop recipient mode
+void set_drag_and_drop_mode_defaults(void) {
+
+    set_option_color_mode(OPT_PRINT_COLOR_ROW_ENDS);
+    banks_output_show_minigraph(true);
+    set_option_summarized(true);
+}
+
+
 int handle_args(int argc, char * argv[]) {
 
     int i;
@@ -233,6 +242,11 @@ int main( int argc, char *argv[] )  {
 
     init();
 
+    #ifdef DRAG_AND_DROP_MODE
+        // Non-interactive mode, set some reasonable default
+        set_drag_and_drop_mode_defaults();
+    #endif
+
     if (handle_args(argc, argv)) {
 
         banks_init_templates();
@@ -287,6 +301,12 @@ int main( int argc, char *argv[] )  {
     // Override exit code if was set during processing
     if (get_exit_error())
         ret = EXIT_FAILURE;
+
+    #ifdef DRAG_AND_DROP_MODE
+        // Wait for input to keep the console window open after processing
+        printf("\n\nPress Any Key to Continue\n");
+        getchar();
+    #endif
 
     return ret;
 }
