@@ -61,31 +61,35 @@ uint8_t * file_read_into_buffer(char * filename, uint32_t *ret_size) {
 
 
 // Calculate a range, adjust it's bank num and add try adding to banks if valid
-static void rom_add_range(area_item range, uint32_t cur_idx, uint32_t empty_run) {
+static void rom_add_range(area_item range, uint32_t cur_idx, uint32_t empty_run, bool romsize_32K_or_less) {
 
     if (range.start != ADDR_UNSET) {
 
         // Range ended, add to areas
         range.end = cur_idx - empty_run;
 
-        // convert from ROM banked format (linear, bits in .14+) 
-        // to expected banked format (bank in bits .16+)
-        range.start = ROM_ADDR_TO_BANKED(range.start);
-        range.end = ROM_ADDR_TO_BANKED(range.end);
+        // Don't try to virtual translate address for binary ROM
+        // files 32K or smaller, most likely they're unbanked.
+        if (!romsize_32K_or_less) {
+            // convert from ROM banked format (linear, bits in .14+)
+            // to expected banked format (bank in bits .16+)
+            range.start = ROM_ADDR_TO_BANKED(range.start);
+            range.end = ROM_ADDR_TO_BANKED(range.end);
 
-        // Banks 1+ all start at 0x4000
-        if (BANK_GET_NUM(range.start) >= 1) {
-            range.start += BANK_SIZE;
-            range.end += BANK_SIZE;
+            // Banks 1+ all start at 0x4000
+            if (BANK_GET_NUM(range.start) >= 1) {
+                range.start += BANK_SIZE;
+                range.end += BANK_SIZE;
+            }
         }
 
         // Calc length and add to banks
-        if (range.end >= range.start) {                       
+        if (range.end >= range.start) {
             range.length = range.end - range.start + 1;
-            //printf("ADD Range: %8x -> %8x (at %8x)\n", range.start, range.end, cur_idx);
+            // printf("ROM ADD Range: %8x -> %8x, %d (at %8x)\n", range.start, range.end, range.length, cur_idx);
             banks_check(range);
         }
-    }    
+    }
 }
 
 
@@ -99,11 +103,13 @@ int rom_file_process(char * filename_in) {
     uint32_t empty_run = 0;
     uint32_t bank_bytes = 0;
     area_item rom_range;
-    
+    bool romsize_32K_or_less;
+
     set_option_input_source(OPT_INPUT_SRC_ROM);
 
     // Read in ROM image
     p_buf = file_read_into_buffer(filename_in, &buf_length);
+    romsize_32K_or_less = (buf_length <= 0x8000);
 
     rom_range.name[0] = '\0';  // Rom file ranges don't have names, set string to empty
     rom_range.start = ADDR_UNSET;
@@ -111,7 +117,7 @@ int rom_file_process(char * filename_in) {
     if (p_buf) {
 
         // Loop through all ROM bytes
-        while (buf_idx < buf_length) {          
+        while (buf_idx < buf_length) {
 
             // Process each bank (0x4000 bytes in a row) separately
             // and close out any ranges that might span between them
@@ -136,18 +142,18 @@ int rom_file_process(char * filename_in) {
                         (rom_range.start != ADDR_UNSET)) {
 
                         // Add range then flag as cleared and prep for a new range
-                        rom_add_range(rom_range, buf_idx, empty_run);
+                        rom_add_range(rom_range, buf_idx, empty_run, romsize_32K_or_less);
                         rom_range.start = ADDR_UNSET;
                     }
                 }
 
-                buf_idx++;            
+                buf_idx++;
                 bank_bytes--;
             } // end: while still _bank_ bytes to process
 
             // Close out a remaining run if one exists (at last byte which is -1 of current)
             // Flag as cleared and prep for a new range
-            rom_add_range(rom_range, buf_idx - 1, empty_run);
+            rom_add_range(rom_range, buf_idx - 1, empty_run, romsize_32K_or_less);
             rom_range.start = ADDR_UNSET;
 
         } // End main buffer loop
