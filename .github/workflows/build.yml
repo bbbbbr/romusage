@@ -53,9 +53,7 @@ jobs:
         shell: bash
         run: |
           cd romusage-root
-          make linuxzip
-          make clean
-          make wincrosszip
+          make package
           cd ..
 
       # ==== Packaging ====
