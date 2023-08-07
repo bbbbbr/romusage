@@ -207,13 +207,15 @@ static void area_check_warn_overlap(area_item area_a, area_item area_b) {
 // Calculate free and used percentages of space in a given bank
 int bank_calc_percent_free(bank_item * p_bank) {
 
-    return (((int32_t)p_bank->size_total - (int32_t)p_bank->size_used)
-             * (int32_t)100) / (int32_t)p_bank->size_total;
+    // Round to nearest whole percent instead of truncate (hence: + total / 2)
+    return (int)(((p_bank->size_total - p_bank->size_used) * 100)
+                + (p_bank->size_total / 2 )) / p_bank->size_total;
 }
 
 int bank_calc_percent_used(bank_item * p_bank) {
 
-    return ((p_bank->size_used * (uint32_t)100) / p_bank->size_total);
+    // Base Used amount on Free space so that total comes out to 100%
+    return (100 - bank_calc_percent_free(p_bank));
 }
 
 
