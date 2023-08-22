@@ -383,6 +383,23 @@ static void area_calc_unbanked_range(area_item * p_area) {
 }
 
 
+// Returns true if the template should be skipped
+//
+// On GBDK SMS/GG the banked LIT_ and DATA_ areas get mapped into the
+// same memory region (only one active at a time) : 0x8000 - 0xBFFF
+//
+// So skip the template of one type if the area is of the other type
+bool banks_sms_gg_checkskip_template(bool sms_gg_is_banked_DATA, bool sms_gg_is_banked_LIT, char * template_name) {
+    if (sms_gg_is_banked_DATA) {
+        if (strstr(template_name,"LIT_"))
+            return true;
+    } else if (sms_gg_is_banked_LIT) {
+        if (strstr(template_name,"DATA_"))
+            return true;
+    }
+    return false;
+}
+
 // Check to see if an area overlaps with any of the bank templates.
 // If it does then try to create/update a bank entry
 // and add/append the area entry
@@ -397,9 +414,23 @@ void banks_check(area_item area) {
     // with (unbanked) bank templates
     area_calc_unbanked_range(&area);
 
+    // On GBDK SMS/GG the banked LIT_ and DATA_ areas get mapped into the
+    // same memory region (only one active at a time) : 0x8000 - 0xBFFF
+    // TODO: kind of sloppy, could be moved to a function
+    bool sms_gg_is_banked_DATA = false;
+    bool sms_gg_is_banked_LIT  = false;
+    if ((get_option_platform() == OPT_PLAT_SMS_GG_GBDK) && strstr(area.name,"DATA_"))
+        sms_gg_is_banked_DATA = true;
+    if ((get_option_platform() == OPT_PLAT_SMS_GG_GBDK) && strstr(area.name,"LIT_"))
+        sms_gg_is_banked_LIT = true;
+
     // Loop through all banks and log any that overlap
     // (may be more than one)
     for(c = 0; c < bank_templates_count; c++) {
+
+        // Skip LIT_X banked template if this is a DATA_X area (and same for inverse)
+        if (banks_sms_gg_checkskip_template(sms_gg_is_banked_DATA, sms_gg_is_banked_LIT, bank_templates[c].name))
+            continue;
 
         // Check a given ROM/RAM bank template for overlap
         size_used = addrs_get_overlap(bank_templates[c].start, bank_templates[c].end,

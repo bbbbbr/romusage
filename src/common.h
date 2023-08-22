@@ -35,6 +35,10 @@
 #define OPT_MERGED_BANKS_WRAM    1u
 #define OPT_MERGED_BANKS_ROM     2u
 
+#define OPT_PLAT_GAMEBOY     0u
+#define OPT_PLAT_SMS_GG_GBDK 1u  // GBDK specific layout of sms/gg
+
+
 extern bool banks_display_areas;
 extern bool banks_display_headers;
 extern bool banks_display_minigraph;
@@ -70,6 +74,7 @@ void set_option_area_sort(int value);
 void set_option_color_mode(int value);
 void set_option_percentage_based_color(bool value);
 void set_option_area_hide_size(uint32_t value);
+void set_option_platform(unsigned int);
 void set_option_display_asciistyle(bool value);
 void set_option_show_compact(bool value);
 void set_option_summarized(bool value);
@@ -83,6 +88,7 @@ int  get_option_area_sort(void);
 int  get_option_color_mode(void);
 bool get_option_percentage_based_color(void);
 bool get_option_hide_banners(void);
+unsigned int get_option_platform(void);
 bool get_option_display_asciistyle(void);
 uint32_t get_option_area_hide_size(void);
 

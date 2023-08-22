@@ -43,11 +43,13 @@ static void display_cdb_warning() {
 
 static void display_help(void) {
     fprintf(stdout,
-           "romusage input_file.[map|noi|ihx|cdb|.gb[c]|.pocket|.duck] [options]\n"
+           "romusage input_file.[map|noi|ihx|cdb|.gb[c]|.pocket|.duck|.gg|.sms] [options]\n"
            VERSION", by bbbbbr\n"
            "\n"
            "Options\n"
            "-h  : Show this help\n"
+           "-p:SMS_GG : Set platform to GBDK SMS/Game Gear (changes memory map templates)\n"
+           "\n"
            "-a  : Show Areas in each Bank. Optional sort by, address:\"-aA\" or size:\"-aS\" \n"
            "-g  : Show a small usage graph per bank (-gA for ascii style)\n"
            "-G  : Show a large usage graph per bank (-GA for ascii style)\n"
@@ -154,6 +156,9 @@ int handle_args(int argc, char * argv[]) {
 
         } else if (strstr(argv[i], "-nA")) {
             set_option_area_sort(OPT_AREA_SORT_HIDE);
+
+        } else if (strstr(argv[i], "-p:SMS_GG") == argv[i]) {
+            set_option_platform(OPT_PLAT_SMS_GG_GBDK);
 
         } else if (strstr(argv[i], "-g") == argv[i]) {
             banks_output_show_minigraph(true);
@@ -274,6 +279,8 @@ int main( int argc, char *argv[] )  {
                 }
             } else if (matches_extension(filename_in, (char *)".gb"    ) ||
                        matches_extension(filename_in, (char *)".gbc"   ) ||
+                       matches_extension(filename_in, (char *)".sms"   ) ||
+                       matches_extension(filename_in, (char *)".gg"   ) ||
                        matches_extension(filename_in, (char *)".pocket") ||
                        matches_extension(filename_in, (char *)".duck") ) {
                 // printf("ROM FILE\n");
