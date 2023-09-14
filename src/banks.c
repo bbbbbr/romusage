@@ -626,15 +626,27 @@ void bank_areas_split_to_buckets(bank_item * p_bank, uint32_t range_start, uint3
     uint32_t bucket_id;
     uint32_t start, end;
 
-    area_item * areas = (area_item *)p_bank->area_list.p_array;
+    // Make a working copy of the bank and it's areas to modify since the
+    // required sorting of areas would override any user level sorting option
+    bank_item bank_copy = *p_bank;
+    bank_copy.area_list.p_array = (void *)malloc(bank_copy.area_list.size * bank_copy.area_list.typesize);
+    if (!bank_copy.area_list.p_array) {
+        printf("ERROR: Failed to reallocate memory for list!\n");
+        exit(EXIT_FAILURE);
+    }
+    // Copy main list of areas to copy of bank for modification
+    memcpy(bank_copy.area_list.p_array, p_bank->area_list.p_array,
+           bank_copy.area_list.size * bank_copy.area_list.typesize);
+
+    area_item * areas = (area_item *)bank_copy.area_list.p_array;
 
     // The calculation requires areas to be sorted ascending by .start addr then by .end addr
-    qsort (p_bank->area_list.p_array, p_bank->area_list.count, sizeof(area_item), area_item_compare);
+    qsort (bank_copy.area_list.p_array, bank_copy.area_list.count, sizeof(area_item), area_item_compare);
 
     // Iterate over all areas, splitting areas into any buckets they overlaps with
     int c = 0;
     uint32_t highest_addr_used = range_start;
-    while (c < p_bank->area_list.count) {
+    while (c < bank_copy.area_list.count) {
 
         // Only process areas not entirely covered by previous area
         // Works since areas are sorted so current will never start before previous,
@@ -675,5 +687,10 @@ void bank_areas_split_to_buckets(bank_item * p_bank, uint32_t range_start, uint3
         }
         // Move to next area
         c++;
+    }
+
+    if (bank_copy.area_list.p_array) {
+        free(bank_copy.area_list.p_array);
+        bank_copy.area_list.p_array = NULL; // Pointless, but out of habit
     }
 }
