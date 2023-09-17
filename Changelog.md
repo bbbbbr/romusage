@@ -1,6 +1,9 @@
 Changelog
 =========
 
+# Version 1.2.6
+- Fix: free % + used% did not always equal 100%
+
 # Version 1.2.5
 - Added `-B` : Brief (summarized) mode:
   - Useful with large numbers of banks
