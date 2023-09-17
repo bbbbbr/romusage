@@ -2,6 +2,7 @@ Changelog
 =========
 
 # Version 1.2.6
+- Added support for GBDK's flavor of Game Gear/SMS (`-p:SMS_GG"`) .noi/.map files (with LIT and CODE areas)
 - Fix: free % + used% did not always equal 100%
 
 # Version 1.2.5
