@@ -22,6 +22,7 @@ unsigned int option_merged_banks = OPT_MERGED_BANKS_NONE;
 unsigned int option_forced_display_max_bank_ROM = 0;
 unsigned int option_forced_display_max_bank_SRAM = 0;
 
+unsigned int option_platform    = OPT_PLAT_GAMEBOY;
 bool option_display_asciistyle  = false;
 bool option_all_areas_exclusive = false;
 bool option_quiet_mode          = false;
@@ -70,6 +71,11 @@ void set_option_summarized(bool value) {
 // Turns on merged WRAM_0 + WRAM_1 display
 void set_option_merged_banks(unsigned int value) {
     option_merged_banks |= value;
+}
+
+// Sets console platform (changes memory map templates)
+void set_option_platform(unsigned int value) {
+    option_platform = value;
 }
 
 // Turn on/off whether to use ascii style
@@ -196,6 +202,11 @@ bool get_option_hide_banners(void) {
 // Hide areas smaller than size
 uint32_t  get_option_area_hide_size(void) {
     return option_area_hide_size;
+}
+
+// Current platform (used for changing memory map templates)
+unsigned int get_option_platform(void) {
+    return option_platform;
 }
 
 // Turn on/off whether to use ascii style
