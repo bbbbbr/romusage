@@ -18,6 +18,8 @@
 
 static int area_item_compare(const void* a, const void* b);
 static int bank_item_compare(const void* a, const void* b);
+static bool banks_check_larger_than_32k(void);
+static void areas_check_rom0_overflow(void);
 
 // Not ready for use until a call to banks_init_templates()
 bank_item bank_templates[BANK_TEMPLATES_MAX];
@@ -156,6 +158,43 @@ static bool area_check_underflow(area_item area, bool notify) {
 }
 
 
+// Attempt to flag if non-banked areas have overflowed ROM0 and rom size is > 32k
+// Must be called after all areas are processed so that it can check rom size accurately
+static void areas_check_rom0_overflow(void) {
+
+    bank_item * banks = (bank_item *)bank_list.p_array;
+    area_item * areas;
+    int b, c;
+    bool has_overflow = false;
+
+    if (banks_check_larger_than_32k() == false) return;
+    if (get_option_platform() != OPT_PLAT_GAMEBOY) return;
+
+    for (b=0; b < bank_list.count; b++) {
+        areas = (area_item *)banks[b].area_list.p_array;
+
+        for(c=0;c < banks[b].area_list.count; c++) {
+
+            if (areas[c].end >= BANK_ADDR_ROM_UPPER_ST) {
+                if ((strcmp(areas[c].name,"_CODE") == 0)         ||
+                    (strcmp(areas[c].name,"_HOME") == 0)        ||
+                    (strcmp(areas[c].name,"_INITIALIZER") == 0) ||
+                    (strcmp(areas[c].name,"_GSINIT") == 0)      ||
+                    (strcmp(areas[c].name,"_GSFINAL") == 0)) {
+
+                    printf("* WARNING: Possible overflow beyond Bank 0 for non-banked area %s (0x%x -> 0x%x). \n",
+                        areas[c].name, areas[c].start, areas[c].end);
+                    has_overflow = true;
+                }
+            }
+        }
+    }
+
+    if (option_error_on_warning && has_overflow)
+        set_exit_error();
+}
+
+
 static void area_check_warnings(area_item area, uint32_t size_assigned) {
 
     // Unassigned warning is mostly redundant with area_check_bank_overflow()
@@ -202,6 +241,20 @@ static void area_check_warn_overlap(area_item area_a, area_item area_b) {
     }
 }
 
+
+static bool banks_check_larger_than_32k(void) {
+
+    bank_item * banks = (bank_item *)bank_list.p_array;
+    int c;
+
+    for (c=0; c < bank_list.count; c++) {
+        if ((banks[c].bank_num > BANK_NUM_ROM1) &&
+            (banks[c].bank_mem_type == BANK_MEM_TYPE_ROM)) {
+
+            return true;
+        }
+    }
+}
 
 
 // Calculate free and used percentages of space in a given bank
@@ -601,7 +654,6 @@ static void bank_fill_area_gaps_with_unknown(void) {
 }
 
 
-
 // Print banks to output
 void banklist_finalize_and_show(void) {
 
@@ -625,6 +677,8 @@ void banklist_finalize_and_show(void) {
         else
             qsort (banks[c].area_list.p_array, banks[c].area_list.count, sizeof(area_item), area_item_compare);
     }
+
+    areas_check_rom0_overflow();
 
     // Only print if quiet mode is not enabled
     if (!option_quiet_mode) {

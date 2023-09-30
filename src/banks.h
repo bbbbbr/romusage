@@ -15,6 +15,7 @@
 #define BANK_ADDR_VADDR_MASK    0xFFFF0000U  // Virtual addressing mask for where .noi files/etc store bank number
 #define BANK_NUM_ROM1_VADDR     (1u << 16)
 #define BANK_NUM_ROM0           (0u)
+#define BANK_NUM_ROM1           (1u)
 
 #define AREA_COPY_ADDRESS_TRANSLATE_YES true
 #define AREA_COPY_ADDRESS_TRANSLATE_NO  false
