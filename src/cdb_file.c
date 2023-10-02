@@ -17,8 +17,14 @@
 
 list_type symbol_list;
 
-#define CDB_L_REC_FUNC_START "G"
-#define CDB_L_REC_FUNC_END "XG"
+#define CDB_L_REC_FUNC_START_GLOBAL 'G'
+#define CDB_L_REC_FUNC_START_LOCAL  'F'
+#define CDB_L_REC_FUNC_END_GLOBAL   "XG"
+#define CDB_L_REC_FUNC_END_LOCAL    "XF"
+
+// More compelte CDB coverage is affected by this SDCC bug
+// #3662 Adding a function removes const arrays above it from .adb/.cdb output
+// https://sourceforge.net/p/sdcc/bugs/3662/
 
 
 // Example data to parse from a .cdb file:
@@ -27,10 +33,27 @@ list_type symbol_list;
 // L:G$big_const_4$0_0$0:24039 <-- bank 2
 // L:G$big_const_3$0_0$0:1784E <-- Bank 1
 //
+// S:Fsrcfile_2$func_2_local_scope$0_0$0({2}DF,SV:S),C,0,0
+// L:Fsrcfile_2$func_2_local_scope$0$0:14000
+// L:XFsrcfile_2$func_2_local_scope$0$0:14003
+// F:Fsrcfile_2$func_2_local_scope$0_0$0({2}DF,SV:S),C,0,0,0,0,0
+//
 // 0 1 2---------- 3-- 4  5-- 6----- 7  8  9 10 11
 // S:G$big_const_3$0_0$0({256}DA256d,SC:U),D,0,0     <--- size 256 bytes (SC=signed char)
 // S:G$big_const_4$0_0$0({15360}DA15360d,SC:U),D,0,0 <--- size 15360 bytes (SC=signed char)
+//
+// 0 1--------- 2------------ 3-- 4  5---
+// L:Fsrcfile_2$local_const_2$0_0$0:14027
+// 0 1--------- 2------------ 3-- 4  5---- 6------- 7  8  9 10 11
+// S:Fsrcfile_2$local_const_2$0_0$0({14336}DA14336d,SC:U),D,0,0 <--- size 14336 bytes
 
+// 4.8 Link Address of Symbol
+//
+// L    Link record type indicator
+// G   Symbol has file scope
+// F <Filename>    Symbol has file scope.
+// L <Function>    Symbol has function scope
+//
 // functions use L:XG to mark their last line
 //   basxto:    L:XG$init_map$0$0:BCA - L:G$init_map$0$0:AFB = should be the length
 //     L:G$board_handle_new_piece$0$0:6284
@@ -50,7 +73,7 @@ list_type symbol_list;
 // I   SFR space
 // J   SBIT space
 // R   Register space
-// Z   Used for function records, or any undefined space code 
+// Z   Used for function records, or any undefined space code
 //
 // Types in a Section 4.4 Type Chain Record (S: record)
 // DA <n>  Array of n elements
@@ -69,7 +92,7 @@ list_type symbol_list;
 // SF  float
 // ST <name>   Structure of name <name>
 // SX  sbit
-// SB <n>  Bit field of <n> bits 
+// SB <n>  Bit field of <n> bits
 
 
 // Initialize the symbol list
@@ -133,7 +156,7 @@ static void cdb_symbollist_add_all_to_banks() {
             symbols[c].length = symbols[c].end - symbols[c].start + 1;
         }
 
-        
+
         if ((symbols[c].start != AREA_VAL_UNSET) &&
             (symbols[c].length != AREA_VAL_UNSET)) {
             symbols[c].end = symbols[c].start + symbols[c].length - 1;
@@ -157,10 +180,16 @@ static void cdb_add_record_linker(char * type, char * name, char * address) {
 
         // Check Linker record for start-address or end-address
         // Bank number is in the address bits, no need to modify it
-        if (strncmp(type, CDB_L_REC_FUNC_END, 4) == 0)
-            symbols[symbol_id].end = strtol(address, NULL, 16);   // Start address
-        else if (strncmp(type, CDB_L_REC_FUNC_START, 4) == 0)
-            symbols[symbol_id].start = strtol(address, NULL, 16); // End address
+        if ((strncmp(type, CDB_L_REC_FUNC_END_GLOBAL, 4) == 0) ||
+            (strncmp(type, CDB_L_REC_FUNC_END_LOCAL, 4) == 0)) {
+            symbols[symbol_id].end = strtol(address, NULL, 16);     // End address
+        }
+        else if ((type[0] == CDB_L_REC_FUNC_START_GLOBAL) ||
+                 (type[0] == CDB_L_REC_FUNC_START_LOCAL)) {
+            symbols[symbol_id].start = strtol(address, NULL, 16);   // Start address
+        }
+        // else
+        // printf("Rejected L record %s, %s, %s\n", type, name, address);
     }
 }
 
@@ -190,6 +219,8 @@ static void cdb_add_record_symbol(char * addr_space, char * name, char * length,
             }
         }
     }
+    // else
+    // printf("Rejected S record %s, %s, %s, %s\n", addr_space, name, length, dcl_type);
 }
 
 
@@ -237,22 +268,18 @@ int cdb_file_process_symbols(char * filename_in) {
                     // Linker record (start or end address)
                     if ((p_words[0][0] == CDB_REC_L) &&
                         (cols == CDB_REC_L_COUNT_MATCH)) {
-
                         // [1] Start/End, [2] Area Name1, [5] Address
                         cdb_add_record_linker(p_words[1], p_words[2], p_words[5]);
                     }
-
                     // Symbol record (length)
                     if ((p_words[0][0] == CDB_REC_S) &&
                         (cols == CDB_REC_S_COUNT_MATCH)) {
-
                         // [9] address space, [2] Area Name, [5] Symbol decimal length, [6] DCLType
                         cdb_add_record_symbol(p_words[9], p_words[2], p_words[5], p_words[6]);
                     }
 
                 } // end: if valid start of line
             } // end: valid min chars to process line
-
         } // end: while still lines to process
 
         fclose(cdb_file);
