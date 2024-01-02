@@ -255,6 +255,8 @@ static bool banks_check_larger_than_32k(void) {
             return true;
         }
     }
+
+    return false;
 }
 
 
