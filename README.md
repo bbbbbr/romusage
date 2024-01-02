@@ -35,11 +35,13 @@ GB / GBC ROM Files:
 
 ### Usage
 ```
-romusage input_file.[map|noi|ihx|cdb|.gb[c]|.pocket|.duck] [options]
-version 1.2.5, by bbbbbr
+romusage input_file.[map|noi|ihx|cdb|.gb[c]|.pocket|.duck|.gg|.sms] [options]
+version 1.2.8, by bbbbbr
 
 Options
 -h  : Show this help
+-p:SMS_GG : Set platform to GBDK SMS/Game Gear (changes memory map templates)
+
 -a  : Show Areas in each Bank. Optional sort by, address:"-aA" or size:"-aS" 
 -g  : Show a small usage graph per bank (-gA for ascii style)
 -G  : Show a large usage graph per bank (-GA for ascii style)
@@ -51,6 +53,7 @@ Options
 -e  : Manually specify an Area that should not overlap -e:NAME:HEXADDR:HEXLENGTH
 -E  : All areas are exclusive (except HEADERs), warn for any overlaps
 -q  : Quiet, no output except warnings and errors
+-Q  : Suppress output of warnings and errors
 -R  : Return error code for Area warnings and errors
 
 -sR : [Rainbow] Color output (-sRe for Row Ends, -sRd for Center Dimmed, -sRp % based)
@@ -61,6 +64,7 @@ Options
 -smROM  : Show Merged ROM_0  and ROM_1  output (i.e. bare 32K ROM)
 -smWRAM : Show Merged WRAM_0 and WRAM_1 output (i.e DMG/MGB not CGB)
           -sm* compatible with banked ROM_x or WRAM_x when used with -B
+-sJ : Show JSON output. Some options not applicable. When used, -Q recommended
 -nB : Hide warning banner (for .cdb output)
 -nA : Hide areas (shown by default in .cdb output)
 -z  : Hide areas smaller than SIZE -z:DECSIZE
