@@ -408,8 +408,8 @@ static void banklist_addto(bank_item bank_template, area_item area, int bank_num
 
     // Don't append bank name for merged banks
     if ((bank_template.is_banked == BANKED_YES) && (!bank_template.is_merged_bank))  {
-        // save result to suppress truncation warning, bank names will never be > 100 chars and truncation is fine if it got to that
-        int ret = snprintf(newbank.name, sizeof(newbank.name), "%s%d", bank_template.name, bank_num);
+        if (snprintf(newbank.name, sizeof(newbank.name), "%s%d", bank_template.name, bank_num) > sizeof(newbank.name))
+            log_warning("Warning: truncated bank name to :%s\n", newbank.name);
     }
 
     // Initialize new bank's area list and add the area
