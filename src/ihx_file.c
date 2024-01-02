@@ -10,6 +10,7 @@
 #include <stdint.h>
 
 #include "common.h"
+#include "logging.h"
 #include "banks.h"
 #include "ihx_file.h"
 
@@ -119,20 +120,20 @@ int ihx_parse_and_validate_record(char * p_str, ihx_record * p_rec) {
 
         // Only parse lines that start with ':' character (Start token for IHX record)
         if (p_str[0] != ':') {
-            printf("Warning: IHX: Invalid start of line token for line: %s \n", p_str);
+            log_warning("Warning: IHX: Invalid start of line token for line: %s \n", p_str);
             return false;
         }
 
        // Require minimum length
         if (p_rec->length < IHX_REC_LEN_MIN) {
-            printf("Warning: IHX: Invalid line, too few characters: %s. Is %d, needs at least %d \n", p_str, p_rec->length, IHX_REC_LEN_MIN);
+            log_warning("Warning: IHX: Invalid line, too few characters: %s. Is %d, needs at least %d \n", p_str, p_rec->length, IHX_REC_LEN_MIN);
             return false;
         }
 
         // Only hex characters are allowed after start token
         p_str++; // Advance past Start code
         if (check_hex(p_str)) {
-            printf("Warning: IHX: Invalid line, non-hex characters present: %s\n", p_str);
+            log_warning("Warning: IHX: Invalid line, non-hex characters present: %s\n", p_str);
             return false;
         }
 
@@ -143,7 +144,7 @@ int ihx_parse_and_validate_record(char * p_str, ihx_record * p_rec) {
         // Require expected data byte count to fit within record length (at 2 chars per hex byte)
         calc_length = IHX_REC_LEN_MIN + (p_rec->byte_count * 2);
         if (p_rec->length != calc_length) {
-            printf("Warning: IHX: byte count doesn't match length available in record! Record length = %d, Calc length = %d, bytecount = %d \n", p_rec->length, calc_length, p_rec->byte_count);
+            log_warning("Warning: IHX: byte count doesn't match length available in record! Record length = %d, Calc length = %d, bytecount = %d \n", p_rec->length, calc_length, p_rec->byte_count);
             return false;
         }
 
@@ -156,7 +157,7 @@ int ihx_parse_and_validate_record(char * p_str, ihx_record * p_rec) {
 
             // Don't process records with zero bytes of length
             if (p_rec->byte_count == 0) {
-                printf("Warning: IHX: Zero length record starting at %x\n", p_rec->address);
+                log_warning("Warning: IHX: Zero length record starting at %x\n", p_rec->address);
                 return false;
             }
 
@@ -182,7 +183,7 @@ int ihx_parse_and_validate_record(char * p_str, ihx_record * p_rec) {
         p_str += 2;
 
         if (p_rec->checksum != checksum_calc) {
-            printf("Warning: IHX: record checksum %x didn't match calculated checksum %x\n", p_rec->checksum, checksum_calc);
+            log_warning("Warning: IHX: record checksum %x didn't match calculated checksum %x\n", p_rec->checksum, checksum_calc);
             return false;
         }
 
@@ -190,7 +191,7 @@ int ihx_parse_and_validate_record(char * p_str, ihx_record * p_rec) {
         // Warn if they cross the boundary between different banks
         if ((p_rec->address >= 0x00004000U) &&
             ((p_rec->address & 0xFFFFC000U) != (p_rec->address_end & 0xFFFFC000U))) {
-            printf("Warning: IHX: Write from one bank spans into the next. Bank overflow? %x -> %x (bank %d -> %d)\n",
+            log_warning("Warning: IHX: Write from one bank spans into the next. Bank overflow? %x -> %x (bank %d -> %d)\n",
                    p_rec->address, p_rec->address_end, BANK_NUM(p_rec->address), BANK_NUM(p_rec->address_end));
         }
 
@@ -270,7 +271,7 @@ int ihx_file_process_areas(char * filename_in) {
                 // printf("Extended linear address changed to %08x %s\n\n\n", g_address_upper, strline_in);
                 continue;
             } else if (ihx_rec.type != IHX_REC_DATA) {
-                printf("Warning: IHX: dropped record %s of type %d\n", strline_in, ihx_rec.type);
+                log_warning("Warning: IHX: dropped record %s of type %d\n", strline_in, ihx_rec.type);
                 continue;
             }
 

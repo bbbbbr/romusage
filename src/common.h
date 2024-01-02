@@ -53,7 +53,6 @@ extern unsigned int option_forced_display_max_bank_SRAM;
 
 extern bool option_all_areas_exclusive;
 extern bool option_quiet_mode;
-extern bool option_quiet_no_warn_no_error;
 extern bool option_suppress_duplicates;
 extern bool option_error_on_warning;
 extern unsigned int option_merged_banks;

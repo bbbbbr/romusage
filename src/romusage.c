@@ -10,6 +10,7 @@
 #include <stdint.h>
 
 #include "common.h"
+#include "logging.h"
 #include "banks.h"
 #include "banks_color.h"
 #include "map_file.h"
@@ -18,7 +19,7 @@
 #include "cdb_file.h"
 #include "rom_file.h"
 
-#define VERSION "version 1.2.7"
+#define VERSION "version 1.2.8"
 
 void static display_cdb_warning(void);
 void static display_help(void);
@@ -61,6 +62,7 @@ static void display_help(void) {
            "-e  : Manually specify an Area that should not overlap -e:NAME:HEXADDR:HEXLENGTH\n"
            "-E  : All areas are exclusive (except HEADERs), warn for any overlaps\n"
            "-q  : Quiet, no output except warnings and errors\n"
+           "-Q  : Suppress output of warnings and errors\n"
            "-R  : Return error code for Area warnings and errors\n"
            "\n"
            "-sR : [Rainbow] Color output (-sRe for Row Ends, -sRd for Center Dimmed, -sRp %% based)\n"
@@ -71,7 +73,7 @@ static void display_help(void) {
            "-smROM  : Show Merged ROM_0  and ROM_1  output (i.e. bare 32K ROM)\n"
            "-smWRAM : Show Merged WRAM_0 and WRAM_1 output (i.e DMG/MGB not CGB)\n"
            "          -sm* compatible with banked ROM_x or WRAM_x when used with -B\n"
-           "-sJ : Show JSON output. Some options not applicable, suppresses warnings and errors\n"
+           "-sJ : Show JSON output. Some options not applicable. When used, -Q recommended\n"
            "-nB : Hide warning banner (for .cdb output)\n"
            "-nA : Hide areas (shown by default in .cdb output)\n"
            "-z  : Hide areas smaller than SIZE -z:DECSIZE\n"
@@ -189,6 +191,8 @@ int handle_args(int argc, char * argv[]) {
 
         } else if (strstr(argv[i], "-q") == argv[i]) {
             set_option_quiet_mode(true);
+        } else if (strstr(argv[i], "-Q") == argv[i]) {
+            log_set_level(OUTPUT_LEVEL_QUIET);
         } else if (strstr(argv[i], "-R") == argv[i]) {
             set_option_error_on_warning(true);
 

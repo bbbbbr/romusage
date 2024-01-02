@@ -8,6 +8,7 @@
 #include <stdint.h>
 
 #include "common.h"
+#include "logging.h"
 
 bool banks_display_areas        = false;
 bool banks_display_headers      = false;
@@ -27,7 +28,6 @@ unsigned int option_platform    = OPT_PLAT_GAMEBOY;
 bool option_display_asciistyle  = false;
 bool option_all_areas_exclusive = false;
 bool option_quiet_mode          = false;
-bool option_quiet_no_warn_no_error = false;
 bool option_suppress_duplicates = true;
 bool option_error_on_warning    = false;
 bool option_hide_banners        = false;
@@ -68,9 +68,6 @@ void set_option_show_compact(bool value) {
 // Turn on/off JSON output mode
 void set_option_show_json(bool value) {
     option_json_output = value;
-    // JSON mode suppresses warning and error output (for now)
-    if (option_json_output)
-        option_quiet_no_warn_no_error = true;
 }
 
 // Turn on/off brief / summarized mode for banked regions

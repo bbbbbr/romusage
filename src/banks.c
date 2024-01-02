@@ -9,6 +9,7 @@
 #include <stdint.h>
 
 #include "common.h"
+#include "logging.h"
 #include "list.h"
 #include "banks.h"
 #include "bank_templates.h"
@@ -121,7 +122,7 @@ static void area_check_region_overflow(area_item area) {
         if ((WITHOUT_BANK(area.start) >= bank_templates[c].start) &&
             (WITHOUT_BANK(area.start) <= bank_templates[c].end) &&
              (area.end   > (BANK_ONLY(area.start) + bank_templates[c].overflow_end))) {
-            printf("* WARNING: Area %-8s at %5x -> %5x extends past end of memory region at %5x (Overflow by %d bytes)\n",
+            log_warning("* WARNING: Area %-8s at %5x -> %5x extends past end of memory region at %5x (Overflow by %d bytes)\n",
                    area.name,
                    // BANK_GET_NUM(area.start),
                    area.start, area.end,
@@ -142,7 +143,7 @@ static bool area_check_underflow(area_item area, bool notify) {
     if (area.end > (BANK_ONLY(area.start) + MAX_ADDR_UNBANKED)) {
 
         if (notify) {
-            printf("* WARNING: Area %-8s at %5x -> %5x extends past end of address space at %5x (Underflow error by %d bytes)\n",
+            log_warning("* WARNING: Area %-8s at %5x -> %5x extends past end of address space at %5x (Underflow error by %d bytes)\n",
                 area.name,
                 area.start, area.end,
                 BANK_ONLY(area.start) + MAX_ADDR_UNBANKED,
@@ -182,7 +183,7 @@ static void areas_check_rom0_overflow(void) {
                     (strcmp(areas[c].name,"_GSINIT") == 0)      ||
                     (strcmp(areas[c].name,"_GSFINAL") == 0)) {
 
-                    printf("* WARNING: Possible overflow beyond Bank 0 for non-banked area %s (0x%x -> 0x%x). \n",
+                    log_warning("* WARNING: Possible overflow beyond Bank 0 for non-banked area %s (0x%x -> 0x%x). \n",
                         areas[c].name, areas[c].start, areas[c].end);
                     has_overflow = true;
                 }
@@ -201,7 +202,7 @@ static void area_check_warnings(area_item area, uint32_t size_assigned) {
     //
     // // Warn if there are unassigned bytes left over
     // if (size_assigned < RANGE_SIZE(area.start, area.end)) {
-    //     printf("\n* Warning: Area %s 0x%x -> 0x%x (%d bytes): %d bytes not assigned to any bank (overflow error)\n",
+    //     log_warning("\n* Warning: Area %s 0x%x -> 0x%x (%d bytes): %d bytes not assigned to any bank (overflow error)\n",
     //         area.name,
     //         area.start, area.end,
     //         RANGE_SIZE(area.start, area.end),
@@ -226,7 +227,7 @@ static void area_check_warn_overlap(area_item area_a, area_item area_b) {
         overlap_size = addrs_get_overlap(WITHOUT_BANK(area_a.start), WITHOUT_BANK(area_a.end),
                                          WITHOUT_BANK(area_b.start), WITHOUT_BANK(area_b.end));
         if (overlap_size > 0) {
-            printf("\n* WARNING: Areas overlapp by %d bytes: Possible bank overflow.\n"
+            log_warning("\n* WARNING: Areas overlapp by %d bytes: Possible bank overflow.\n"
                    "%15s 0x%04x -> 0x%04x (%d bytes%s)\n"
                    "%15s 0x%04x -> 0x%04x (%d bytes%s)\n",
                 overlap_size,
@@ -722,7 +723,7 @@ void bank_areas_split_to_buckets(bank_item * p_bank, uint32_t range_start, uint3
     bank_item bank_copy = *p_bank;
     bank_copy.area_list.p_array = (void *)malloc(bank_copy.area_list.size * bank_copy.area_list.typesize);
     if (!bank_copy.area_list.p_array) {
-        printf("ERROR: Failed to reallocate memory for list!\n");
+        log_error("ERROR: Failed to reallocate memory for list!\n");
         exit(EXIT_FAILURE);
     }
     // Copy main list of areas to copy of bank for modification

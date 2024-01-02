@@ -1,6 +1,10 @@
 Changelog
 =========
 
+# Version 1.2.8
+- `-sJ` JSON output
+- `-Q` Suppress output of warnings and errors
+
 # Version 1.2.7
 - Attempt to warn when regions such as `_HOME` or `_CODE` have overflowed ROM0 and rom size is larger than 32k
 

@@ -10,6 +10,7 @@
 #include <stdint.h>
 
 #include "common.h"
+#include "logging.h"
 #include "list.h"
 #include "banks.h"
 #include "rom_file.h"
@@ -44,17 +45,17 @@ uint8_t * file_read_into_buffer(char * filename, uint32_t *ret_size) {
             filedata = (uint8_t *)malloc(fsize);
             if (filedata) {
                 if (fsize != fread(filedata, 1, fsize, file_in)) {
-                    printf("Warning: File read size didn't match expected for %s\n", filename);
+                    log_warning("Warning: File read size didn't match expected for %s\n", filename);
                     filedata = NULL;
                 }
                 // Read was successful, set return size
                 *ret_size = fsize;
-            } else printf("ERROR: Failed to allocate memory to read file %s\n", filename);
+            } else log_error("ERROR: Failed to allocate memory to read file %s\n", filename);
 
-        } else printf("ERROR: Failed to read size of file %s\n", filename);
+        } else log_error("ERROR: Failed to read size of file %s\n", filename);
 
         fclose(file_in);
-    } else printf("ERROR: Failed to open input file %s\n", filename);
+    } else log_error("ERROR: Failed to open input file %s\n", filename);
 
     return filedata;
 }

@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#include "logging.h"
 #include "list.h"
 
 #define LIST_GROW_SIZE 100 // 50 // grow array by N entries at a time
@@ -20,7 +21,7 @@ void list_init(list_type * p_list, size_t array_typesize) {
     p_list->p_array = (void *)malloc(p_list->size * p_list->typesize);
 
     if (!p_list->p_array) {
-        printf("ERROR: Failed to allocate memory for list!\n");
+        log_error("ERROR: Failed to allocate memory for list!\n");
         exit(EXIT_FAILURE);
     }
 }
@@ -53,7 +54,7 @@ void list_additem(list_type * p_list, void * p_newitem) {
         p_list->p_array = (void *)realloc(p_list->p_array, p_list->size * p_list->typesize);
         // If realloc failed, free original buffer before quitting
         if (!p_list->p_array) {
-            printf("ERROR: Failed to reallocate memory for list!\n");
+            log_error("ERROR: Failed to reallocate memory for list!\n");
             if (tmp_list) {
                 free(tmp_list);
                 tmp_list = NULL;

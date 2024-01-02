@@ -9,6 +9,7 @@
 #include <stdint.h>
 
 #include "common.h"
+#include "logging.h"
 #include "list.h"
 #include "banks.h"
 
@@ -85,7 +86,7 @@ static bool check_apply_forced_max_bank(int * p_banknum, int bank_num_max_used, 
         }
 
         if (forced_bank_num < bank_num_max_used) {
-            printf("Warning! Forced Max %s Bank %d is smaller than Max Used Bank %d\n", p_str_banktype, forced_bank_num, bank_num_max_used);
+            log_warning("Warning! Forced Max %s Bank %d is smaller than Max Used Bank %d\n", p_str_banktype, forced_bank_num, bank_num_max_used);
             if (option_error_on_warning)
                 set_exit_error();
         }

@@ -9,6 +9,7 @@
 #include <stdint.h>
 
 #include "common.h"
+#include "logging.h"
 #include "list.h"
 #include "banks.h"
 #include "banks_print.h"
@@ -87,7 +88,7 @@ static void bank_print_graph(bank_item * p_bank, uint32_t num_chars) {
 
     uint32_t * p_buckets = (uint32_t *)malloc(bucket_buf_size);
     if (p_buckets == NULL) {
-        printf("Error: Failed to allocate buffer for graph!\n");
+        log_error("Error: Failed to allocate buffer for graph!\n");
         return;
     }
     memset(p_buckets, 0, bucket_buf_size);
@@ -238,7 +239,7 @@ void banklist_printall(list_type * p_bank_list) {
     #ifdef __WIN32__
         if (get_option_color_mode() != OPT_PRINT_COLOR_OFF)
             if (!colors_try_windows_enable_virtual_term_for_vt_codes())
-                printf("Warning: Failed to enable Windows virtual terminal sequences for color!\n");
+                log_warning("Warning: Failed to enable Windows virtual terminal sequences for color!\n");
     #endif
 
     fprintf(stdout, "\n");

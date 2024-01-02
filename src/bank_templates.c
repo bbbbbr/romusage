@@ -8,6 +8,7 @@
 #include <stdint.h>
 
 #include "common.h"
+#include "logging.h"
 #include "banks.h"
 #include "bank_templates.h"
 
@@ -79,7 +80,7 @@ const bank_item smsgg_RAM_nonbanked =  {"RAM",     0xC000, 0xDFFF, BANKED_YES, 0
 static int bank_template_add(int idx, bank_item * p_bank_templates, const bank_item  * p_bank) {
 
     if (idx >= BANK_TEMPLATES_MAX) {
-        printf("Error: exceeded max bank template\n");
+        log_error("Error: exceeded max bank template\n");
         exit(EXIT_FAILURE);
     }
 
