@@ -9,5 +9,6 @@
 #include "banks.h"
 
 void banklist_printall(list_type *);
+void banklist_printall_json(list_type *);
 
 #endif // _BANKS_PRINT_H

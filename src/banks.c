@@ -684,10 +684,16 @@ void banklist_finalize_and_show(void) {
     if (!option_quiet_mode) {
         if (option_summarized_mode) {
             banklist_collapse_to_summary(&bank_list, &bank_list_summarized);
-            banklist_printall(&bank_list_summarized);
+            if (option_json_output)
+                banklist_printall_json(&bank_list_summarized);
+            else
+                banklist_printall(&bank_list_summarized);
         }
         else {
-            banklist_printall(&bank_list);
+            if (option_json_output)
+                banklist_printall_json(&bank_list);
+            else
+                banklist_printall(&bank_list);
         }
     }
 }

@@ -71,6 +71,7 @@ static void display_help(void) {
            "-smROM  : Show Merged ROM_0  and ROM_1  output (i.e. bare 32K ROM)\n"
            "-smWRAM : Show Merged WRAM_0 and WRAM_1 output (i.e DMG/MGB not CGB)\n"
            "          -sm* compatible with banked ROM_x or WRAM_x when used with -B\n"
+           "-sJ : Show JSON output. Some options not applicable, suppresses warnings and errors\n"
            "-nB : Hide warning banner (for .cdb output)\n"
            "-nA : Hide areas (shown by default in .cdb output)\n"
            "-z  : Hide areas smaller than SIZE -z:DECSIZE\n"
@@ -150,6 +151,9 @@ int handle_args(int argc, char * argv[]) {
 
         } else if (strstr(argv[i], "-sC") == argv[i]) {
             set_option_show_compact(true);
+
+        } else if (strstr(argv[i], "-sJ") == argv[i]) {
+            set_option_show_json(true);
 
         } else if (strstr(argv[i], "-nB") == argv[i]) {
             set_option_hide_banners(true);

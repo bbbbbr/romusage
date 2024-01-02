@@ -44,6 +44,7 @@ extern bool banks_display_headers;
 extern bool banks_display_minigraph;
 extern bool banks_display_largegraph;
 extern bool option_compact_mode;
+extern bool option_json_output;
 extern bool option_summarized_mode;
 
 extern unsigned int option_merged_banks;
@@ -52,6 +53,7 @@ extern unsigned int option_forced_display_max_bank_SRAM;
 
 extern bool option_all_areas_exclusive;
 extern bool option_quiet_mode;
+extern bool option_quiet_no_warn_no_error;
 extern bool option_suppress_duplicates;
 extern bool option_error_on_warning;
 extern unsigned int option_merged_banks;
@@ -77,6 +79,7 @@ void set_option_area_hide_size(uint32_t value);
 void set_option_platform(unsigned int);
 void set_option_display_asciistyle(bool value);
 void set_option_show_compact(bool value);
+void set_option_show_json(bool value);
 void set_option_summarized(bool value);
 
 bool option_set_displayed_bank_range(char * arg_str);

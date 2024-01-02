@@ -246,7 +246,7 @@ void banklist_printall(list_type * p_bank_list) {
         fprintf(stdout,"Bank              Used     Free  Free%% \n"
                        "--------       -------  -------  -----\n");
     } else {
-        fprintf(stdout,"Bank         Range                Size     Used  Used%%     Free  Free%% \n" 
+        fprintf(stdout,"Bank         Range                Size     Used  Used%%     Free  Free%% \n"
                        "--------     ----------------  -------  -------  -----  -------  -----\n");
     }
 
@@ -265,4 +265,80 @@ void banklist_printall(list_type * p_bank_list) {
         // Print a large graph per-bank if requested
     if (banks_display_largegraph)
         banklist_print_large_graph(p_bank_list);
+}
+
+
+// ====== JSON OUTPUT ======
+
+static void bank_print_info_json(bank_item *p_bank) {
+
+    fprintf(stdout,"    {\n");
+    fprintf(stdout,"    \"name\":         \"%s\",\n",p_bank->name);
+
+    fprintf(stdout,"    \"type\":         \"%d\",\n",p_bank->bank_mem_type);
+    fprintf(stdout,"    \"baseBankNum\":  \"%d\",\n",p_bank->base_bank_num);
+    fprintf(stdout,"    \"isBanked\":     \"%d\",\n",p_bank->is_banked);
+    fprintf(stdout,"    \"isMergedBank\": \"%d\",\n",p_bank->is_merged_bank);
+
+    fprintf(stdout,"    \"rangeStart\":   \"%d\",\n",p_bank->start);
+    fprintf(stdout,"    \"rangeEnd\":     \"%d\",\n",p_bank->end);
+    fprintf(stdout,"    \"size\":         \"%d\",\n",p_bank->size_total);
+    fprintf(stdout,"    \"used\":         \"%d\",\n",p_bank->size_used);
+    fprintf(stdout,"    \"free\":         \"%d\",\n",(int32_t)p_bank->size_total - (int32_t)p_bank->size_used);
+    fprintf(stdout,"    \"usedPercent\":  \"%d\",\n",bank_calc_percent_used(p_bank));
+    fprintf(stdout,"    \"freePercent\":  \"%d\",\n",bank_calc_percent_free(p_bank));
+
+    fprintf(stdout,"    \"miniGraph\":    \"");
+        bank_print_graph(p_bank, MINIGRAPH_SIZE);
+    fprintf(stdout,"\"\n");
+
+    fprintf(stdout,"    }\n");
+}
+
+
+// Render all banks and space used as json format
+// Example:
+//
+// {"banks":
+//   [
+//     {
+//     "name":         "ROM_2/3",
+//     "type":         "0",
+//     "baseBankNum":  "0",
+//     "isBanked":     "1",
+//     "isMergedBank": "1",
+//     "rangeStart":   "0",
+//     "rangeEnd":     "32767",
+//     "size":         "65536",
+//     "used":         "24740",
+//     "free":         "40796",
+//     "usedPercent":  "38",
+//     "freePercent":  "62",
+//     "miniGraph":    "-##-...#######.............."
+//     }
+//     ,
+//     ...
+//   ]
+// }
+void banklist_printall_json(list_type * p_bank_list) {
+
+    bank_item * banks = (bank_item *)p_bank_list->p_array;
+    int c;
+    int b;
+
+    // JSON array header
+    fprintf(stdout,"{\"banks\":\n"
+                   "  [\n");
+
+    // Print each bank as an array object item
+    for (c = 0; c < p_bank_list->count; c++) {
+        // Comma separator between array items
+        if (c > 0) fprintf(stdout,"    ,\n");
+
+        bank_print_info_json(&banks[c]);
+    }
+
+    // JSON array footer
+    fprintf(stdout,"  ]\n"
+                   "}\n");
 }
