@@ -1,8 +1,7 @@
 romusage
 ===========
 ### Downloads
- - Releases: See the Releases section to the right
- - [Unpackaged Binaries](/package/)
+ - Releases: See the [Releases](https://github.com/bbbbbr/romusage/releases) section to the right
 
 ### Description
 A small command line tool for estimating usage (free space) of Game Boy ROMs from the following file types:
