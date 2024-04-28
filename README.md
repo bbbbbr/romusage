@@ -14,24 +14,10 @@ A small command line tool for estimating usage (free space) of Game Boy ROMs  (+
 
 It produces a trimmed, sorted output of ROM/RAMs, their usage and optionally the Areas located in them.
 
-Runs on Linux, Windows and MacOS, it can be used with [GBDK 2020](https://github.com/Zal0/gbdk-2020/), [ZGB v2020+](https://github.com/Zal0/ZGB/) and [RGBDS](https://github.com/gbdev/rgbds). If map file output is not already enabled, use either `-Wl-m` with `lcc` or `-m` with `sdldgb` directly.
+Runs on Linux, Windows and MacOS, it can be used with [GBDK 2020](https://github.com/Zal0/gbdk-2020/), [ZGB v2020+](https://github.com/Zal0/ZGB/) and [RGBDS](https://github.com/gbdev/rgbds). If map or noi file output is not already enabled, use either `-debug` with `lcc` or `-m` with `sdldgb` directly.
 
 Examples of color output. `-sRe` with `-sRp` for percentage based color on row ends with `-g` small graphs. `-sRd` for section based color with center columns dimmed.
 ![Romusage Color Examples](/info/romusage_color_examples_linux.png)
-
-The usage calculation will attempt to merge overlapping areas to avoid counting shared space multiple times (such as HEADER areas). Optionally it can warn of overlap in exclusive areas, such as the Stack.
-
-IHX Files:
-- For .ihx files bank overflow can only be guessed at (aside from duplicate writes). It's often not possible to tell the difference two banks with data that perfectly aligns on a shared boundary and a single bank that spills over into the unused area of a following bank. It's better to use .map and .noi files to check for overflow.
-- Due to their nature, RAM estimates are unavailable with .ihx files
-
-CDB Files:
-- To enable .cdb output use the additional debug flags `-Wl-y` with `lcc` or `-y` with `sdldgb` directly.
-- For .cdb files the calculated output ONLY reports (most) data from C source files. It cannot count functions and data from ASM sources and LIBs, so bank totals may be incorrect/missing. It's main use is finding the size of individual functions and variables (what's using up space), not estimating the free/used space of banks.
-
-ROM Files (.gb / .gbc / .pocket / .duck / gg / sms) :
-- No overflow detection
-- Usage estimates can only attempt to distinguish between "empty space" (0xFF's) and data that looks like empty space (0xFF's). It may be inaccurate.
 
 ### Usage
 ```
@@ -88,6 +74,22 @@ Notes:
     so bank totals may be incorrect/missing.
   * GB/GBC/ROM files are just guessing, no promises.
 ```
+### Format notes
+The usage calculation will attempt to merge overlapping areas to avoid counting shared space multiple times (such as HEADER areas). Optionally it can warn of overlap in exclusive areas, such as the Stack.
+
+IHX Files:
+- For .ihx files bank overflow can only be guessed at (aside from duplicate writes). It's often not possible to tell the difference two banks with data that perfectly aligns on a shared boundary and a single bank that spills over into the unused area of a following bank. It's better to use .map and .noi files to check for overflow.
+- Due to their nature, RAM estimates are unavailable with .ihx files
+
+CDB Files:
+- To enable .cdb output use the additional debug flags `-Wl-y` with `lcc` or `-y` with `sdldgb` directly.
+- For .cdb files the calculated output ONLY reports (most) data from C source files. It cannot count functions and data from ASM sources and LIBs, so bank totals may be incorrect/missing. It's main use is finding the size of individual functions and variables (what's using up space), not estimating the free/used space of banks.
+
+ROM Files (.gb / .gbc / .pocket / .duck / gg / sms) :
+- No overflow detection
+- Usage estimates can only attempt to distinguish between "empty space" (0xFF's) and data that looks like empty space (0xFF's). It may be inaccurate.
+
+
 ### Examples
 
 Example output with a small graph (-g) for a 32k non-banked ROM, called after completion of the link stage. Manually specify Shadow OAM and Stack as exclusive ranges (-e). Reading from the .map file.
