@@ -4,12 +4,13 @@ romusage
  - Releases: See the [Releases](https://github.com/bbbbbr/romusage/releases) section to the right
 
 ### Description
-A small command line tool for estimating usage (free space) of Game Boy ROMs from the following file types:
+A small command line tool for estimating usage (free space) of Game Boy ROMs  (+ Mega Duck, Analogue .pocket, Game Gear, SMS) from the following file types:
 - .map (sdcc, rgbds)
 - .noi (sdcc)
 - .ihx (sdcc)
 - .cdb (sdcc)
 - .gb / .gbc / .pocket / .duck (ROM image file for: Game Boy / Color, Analogue Pocket, Mega Duck / Cougar Boy)
+- .gg / .sms (ROM image file for: Game Gear / Sega Master System. Note: SMS/GG is GBDK-2020 specific)
 
 It produces a trimmed, sorted output of ROM/RAMs, their usage and optionally the Areas located in them.
 
@@ -28,7 +29,7 @@ CDB Files:
 - To enable .cdb output use the additional debug flags `-Wl-y` with `lcc` or `-y` with `sdldgb` directly.
 - For .cdb files the calculated output ONLY reports (most) data from C source files. It cannot count functions and data from ASM sources and LIBs, so bank totals may be incorrect/missing. It's main use is finding the size of individual functions and variables (what's using up space), not estimating the free/used space of banks.
 
-GB / GBC ROM Files:
+ROM Files (.gb / .gbc / .pocket / .duck / gg / sms) :
 - No overflow detection
 - Usage estimates can only attempt to distinguish between "empty space" (0xFF's) and data that looks like empty space (0xFF's). It may be inaccurate.
 
