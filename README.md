@@ -1,3 +1,6 @@
+### Note about GBDK-2020
+Note: This utility is now included in [GBDK-2020](https://github.com/gbdk-2020/gbdk-2020) (version 4.3.0+), so you may already have a copy if you're using that dev kit.
+
 romusage
 ===========
 ### Downloads
