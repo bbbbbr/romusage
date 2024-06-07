@@ -25,7 +25,7 @@ Examples of color output. `-sRe` with `-sRp` for percentage based color on row e
 ### Usage
 ```
 romusage input_file.[map|noi|ihx|cdb|.gb[c]|.pocket|.duck|.gg|.sms] [options]
-version 1.2.8, by bbbbbr
+version 1.2.9, by bbbbbr
 
 Options
 -h  : Show this help
@@ -53,10 +53,11 @@ Options
 -smROM  : Show Merged ROM_0  and ROM_1  output (i.e. bare 32K ROM)
 -smWRAM : Show Merged WRAM_0 and WRAM_1 output (i.e DMG/MGB not CGB)
           -sm* compatible with banked ROM_x or WRAM_x when used with -B
--sJ : Show JSON output. Some options not applicable. When used, -Q recommended
--nB : Hide warning banner (for .cdb output)
--nA : Hide areas (shown by default in .cdb output)
--z  : Hide areas smaller than SIZE -z:DECSIZE
+-sJ   : Show JSON output. Some options not applicable. When used, -Q recommended
+-nB   : Hide warning banner (for .cdb output)
+-nA   : Hide areas (shown by default in .cdb output)
+-z    : Hide areas smaller than SIZE -z:DECSIZE
+-nMEM : Hide banks matching case sensitive substring (ex hide all RAM: -nMEM:RAM)
 
 Use: Read a .map, .noi, .cdb or .ihx file to display area sizes
 Example 1: "romusage build/MyProject.map"

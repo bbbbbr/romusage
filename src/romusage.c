@@ -19,7 +19,7 @@
 #include "cdb_file.h"
 #include "rom_file.h"
 
-#define VERSION "version 1.2.8"
+#define VERSION "version 1.2.9"
 
 void static display_cdb_warning(void);
 void static display_help(void);
@@ -73,10 +73,11 @@ static void display_help(void) {
            "-smROM  : Show Merged ROM_0  and ROM_1  output (i.e. bare 32K ROM)\n"
            "-smWRAM : Show Merged WRAM_0 and WRAM_1 output (i.e DMG/MGB not CGB)\n"
            "          -sm* compatible with banked ROM_x or WRAM_x when used with -B\n"
-           "-sJ : Show JSON output. Some options not applicable. When used, -Q recommended\n"
-           "-nB : Hide warning banner (for .cdb output)\n"
-           "-nA : Hide areas (shown by default in .cdb output)\n"
-           "-z  : Hide areas smaller than SIZE -z:DECSIZE\n"
+           "-sJ   : Show JSON output. Some options not applicable. When used, -Q recommended\n"
+           "-nB   : Hide warning banner (for .cdb output)\n"
+           "-nA   : Hide areas (shown by default in .cdb output)\n"
+           "-z    : Hide areas smaller than SIZE -z:DECSIZE\n"
+           "-nMEM : Hide banks matching case sensitive substring (ex hide all RAM: -nMEM:RAM)\n"
            "\n"
            "Use: Read a .map, .noi, .cdb or .ihx file to display area sizes\n"
            "Example 1: \"romusage build/MyProject.map\"\n"
@@ -145,7 +146,7 @@ int handle_args(int argc, char * argv[]) {
         } else if (strstr(argv[i], "-sP") == argv[i]) {
             if (!set_option_custom_bank_colors(argv[i])) {
                 fprintf(stdout,"malformed custom color palette: %s\n\n", argv[i]);
-                display_help();
+                // display_help();
                 return false;
             }
         } else if (strstr(argv[i], "-sH") == argv[i]) {
@@ -178,9 +179,9 @@ int handle_args(int argc, char * argv[]) {
         } else if (strstr(argv[i], "-B") == argv[i]) {
             set_option_summarized(true);
         } else if (strstr(argv[i], "-F") == argv[i]) {
-            if (!option_set_displayed_bank_range(argv[i])) {
+            if (!set_option_displayed_bank_range(argv[i])) {
                 fprintf(stdout,"Malformed -F forced display max bank range\n\n");
-                display_help();
+                // display_help();
                 return false;
             }
 
@@ -199,13 +200,21 @@ int handle_args(int argc, char * argv[]) {
         } else if (strstr(argv[i], "-z:") == argv[i]) {
             set_option_area_hide_size( strtol(argv[i] + 3, NULL, 10));
 
+        } else if (strstr(argv[i], "-nMEM:") == argv[i]) {
+            if (!set_option_banks_hide_add(argv[i] + strlen("-nMEM:"))) {
+                fprintf(stdout,"Adding memory region to hide failed: %s\n\n", argv[i]);
+                // display_help();
+                return false;
+            }
+
         } else if ((strstr(argv[i], "-m") == argv[i]) ||
                    (strstr(argv[i], "-e") == argv[i])) {
             if (!area_manual_queue(argv[i])) {
                 fprintf(stdout,"Malformed manual area argument: %s\n\n", argv[i]);
-                display_help();
+                // display_help();
                 return false;
             }
+
         } else if (argv[i][0] == '-') {
             fprintf(stdout,"Unknown argument: %s\n\n", argv[i]);
             display_help();
