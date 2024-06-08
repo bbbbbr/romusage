@@ -165,7 +165,10 @@ int rom_file_process(char * filename_in) {
         }
 
     } // end: if valid file
-    else return (false);
+    else {
+        log_error("Error: Failed to open input file %s\n", filename_in);
+        return false;
+    }
 
    return true;
 }
