@@ -50,12 +50,12 @@ uint8_t * file_read_into_buffer(char * filename, uint32_t *ret_size) {
                 }
                 // Read was successful, set return size
                 *ret_size = fsize;
-            } else log_error("ERROR: Failed to allocate memory to read file %s\n", filename);
+            } else log_error("Error: Failed to allocate memory to read file %s\n", filename);
 
-        } else log_error("ERROR: Failed to read size of file %s\n", filename);
+        } else log_error("Error: Failed to read size of file %s\n", filename);
 
         fclose(file_in);
-    } else log_error("ERROR: Failed to open input file %s\n", filename);
+    } else log_error("Error: Failed to open input file %s\n", filename);
 
     return filedata;
 }

@@ -736,7 +736,7 @@ void bank_areas_split_to_buckets(bank_item * p_bank, uint32_t range_start, uint3
     bank_item bank_copy = *p_bank;
     bank_copy.area_list.p_array = (void *)malloc(bank_copy.area_list.size * bank_copy.area_list.typesize);
     if (!bank_copy.area_list.p_array) {
-        log_error("ERROR: Failed to reallocate memory for list!\n");
+        log_error("Error: Failed to reallocate memory for list!\n");
         exit(EXIT_FAILURE);
     }
     // Copy main list of areas to copy of bank for modification

@@ -3,6 +3,7 @@ Changelog
 
 # Version 1.2.9
 - `-nMEM` Hide memory regions with case sensitive substring (ex hide all RAM: `-nMEM:RAM`)
+- Improve error messaging
 
 # Version 1.2.8
 - `-sJ` JSON output

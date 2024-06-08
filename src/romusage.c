@@ -21,8 +21,13 @@
 
 #define VERSION "version 1.2.9"
 
+enum {
+    HELP_FULL = 0,
+    HELP_BRIEF
+};
+
 void static display_cdb_warning(void);
-void static display_help(void);
+void static display_help(int mode);
 int handle_args(int argc, char * argv[]);
 static bool matches_extension(char *, char *);
 static void init(void);
@@ -42,7 +47,7 @@ static void display_cdb_warning() {
            "   ************************ NOTICE ************************ \n");
 }
 
-static void display_help(void) {
+static void display_help(int mode) {
     fprintf(stdout,
            "romusage input_file.[map|noi|ihx|cdb|.gb[c]|.pocket|.duck|.gg|.sms] [options]\n"
            VERSION", by bbbbbr\n"
@@ -78,7 +83,10 @@ static void display_help(void) {
            "-nA   : Hide areas (shown by default in .cdb output)\n"
            "-z    : Hide areas smaller than SIZE -z:DECSIZE\n"
            "-nMEM : Hide banks matching case sensitive substring (ex hide all RAM: -nMEM:RAM)\n"
-           "\n"
+           "\n");
+
+    if (mode == HELP_FULL) {
+        fprintf(stdout,
            "Use: Read a .map, .noi, .cdb or .ihx file to display area sizes\n"
            "Example 1: \"romusage build/MyProject.map\"\n"
            "Example 2: \"romusage build/MyProject.noi -a -e:STACK:DEFF:100 -e:SHADOW_OAM:C000:A0\"\n"
@@ -98,6 +106,7 @@ static void display_help(void) {
            "    so bank totals may be incorrect/missing.\n"
            "  * GB/GBC/ROM files are just guessing, no promises.\n"
            );
+    }
 }
 
 
@@ -115,7 +124,7 @@ int handle_args(int argc, char * argv[]) {
     int i;
 
     if( argc < 2 ) {
-        display_help();
+        display_help(HELP_FULL);
         return false;
     }
 
@@ -127,7 +136,7 @@ int handle_args(int argc, char * argv[]) {
     for (i = 1; i <= (argc -1); i++ ) {
 
         if (strstr(argv[i], "-h") == argv[i]) {
-            display_help();
+            display_help(HELP_FULL);
             show_help_and_exit = true;
             return true;  // Don't parse further input when -h is used
         } else if (strstr(argv[i], "-a") == argv[i]) {
@@ -216,8 +225,8 @@ int handle_args(int argc, char * argv[]) {
             }
 
         } else if (argv[i][0] == '-') {
-            fprintf(stdout,"Unknown argument: %s\n\n", argv[i]);
-            display_help();
+            log_error("Error: Unknown argument: %s\n\n", argv[i]);
+            display_help(HELP_BRIEF);
             return false;
         }
 
@@ -314,13 +323,14 @@ int main( int argc, char *argv[] )  {
                     if (!get_option_hide_banners()) display_cdb_warning();
                     ret = EXIT_SUCCESS; // Exit with success
                 }
+            } else {
+                log_error("Error: Incompatible file extension\n");
             }
-
         }
     }
 
-    if (ret == EXIT_FAILURE)
-        printf("Problem with filename or unable to open file! %s\n", filename_in);
+    // if (ret == EXIT_FAILURE)
+    //     printf("Problem with filename or unable to open file! %s\n", filename_in);
 
     // Override exit code if was set during processing
     if (get_exit_error())
