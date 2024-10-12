@@ -51,12 +51,20 @@ cleanobj:
 clean:
 	$(DEL) $(COBJ) $(BIN_WIN) $(BIN)
 
-macoszip: macos
+macos-x64-zip: macos
 	mkdir -p $(PACKDIR)
 	strip $(BIN)
 	# -j discards (junks) path to file
-	zip -j $(BIN)-macos.zip $(BIN)
-	mv $(BIN)-macos.zip $(PACKDIR)
+	zip -j $(BIN)-macos-x64.zip $(BIN)
+	mv $(BIN)-macos-x64.zip $(PACKDIR)
+#	cp $(BIN) $(PACKDIR)
+
+macos-arm64-zip: macos
+	mkdir -p $(PACKDIR)
+	strip $(BIN)
+	# -j discards (junks) path to file
+	zip -j $(BIN)-macos-arm64.zip $(BIN)
+	mv $(BIN)-macos-arm64.zip $(PACKDIR)
 #	cp $(BIN) $(PACKDIR)
 
 linuxzip: linux
