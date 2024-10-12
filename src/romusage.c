@@ -130,12 +130,8 @@ int handle_args(int argc, char * argv[]) {
         return false;
     }
 
-    // Copy input filename (if not preceded with option dash)
-    if (argv[1][0] != '-')
-        snprintf(filename_in, sizeof(filename_in), "%s", argv[1]);
-
     // Start at first optional argument, argc is zero based
-    for (i = 1; i <= (argc -1); i++ ) {
+    for (i = 0; i <= (argc -1); i++ ) {
 
         if (strstr(argv[i], "-h") == argv[i]) {
             display_help(HELP_FULL);
@@ -238,6 +234,10 @@ int handle_args(int argc, char * argv[]) {
             return false;
         }
 
+        // Copy input filename (if not preceded with option dash)
+        else if (argv[i][0] != '-') {
+            snprintf(filename_in, sizeof(filename_in), "%s", argv[i]);
+        }
     }
 
     return true;

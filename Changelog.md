@@ -4,6 +4,7 @@ Changelog
 # Version 1.3.0
 - `-b:HEXVAL:[...]` Set hex bytes treated as Empty in ROM files (.gb/etc) (default `FF`(255), ex use 255 AND 0: `-b:FF:00`
 - Improve error messaging
+- Allow filename at any location in option arguments
 
 # Version 1.2.9
 - `-nMEM` Hide memory regions with case sensitive substring (ex hide all RAM: `-nMEM:RAM`)
