@@ -19,6 +19,8 @@ jobs:
             name: Linux-x64
           - os: macos-12
             name: MacOS-x64
+          - os: macos-14
+            name: MacOS-arm64
     steps:
 
 
@@ -40,8 +42,16 @@ jobs:
           submodules: false
 
       # ==== Builds ====
-      - name: Build MacOS
+      - name: Build MacOS x64
         if: (matrix.name == 'MacOS-x64')
+        shell: bash
+        run: |
+          cd romusage-root
+          make macoszip
+          cd ..
+
+      - name: Build MacOS arm64
+        if: (matrix.name == 'MacOS-arm64')
         shell: bash
         run: |
           cd romusage-root
@@ -58,7 +68,7 @@ jobs:
 
       # ==== Packaging ====
       - name: Package build Linux/MacOS
-        if: (matrix.name == 'Linux-x64') || (matrix.name == 'MacOS-x64')
+        if: (matrix.name == 'Linux-x64') || (matrix.name == 'MacOS-x64') || (matrix.name == 'MacOS-arm64')
         shell: bash
         run: |
           cd romusage-root
@@ -79,7 +89,16 @@ jobs:
         if: (matrix.name == 'MacOS-x64')
         uses: actions/upload-artifact@v4
         with:
-          name: Romusage build MacOS
+          name: Romusage build MacOS x64
+          # path: romusage-root/package/${{ env.BUILD_PACKAGE_FILENAME }}
+          path: romusage-root/package
+          # retention-days: 30
+
+      - name: Store build
+        if: (matrix.name == 'MacOS-arm64')
+        uses: actions/upload-artifact@v4
+        with:
+          name: Romusage build MacOS arm64
           # path: romusage-root/package/${{ env.BUILD_PACKAGE_FILENAME }}
           path: romusage-root/package
           # retention-days: 30
