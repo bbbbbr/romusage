@@ -91,6 +91,7 @@ bool set_option_displayed_bank_range(char * arg_str);
 
 void set_option_merged_banks(unsigned int value);
 bool set_option_banks_hide_add(char * str_bank_hide_substring);
+bool set_option_binary_rom_empty_values(char * arg_str);
 
 int  get_option_input_source(void);
 int  get_option_area_sort(void);

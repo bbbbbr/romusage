@@ -10,6 +10,7 @@
 
 #include "common.h"
 #include "logging.h"
+#include "rom_file.h"
 
 bool banks_display_areas        = false;
 bool banks_display_headers      = false;
@@ -238,6 +239,41 @@ bool set_option_banks_hide_add(char * str_bank_hide_substring) {
 
 
     return false;
+}
+
+
+// Set hex bytes treated as Empty in ROM files (.gb/etc) -b:HEXVAL:HEXVAL...
+//       -b:FF
+// Value passed in has "-e" stripped off the front
+bool set_option_binary_rom_empty_values(char * arg_str) {
+
+    #define MAX_ROMFILE_ENTRIES     256
+    #define MIN_EXPECTED_ENTRIES   1
+
+    char entries_found;
+    char * p_str;
+    char * p_words[MAX_ROMFILE_ENTRIES];
+
+    // Clear existing defaults
+    romfile_empty_value_table_clear();
+
+    // Split string into words separated by : chars
+    entries_found = 0;
+    p_str = strtok(arg_str,":");
+    while (p_str != NULL)
+    {
+        p_words[entries_found++] = p_str;
+        p_str = strtok(NULL, "-:");
+        if (entries_found >= MAX_ROMFILE_ENTRIES) break;
+    }
+
+    for (int c = 0; c < entries_found; c++)
+        romfile_empty_value_table_add_entry( (uint8_t)strtol(p_words[c], NULL, 16) );
+
+    if (entries_found >= MIN_EXPECTED_ENTRIES)
+        return true;
+    else
+        return false; // Signal failure
 }
 
 

@@ -19,7 +19,7 @@
 #include "cdb_file.h"
 #include "rom_file.h"
 
-#define VERSION "version 1.2.9"
+#define VERSION "version 1.3.0"
 
 enum {
     HELP_FULL = 0,
@@ -65,6 +65,7 @@ static void display_help(int mode) {
            "\n"
            "-m  : Manually specify an Area -m:NAME:HEXADDR:HEXLENGTH\n"
            "-e  : Manually specify an Area that should not overlap -e:NAME:HEXADDR:HEXLENGTH\n"
+           "-b  : Set hex bytes treated as Empty in ROM files (.gb/etc) -b:HEXVAL[...] (default FF)\n"
            "-E  : All areas are exclusive (except HEADERs), warn for any overlaps\n"
            "-q  : Quiet, no output except warnings and errors\n"
            "-Q  : Suppress output of warnings and errors\n"
@@ -94,6 +95,7 @@ static void display_help(int mode) {
            "Example 4: \"romusage build/MyProject.map -q -R\"\n"
            "Example 5: \"romusage build/MyProject.noi -sR -sP:90:32:90:35:33:36\"\n"
            "Example 6: \"romusage build/MyProject.map -sRp -g -B -F:255:15 -smROM -smWRAM\"\n"
+           "Example 7: \"romusage build/MyProject.gb  -g -b:FF:00\"\n"
            "\n"
            "Notes:\n"
            "  * GBDK / RGBDS map file format detection is automatic.\n"
@@ -154,7 +156,7 @@ int handle_args(int argc, char * argv[]) {
             }
         } else if (strstr(argv[i], "-sP") == argv[i]) {
             if (!set_option_custom_bank_colors(argv[i])) {
-                fprintf(stdout,"malformed custom color palette: %s\n\n", argv[i]);
+                log_error("Malformed -sP custom color palette: %s\n\n", argv[i]);
                 // display_help();
                 return false;
             }
@@ -189,8 +191,14 @@ int handle_args(int argc, char * argv[]) {
             set_option_summarized(true);
         } else if (strstr(argv[i], "-F") == argv[i]) {
             if (!set_option_displayed_bank_range(argv[i])) {
-                fprintf(stdout,"Malformed -F forced display max bank range\n\n");
+                log_error("Malformed -F forced display max bank range\n\n");
                 // display_help();
+                return false;
+            }
+
+        } else if (strstr(argv[i], "-b") == argv[i]) {
+            if (!set_option_binary_rom_empty_values(argv[i] + strlen("-b"))) {
+                log_error("Malformed or no entries found -b set hex values treated as empty for ROM files: %s\n\n", argv[i]);
                 return false;
             }
 
@@ -211,7 +219,7 @@ int handle_args(int argc, char * argv[]) {
 
         } else if (strstr(argv[i], "-nMEM:") == argv[i]) {
             if (!set_option_banks_hide_add(argv[i] + strlen("-nMEM:"))) {
-                fprintf(stdout,"Adding memory region to hide failed: %s\n\n", argv[i]);
+                log_error("Adding memory region to hide failed: %s\n\n", argv[i]);
                 // display_help();
                 return false;
             }
@@ -219,7 +227,7 @@ int handle_args(int argc, char * argv[]) {
         } else if ((strstr(argv[i], "-m") == argv[i]) ||
                    (strstr(argv[i], "-e") == argv[i])) {
             if (!area_manual_queue(argv[i])) {
-                fprintf(stdout,"Malformed manual area argument: %s\n\n", argv[i]);
+                log_error("Malformed -m or -e manual area argument: %s\n\n", argv[i]);
                 // display_help();
                 return false;
             }
@@ -253,6 +261,7 @@ static void init(void) {
     cdb_init();
     noi_init();
     banks_init();
+    romfile_init_defaults();
 }
 
 
