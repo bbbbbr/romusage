@@ -113,8 +113,14 @@ test-norepo:
 	find test_norepo/smsgg/* -iname "*.map" -type f | xargs -I {} $(BIN) -p:SMS_GG -g -a "{}" >> test_norepo/output/test_run.txt 2>&1
 	find test_norepo/smsgg/* -iname "*.noi" -type f | xargs -I {} $(BIN) -p:SMS_GG -g -a "{}" >> test_norepo/output/test_run.txt 2>&1
 	find test_norepo/smsgg/* -iname "*.gg"  -type f | xargs -I {} $(BIN) -p:SMS_GG -g -a "{}" >> test_norepo/output/test_run.txt 2>&1
+	# NES
+	find test_norepo/nes/* -iname "*.map" -type f | xargs -I {} $(BIN) -p:NES1 -g -a "{}" >> test_norepo/output/test_run.txt 2>&1
+	find test_norepo/nes/* -iname "*.noi" -type f | xargs -I {} $(BIN) -p:NES1 -g -a "{}" >> test_norepo/output/test_run.txt 2>&1
 
 	diff --brief test_norepo/output/test_ref.txt test_norepo/output/test_run.txt
+
+test-norepo-diff:
+	diff test_norepo/output/test_ref.txt test_norepo/output/test_run.txt
 
 updatetest-norepo:
 	rm -f  test_norepo/output/test_ref.txt
@@ -127,6 +133,9 @@ updatetest-norepo:
 	find test_norepo/smsgg/* -iname "*.map" -type f | xargs -I {} $(BIN) -p:SMS_GG -g -a "{}" >> test_norepo/output/test_ref.txt 2>&1
 	find test_norepo/smsgg/* -iname "*.noi" -type f | xargs -I {} $(BIN) -p:SMS_GG -g -a "{}" >> test_norepo/output/test_ref.txt 2>&1
 	find test_norepo/smsgg/* -iname "*.gg"  -type f | xargs -I {} $(BIN) -p:SMS_GG -g -a "{}" >> test_norepo/output/test_ref.txt 2>&1
+	# NES
+	find test_norepo/nes/* -iname "*.map" -type f | xargs -I {} $(BIN) -p:NES1 -g -a "{}" >> test_norepo/output/test_ref.txt 2>&1
+	find test_norepo/nes/* -iname "*.noi" -type f | xargs -I {} $(BIN) -p:NES1 -g -a "{}" >> test_norepo/output/test_ref.txt 2>&1
 
 
 # create necessary directories after Makefile is parsed but before build
