@@ -104,6 +104,10 @@ updatetest:
 test-norepo:
 	mkdir -p test_norepo/output
 	rm -f  test_norepo/output/test_run.txt
+	# GB
+	$(BIN) test_norepo/gb/autobanks_gb.map -g -smROM -B >> test_norepo/output/test_run.txt 2>&1
+	$(BIN) test_norepo/gb/autobanks_gb.map -g -B        >> test_norepo/output/test_run.txt 2>&1
+	$(BIN) test_norepo/gb/autobanks_gb.map -g -smROM    >> test_norepo/output/test_run.txt 2>&1
 	find test_norepo/gb/* -iname "*.map" -type f | xargs -I {} $(BIN) -g -a "{}" >> test_norepo/output/test_run.txt 2>&1
 	find test_norepo/gb/* -iname "*.noi" -type f | xargs -I {} $(BIN) -g -a "{}" >> test_norepo/output/test_run.txt 2>&1
 	find test_norepo/gb/* -iname "*.ihx" -type f | xargs -I {} $(BIN) -g -a "{}" >> test_norepo/output/test_run.txt 2>&1
@@ -124,6 +128,10 @@ test-norepo-diff:
 
 updatetest-norepo:
 	rm -f  test_norepo/output/test_ref.txt
+	# GB
+	$(BIN) test_norepo/gb/autobanks_gb.map -g -smROM -B >> test_norepo/output/test_ref.txt 2>&1
+	$(BIN) test_norepo/gb/autobanks_gb.map -g -B        >> test_norepo/output/test_ref.txt 2>&1
+	$(BIN) test_norepo/gb/autobanks_gb.map -g -smROM    >> test_norepo/output/test_ref.txt 2>&1
 	find test_norepo/gb/* -iname "*.map" -type f | xargs -I {} $(BIN) -g -a "{}" >> test_norepo/output/test_ref.txt 2>&1
 	find test_norepo/gb/* -iname "*.noi" -type f | xargs -I {} $(BIN) -g -a "{}" >> test_norepo/output/test_ref.txt 2>&1
 	find test_norepo/gb/* -iname "*.ihx" -type f | xargs -I {} $(BIN) -g -a "{}" >> test_norepo/output/test_ref.txt 2>&1
