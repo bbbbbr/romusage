@@ -15,8 +15,9 @@ ifdef DRAG_AND_DROP_MODE
 	EXTRA_FNAME = _drag_and_drop
 	CFLAGS+= -DDRAG_AND_DROP_MODE
 endif
-BIN = $(BINDIR)/romusage$(EXTRA_FNAME)
-BIN_WIN = $(BIN).exe
+BIN = $(BINDIR)/romusage$(EXTRA_FNAME)$(EXE_EXT)
+PACKFILES = $(BIN) Changelog.md README.md LICENSE
+PACKBASENAME = romusage$(EXTRA_FNAME)
 
 
 # ignore package dicrectory that conflicts with rule target
@@ -30,11 +31,12 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.c
 
 # Linux MinGW build for Windows
 # (static linking to avoid DLL dependencies)
+wincross: EXE_EXT = .exe
 wincross: TARGET=i686-w64-mingw32
 wincross: CC = $(TARGET)-g++
 wincross: LDFLAGS = -s -static
 wincross: $(COBJ)
-	$(CC) -o $(BIN_WIN)  $^ $(LDFLAGS)
+	$(CC) -o $(BIN)  $^ $(LDFLAGS)
 
 # Maxos uses linux target
 macos: linux
@@ -49,39 +51,36 @@ cleanobj:
 	$(DEL) $(COBJ)
 
 clean:
-	$(DEL) $(COBJ) $(BIN_WIN) $(BIN)
+	$(DEL) $(COBJ) $(BIN) $(BIN)
 
 macos-x64-zip: macos
 	mkdir -p $(PACKDIR)
 	strip $(BIN)
 	# -j discards (junks) path to file
-	zip -j $(BIN)-macos-x64.zip $(BIN)
-	mv $(BIN)-macos-x64.zip $(PACKDIR)
-#	cp $(BIN) $(PACKDIR)
+	zip -j $(PACKBASENAME)-macos-x64.zip $(PACKFILES)
+	mv $(PACKBASENAME)-macos-x64.zip $(PACKDIR)
 
 macos-arm64-zip: macos
 	mkdir -p $(PACKDIR)
 	strip $(BIN)
 	# -j discards (junks) path to file
-	zip -j $(BIN)-macos-arm64.zip $(BIN)
-	mv $(BIN)-macos-arm64.zip $(PACKDIR)
-#	cp $(BIN) $(PACKDIR)
+	zip -j $(PACKBASENAME)-macos-arm64.zip $(PACKFILES)
+	mv $(PACKBASENAME)-macos-arm64.zip $(PACKDIR)
 
 linuxzip: linux
 	mkdir -p $(PACKDIR)
 	strip $(BIN)
 	# -j discards (junks) path to file
-	zip -j $(BIN)-linux.zip $(BIN)
-	mv $(BIN)-linux.zip $(PACKDIR)
-#	cp $(BIN) $(PACKDIR)
+	zip -j $(PACKBASENAME)-linux.zip $(PACKFILES)
+	mv $(PACKBASENAME)-linux.zip $(PACKDIR)
 
-wincrosszip: wincross
+wincrosszip: EXE_EXT = .exe
+wincrosszip: wincross	
 	mkdir -p $(PACKDIR)
-	strip $(BIN_WIN)
+	strip $(BIN)
 	# -j discards (junks) path to file
-	zip -j $(BIN)-windows.zip $(BIN_WIN)
-	mv $(BIN)-windows.zip $(PACKDIR)
-#	cp $(BIN_WIN) $(PACKDIR)
+	zip -j $(PACKBASENAME)-windows.zip $(PACKFILES)
+	mv $(PACKBASENAME)-windows.zip $(PACKDIR)
 
 package:
 	${MAKE} clean
