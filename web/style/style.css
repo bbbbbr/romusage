@@ -1,0 +1,170 @@
+/* 
+This is free and unencumbered software released into the public domain.
+For more information, please refer to <https://unlicense.org>
+bbbbbr 2025
+*/
+
+
+@import url('https://fonts.googleapis.com/css?family=Open+Sans:400,700');
+
+
+body{
+	margin:0;
+	font:15px 'Open Sans',sans-serif;
+	cursor:default;
+	line-height:1.8;
+	background-color:#31343a;
+	color:#3c3c3c;
+}
+
+
+.dragdrop_ready {
+    background-color: rgba(128,255,128, 0.25) !important;
+    border:2px dotted rgba(128,255,128) !important;
+}
+
+.file_drop_zone {
+    border:2px dotted #18a9f0;
+    padding:15px;
+    margin:20px;
+    justify-content: center;
+
+    color:rgba(255,255,255,0.75);
+
+    background-color:rgba(0, 92, 255,0.05);
+    background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.01), rgba(255,255,255,0.01) 10px, rgba(255,255,255,0.0) 10px, rgba(255,255,255,0.0) 20px);
+}
+
+.drop_delay_note {
+    color:rgba(255,255,255,0.25);
+}
+
+.usage_area {
+    width: 75%;
+    float: left;
+}
+
+.gb_image {
+    text-align:center;
+    opacity:0.25;
+    margin-top:0px;
+
+    width: 25%;
+    float: left;    
+}
+
+.gb_image > img {
+    width: 50px;
+}
+
+
+.info_header_text {
+    padding-left: 5px;
+    padding-right: 5px;
+    margin-top: 5px;
+    margin-bottom: 5px;    
+}
+
+.info_header_label {
+}
+
+.info_button {
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 5px;
+ }
+
+ .info_button:hover {
+    background:rgba(0,0,0,0.25);
+}
+
+.info_area {
+    margin-left:20px;
+    margin-right:20px;
+
+    padding-left:20px;
+    padding-right:20px;
+
+    color:rgba(255,255,255,0.75);
+}
+
+.info_header {
+    background: rgba(255,255,255,0.20);
+}
+
+.info_body {
+    background: rgba(255,255,255,0.10);
+}
+
+.info_text {
+    
+    padding: 0px;
+    border-style: none;
+    background-color: rgb(70, 73, 78);
+    color:rgba(255,255,255,0.65);
+
+    width:100%;
+    height:100%;
+    overflow-x: scroll;
+    overflow-y: scroll;
+    text-wrap-mode: nowrap;
+}
+
+.info_text:focus {
+     outline:none;
+}
+
+
+
+html, body {
+    height:100%;
+}
+.box {
+  display: flex;
+  flex-flow: column;
+  height: 100%;
+}
+.box .row {
+}
+.box .row.header {
+  flex: 0 1 auto;
+}
+.box .row.content {
+  flex: 1 1 auto;
+}
+.box .row.footer {
+  flex: 0 1 40px;
+}
+.box-container {
+  display: contents;
+}
+
+header {
+    padding: 1% 0 4%;
+}
+header h1 {
+    display:none;
+}
+footer {
+    padding: 50px 0 20px;
+}
+#wrapper {
+    flex-basis:100%
+}
+
+
+header{text-align:center}
+
+footer{
+	text-align:center;
+	color:#767b86;
+	font-size:85%;
+}
+footer a{
+	color:#969ba6;
+	text-decoration:none;
+	border-bottom:1px solid #464b56;
+}
+footer a:hover{
+	color:white;
+	border-color:#41d5ff;
+}
