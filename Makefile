@@ -4,6 +4,7 @@ DEL = rm -f
 SRCDIR = src
 OBJDIR = obj
 BINDIR = bin
+WEBDIR = web
 PACKDIR = package
 MKDIRS = $(OBJDIR) $(BINDIR) $(PACKDIR)
 # Add all c source files from $(SRCDIR)
@@ -16,6 +17,7 @@ ifdef DRAG_AND_DROP_MODE
 	CFLAGS+= -DDRAG_AND_DROP_MODE
 endif
 BIN = $(BINDIR)/romusage$(EXTRA_FNAME)$(EXE_EXT)
+WEB_BIN = $(WEBDIR)/romusage_web
 PACKFILES = $(BIN) Changelog.md README.md LICENSE
 PACKBASENAME = romusage$(EXTRA_FNAME)
 
@@ -46,6 +48,22 @@ linux: CC = gcc
 linux: LDFLAGS = -s
 linux: $(COBJ)
 	$(CC) -o $(BIN) $^ $(LDFLAGS)
+
+# Requires emscripten
+web_build: CC = emcc
+web_build: CFLAGS = -O2
+web_build: LDFLAGS = -s INVOKE_RUN=0 # Don't run main automatically
+web_build: LDFLAGS += -s ALLOW_MEMORY_GROWTH=1
+web_build: LDFLAGS += -s EXPORTED_FUNCTIONS="['_main', '_malloc', '_free', '_set_option_is_web_mode']"
+web_build: LDFLAGS += -s EXPORTED_RUNTIME_METHODS="['ccall', 'cwrap']"
+web_build: LDFLAGS += -s FORCE_FILESYSTEM=1
+web_build: $(COBJ)
+	$(CC) -o $(WEB_BIN).js $^ $(LDFLAGS)
+
+web:
+	${MAKE} clean
+	${MAKE} web_build
+
 
 cleanobj:
 	$(DEL) $(COBJ)
@@ -91,7 +109,7 @@ package:
 	${MAKE} linuxzip
 
 
-.PHONY: test
+.PHONY: test web
 
 test:
 	echo "see test-norepo"

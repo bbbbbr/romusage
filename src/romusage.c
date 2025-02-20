@@ -37,6 +37,9 @@ void cleanup(void);
 char filename_in[MAX_STR_LEN] = {'\0'};
 int  show_help_and_exit = false;
 
+static void main_init(void) {
+    show_help_and_exit = false;
+}
 
 static void display_cdb_warning() {
     printf("\n"
@@ -260,6 +263,10 @@ static bool matches_extension(char * filename, char * extension) {
 
 
 static void init(void) {
+    // The first two are for web mode which needs a reset between runs
+    main_init();
+    options_reset_all();
+
     cdb_init();
     noi_init();
     banks_init();

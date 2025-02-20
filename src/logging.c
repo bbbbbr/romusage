@@ -2,7 +2,10 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdbool.h>
+#include <stdint.h>
 
+#include "common.h"
 #include "logging.h"
 
 int output_level = OUTPUT_LEVEL_DEFAULT;
@@ -11,7 +14,7 @@ int output_level = OUTPUT_LEVEL_DEFAULT;
 #define VA_LIST_PRINT() \
     va_list args; \
     va_start (args, format); \
-    vfprintf (stderr, format, args); \
+    if (get_option_is_web_mode()) { vfprintf (stdout, format, args); } else { vfprintf (stderr, format, args);} \
     va_end (args);
 
 

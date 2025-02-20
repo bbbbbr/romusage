@@ -12,36 +12,75 @@
 #include "logging.h"
 #include "rom_file.h"
 
-bool banks_display_areas        = false;
-bool banks_display_headers      = false;
-bool banks_display_minigraph    = false;
-bool banks_display_largegraph   = false;
-bool option_compact_mode        = false;
-bool option_json_output         = false;
-bool option_summarized_mode     = false;
+bool banks_display_areas;
+bool banks_display_headers;
+bool banks_display_minigraph;
+bool banks_display_largegraph;
+bool option_compact_mode;
+bool option_json_output;
+bool option_summarized_mode;
 
 // -B
-unsigned int option_merged_banks = OPT_MERGED_BANKS_NONE;
+unsigned int option_merged_banks;
 // -F
-unsigned int option_forced_display_max_bank_ROM = 0;
-unsigned int option_forced_display_max_bank_SRAM = 0;
+unsigned int option_forced_display_max_bank_ROM;
+unsigned int option_forced_display_max_bank_SRAM;
 
-unsigned int option_platform    = OPT_PLAT_GAMEBOY;
-bool option_display_asciistyle  = false;
-bool option_all_areas_exclusive = false;
-bool option_quiet_mode          = false;
-bool option_suppress_duplicates = true;
-bool option_error_on_warning    = false;
-bool option_hide_banners        = false;
-int  option_input_source        = OPT_INPUT_SRC_NONE;
-int  option_area_sort           = OPT_AREA_SORT_DEFAULT;
-int  option_color_mode          = OPT_PRINT_COLOR_OFF;
-bool option_percentage_based_color = false;
-uint32_t option_area_hide_size  = OPT_AREA_HIDE_SIZE_DEFAULT;
-bool exit_error                 = false;
+unsigned int option_platform;
+bool option_display_asciistyle;
+bool option_all_areas_exclusive;
+bool option_quiet_mode;
+bool option_suppress_duplicates;
+bool option_error_on_warning;
+bool option_hide_banners;
+int  option_input_source;
+int  option_area_sort;
+int  option_color_mode;
+bool option_percentage_based_color;
+uint32_t option_area_hide_size;
+bool option_is_web_mode;
 
-int  banks_hide_count = 0;
+bool exit_error;
+
+int  banks_hide_count;
 char banks_hide_list[BANKS_HIDE_SZ][DEFAULT_STR_LEN];
+
+
+// Need a way to reset all options to default when running
+// as wasm and called multiple times
+void options_reset_all(void) {
+    banks_display_areas        = false;
+    banks_display_headers      = false;
+    banks_display_minigraph    = false;
+    banks_display_largegraph   = false;
+    option_compact_mode        = false;
+    option_json_output         = false;
+    option_summarized_mode     = false;
+
+    // -B
+    option_merged_banks = OPT_MERGED_BANKS_NONE;
+    // -F
+    option_forced_display_max_bank_ROM = 0;
+    option_forced_display_max_bank_SRAM = 0;
+
+    option_platform    = OPT_PLAT_GAMEBOY;
+    option_display_asciistyle  = false;
+    option_all_areas_exclusive = false;
+    option_quiet_mode          = false;
+    option_suppress_duplicates = true;
+    option_error_on_warning    = false;
+    option_hide_banners        = false;
+    option_input_source        = OPT_INPUT_SRC_NONE;
+    option_area_sort           = OPT_AREA_SORT_DEFAULT;
+    option_color_mode          = OPT_PRINT_COLOR_OFF;
+    option_percentage_based_color = false;
+    option_area_hide_size      = OPT_AREA_HIDE_SIZE_DEFAULT;
+    option_is_web_mode         = true;
+
+    exit_error                 = false;
+
+    banks_hide_count = 0;
+}
 
 
 // Turn on/off display of areas within bank
@@ -308,3 +347,13 @@ uint32_t min(uint32_t a, uint32_t b) {
 uint32_t max(uint32_t a, uint32_t b) {
     return (a > b) ? a : b;
 }
+
+
+void set_option_is_web_mode(void) {
+    option_is_web_mode = true;
+}
+
+bool get_option_is_web_mode(void) {
+    return option_is_web_mode;
+}
+

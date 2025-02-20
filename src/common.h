@@ -42,6 +42,7 @@
 #define BANKS_HIDE_SZ 30  // How many hide substrings to support
 #define BANKS_HIDE_MAX (BANKS_HIDE_SZ - 1)
 
+extern void options_reset_all(void);
 
 extern bool banks_display_areas;
 extern bool banks_display_headers;
@@ -107,6 +108,10 @@ uint32_t round_up_power_of_2(uint32_t val);
 
 uint32_t min(uint32_t a, uint32_t b);
 uint32_t max(uint32_t a, uint32_t b);
+
+void set_option_is_web_mode(void);
+bool get_option_is_web_mode(void);
+
 
 
 #endif // _COMMON_H
