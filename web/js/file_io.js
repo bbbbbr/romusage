@@ -11,7 +11,7 @@ function loadFile(fileToRead) {
 
     if (window.File && window.FileReader && window.FileList && window.Blob) {
         let fileReader = new FileReader();
-        romusageInputFilename = fileToRead.name;
+        fileReader.argFilename = fileToRead.name; // Attach filename as custom property to event caller
         fileReader.addEventListener("load", invokeProgram);
         fileReader.readAsArrayBuffer(fileToRead);
     }
@@ -19,6 +19,9 @@ function loadFile(fileToRead) {
 
 
 function dropFileHandler(ev) {
+
+    // Clear output window
+    setInfoText("\n");
 
     // Prevent default behavior (Prevent file from being opened)
     ev.preventDefault();

@@ -3,7 +3,6 @@
 // bbbbbr 2025
 
 var Module;
-var romusageInputFilename;
 
 Module = {
 preRun: [],
@@ -12,11 +11,7 @@ print: (function() {
   return function(text) {
     if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
     // Display text output from program in text area
-    var element = document.getElementById('info_area_text');
-    if (element) {
-      element.value += text + "\n";
-      // element.scrollTop = element.scrollHeight; // focus on bottom
-    }
+    appendInfoText(text + "\n");
   };
 })()
 };
@@ -26,13 +21,13 @@ function invokeProgram(e) {
     let fileBuffer = e.target.result;
     let uint8FileBytes = new Uint8Array(fileBuffer)
 
-    // Clear previous output
-    setInfoText("\n");
-    // prependInfoText("---------------------------------\n");
+    // Print a divider line in output
+    appendInfoText("---------------------------------\n");
+    appendInfoText("File: " + e.currentTarget.argFilename + "\n");
 
     // Set up arguments from input field
     let args = document.getElementById("romusage_args").value.split(" ");
-    args.push(romusageInputFilename);
+    args.push(e.currentTarget.argFilename);
 
     // Import function from Emscripten generated file and call it
     romusage_set_option_is_web_mode = Module.cwrap(
@@ -41,14 +36,16 @@ function invokeProgram(e) {
     romusage_set_option_is_web_mode();
 
     // Create a file in the virtual file system for passing in the data
-    let fileNode = Module['FS_createDataFile'](".", romusageInputFilename, uint8FileBytes, true, true);
+    let fileNode = Module['FS_createDataFile'](".", e.currentTarget.argFilename, uint8FileBytes, true, true);
 
     // console.log(args);
     // Call main() in the program
     callMain(args);
 
     // Delete the file now that processing is done
-    Module['FS_unlink'](romusageInputFilename);
+    Module['FS_unlink'](e.currentTarget.argFilename);
+
+    appendInfoText("\n");
 }
 
 
@@ -87,7 +84,7 @@ function invokeProgram(e) {
 
     // Set up arguments from input field
     let args = document.getElementById("romusage_args").value.split(" ");
-    args.push(romusageInputFilename);
+    args.push(e.currentTarget.argFilename);
 
     // console.log(args);
     callMain(args);
