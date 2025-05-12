@@ -19,7 +19,7 @@
 #include "cdb_file.h"
 #include "rom_file.h"
 
-#define VERSION "version 1.3.1"
+#define VERSION "version 1.3.2"
 
 enum {
     HELP_FULL = 0,

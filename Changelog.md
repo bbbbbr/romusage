@@ -1,10 +1,15 @@
 Changelog
 =========
 
+# Version 1.3.2
+- Added Linux Arm 64 build
+- Fixed incorrect array growth size
+- Fix missing error when filename not present
+
 # Version 1.3.1
 - Experimental support for GBDK's flavor of NES (`-p:NES1"`) .noi/.map files
 - Allow areas with leading underscores for .noi/.map files
-- Fix: Brief/summarized mode: overlapped areas in header areas counted multiple times when copying banks
+- Fixed Brief/summarized mode: overlapped areas in header areas counted multiple times when copying banks
 
 # Version 1.3.0
 - `-b:HEXVAL:[...]` Set hex bytes treated as Empty in ROM files (.gb/etc) (default `FF`(255), ex use 255 AND 0: `-b:FF:00`
