@@ -92,6 +92,13 @@ linuxzip: linux
 	zip -j $(PACKBASENAME)-linux.zip $(PACKFILES)
 	mv $(PACKBASENAME)-linux.zip $(PACKDIR)
 
+linux-arm-zip: linux
+	mkdir -p $(PACKDIR)
+	strip $(BIN)
+	# -j discards (junks) path to file
+	zip -j $(PACKBASENAME)-linux_arm.zip $(PACKFILES)
+	mv $(PACKBASENAME)-linux_arm.zip $(PACKDIR)
+
 wincrosszip: EXE_EXT = .exe
 wincrosszip: wincross	
 	mkdir -p $(PACKDIR)

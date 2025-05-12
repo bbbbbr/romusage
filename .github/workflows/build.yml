@@ -15,8 +15,10 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-20.04
-            name: Linux-x64
+          - os: ubuntu-22.04
+            name: Linux-Wincross-x64
+          - os: ubuntu-22.04-arm
+            name: Linux-arm64
           - os: macos-13
             name: MacOS-x64
           - os: macos-14
@@ -27,7 +29,7 @@ jobs:
 
       # ==== OS Specific Dependencies ====
       - name: Linux Depends
-        if: matrix.name == 'Linux-x64'
+        if: matrix.name == 'Linux-Wincross-x64'
         # For Windows crossbuild
         # Use "x64" for 64 bit (x86_64-w64-mingw32-gcc), "x86" for 32 bit (i686-w64-mingw32-gcc)
         uses: egor-tensin/setup-mingw@v2
@@ -58,8 +60,16 @@ jobs:
           make macos-arm64-zip
           cd ..
 
+      - name: Build Linux arm64
+        if: (matrix.name == 'Linux-arm64')
+        shell: bash
+        run: |
+          cd romusage-root
+          make linux-arm-zip
+          cd ..
+
       - name: Build Linux
-        if: (matrix.name == 'Linux-x64')
+        if: (matrix.name == 'Linux-Wincross-x64')
         shell: bash
         run: |
           cd romusage-root
@@ -68,7 +78,6 @@ jobs:
 
       # ==== Packaging ====
       - name: Package build Linux/MacOS
-        if: (matrix.name == 'Linux-x64') || (matrix.name == 'MacOS-x64') || (matrix.name == 'MacOS-arm64')
         shell: bash
         run: |
           cd romusage-root
@@ -77,28 +86,8 @@ jobs:
           cd ..
 
       - name: Store build
-        if: (matrix.name == 'Linux-x64')
         uses: actions/upload-artifact@v4
         with:
-          name: Romusage build Linux & Windows
-          # path: romusage-root/package/${{ env.BUILD_PACKAGE_FILENAME }}
-          path: romusage-root/package
-          # retention-days: 30
-
-      - name: Store build
-        if: (matrix.name == 'MacOS-x64')
-        uses: actions/upload-artifact@v4
-        with:
-          name: Romusage build MacOS x64
-          # path: romusage-root/package/${{ env.BUILD_PACKAGE_FILENAME }}
-          path: romusage-root/package
-          # retention-days: 30
-
-      - name: Store build
-        if: (matrix.name == 'MacOS-arm64')
-        uses: actions/upload-artifact@v4
-        with:
-          name: Romusage build MacOS arm64
-          # path: romusage-root/package/${{ env.BUILD_PACKAGE_FILENAME }}
+          name: Romusage build ${{ matrix.name }}
           path: romusage-root/package
           # retention-days: 30
