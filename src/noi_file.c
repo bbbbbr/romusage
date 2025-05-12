@@ -118,7 +118,7 @@ static void noi_arealist_add(char * rec_type, char * name, char * value) {
 
 int noi_file_process_areas(char * filename_in) {
 
-    char cols;
+    int  cols;
     char * p_str;
     char * p_words[MAX_SPLIT_WORDS];
     char strline_in[MAX_STR_LEN] = "";

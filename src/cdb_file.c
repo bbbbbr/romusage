@@ -227,7 +227,7 @@ static void cdb_add_record_symbol(char * addr_space, char * name, char * length,
 
 int cdb_file_process_symbols(char * filename_in) {
 
-    char cols;
+    int cols;
     char * p_str;
     char * p_words[CDB_MAX_SPLIT_WORDS];
     char strline_in[CDB_MAX_STR_LEN] = "";

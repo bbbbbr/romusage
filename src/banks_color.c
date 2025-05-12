@@ -150,7 +150,7 @@ void bank_render_color(bank_item * p_bank, int mode) {
 // Custom color scheme for output
 bool set_option_custom_bank_colors(char * arg_str) {
 
-    char cols;
+    int cols;
     char * p_str;
     char * p_words[MAX_SPLIT_WORDS];
     area_item area;

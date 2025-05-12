@@ -39,7 +39,7 @@ _HRAM10                00000000    00000001 =           1. bytes (ABS,CON)
 
 static int str_split(char * str_check, char * p_words[], const char * split_criteria) {
 
-    char cols;
+    int cols;
     char * p_str;
 
     cols = 0;

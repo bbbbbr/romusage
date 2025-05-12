@@ -536,7 +536,7 @@ void area_manual_apply_queued(void) {
 // Follow up call is area_manual_apply_queued()
 bool area_manual_queue(char * arg_str) {
 
-    char cols;
+    int cols;
     char * p_str;
     char * p_words[MAX_SPLIT_WORDS];
 

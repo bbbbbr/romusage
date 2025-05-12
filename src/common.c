@@ -199,7 +199,7 @@ bool set_option_displayed_bank_range(char * arg_str) {
     #define MAX_SPLIT_WORDS 4
     #define EXPECTED_COLS   3
 
-    char cols;
+    int cols;
     char * p_str;
     char * p_words[MAX_SPLIT_WORDS];
 
@@ -289,7 +289,7 @@ bool set_option_binary_rom_empty_values(char * arg_str) {
     #define MAX_ROMFILE_ENTRIES     256
     #define MIN_EXPECTED_ENTRIES   1
 
-    char entries_found;
+    int entries_found;
     char * p_str;
     char * p_words[MAX_ROMFILE_ENTRIES];
 
