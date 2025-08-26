@@ -18,6 +18,17 @@ function loadFile(fileToRead) {
 }
 
 
+function buttonLoadFile(e) {
+
+    // Load the files
+    for (var i = 0; i < this.files.length; i++) {
+        loadFile( this.files[i] );
+    }
+
+    // Clear value so next onchange event registers even if it is the same file
+    this.value = null;
+}
+
 function dropFileHandler(ev) {
 
     // Clear output window
